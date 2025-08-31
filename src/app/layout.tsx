@@ -13,8 +13,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`antialiased`}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var d = document.documentElement;
+                  var e = localStorage.getItem('theme');
+                  if (e === 'dark' || (!e && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    d.classList.add('dark');
+                    d.style.colorScheme = 'dark';
+                  } else {
+                    d.classList.add('light');  
+                    d.style.colorScheme = 'light';
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="antialiased bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+        {children}
+      </body>
     </html>
   );
 }

@@ -52,14 +52,14 @@ function BottomToolbar({
 
     if (isConnected) {
       // Connected -> label "Disconnect" -> red
-      return `bg-red-600 hover:bg-red-700 ${cursorClass} ${baseClasses}`;
+      return `bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 ${cursorClass} ${baseClasses}`;
     }
     // Disconnected or connecting -> label is either "Connect" or "Connecting" -> black
-    return `bg-black hover:bg-gray-900 ${cursorClass} ${baseClasses}`;
+    return `bg-black hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 ${cursorClass} ${baseClasses}`;
   }
 
   return (
-    <div className="p-4 flex flex-row items-center justify-center gap-x-8">
+    <div className="p-4 flex flex-row items-center justify-center gap-x-8 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
       <button
         onClick={onToggleConnection}
         className={getConnectionButtonClasses()}
@@ -79,7 +79,7 @@ function BottomToolbar({
         />
         <label
           htmlFor="push-to-talk"
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200"
         >
           Push to talk
         </label>
@@ -90,9 +90,9 @@ function BottomToolbar({
           onTouchEnd={handleTalkButtonUp}
           disabled={!isPTTActive}
           className={
-            (isPTTUserSpeaking ? "bg-gray-300" : "bg-gray-200") +
-            " py-1 px-4 cursor-pointer rounded-md" +
-            (!isPTTActive ? " bg-gray-100 text-gray-400" : "")
+            (isPTTUserSpeaking ? "bg-gray-300 dark:bg-gray-600" : "bg-gray-200 dark:bg-gray-700") +
+            " py-1 px-4 cursor-pointer rounded-md text-gray-800 dark:text-gray-200" +
+            (!isPTTActive ? " bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500" : "")
           }
         >
           Talk
@@ -110,7 +110,7 @@ function BottomToolbar({
         />
         <label
           htmlFor="audio-playback"
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200"
         >
           Audio playback
         </label>
@@ -124,13 +124,13 @@ function BottomToolbar({
           onChange={(e) => setIsEventsPaneExpanded(e.target.checked)}
           className="w-4 h-4"
         />
-        <label htmlFor="logs" className="flex items-center cursor-pointer">
+        <label htmlFor="logs" className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200">
           Logs
         </label>
       </div>
 
       <div className="flex flex-row items-center gap-2">
-        <div>Codec:</div>
+        <div className="text-gray-800 dark:text-gray-200">Codec:</div>
         {/*
           Codec selector – Lets you force the WebRTC track to use 8 kHz 
           PCMU/PCMA so you can preview how the agent will sound 
@@ -143,7 +143,7 @@ function BottomToolbar({
           id="codec-select"
           value={codec}
           onChange={handleCodecChange}
-          className="border border-gray-300 rounded-md px-2 py-1 focus:outline-none cursor-pointer"
+          className="border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 focus:outline-none cursor-pointer bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
         >
           <option value="opus">Opus (48 kHz)</option>
           <option value="pcmu">PCMU (8 kHz)</option>

@@ -21,6 +21,8 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   const groupRef = useRef<THREE.Group | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const ballRef = useRef<THREE.Mesh | null>(null);
+  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const originalPositionsRef = useRef<Float32Array | null>(null);
   const previousPositionsRef = useRef<Float32Array | null>(null);
   const shrinkFactorRef = useRef<number>(1);
@@ -34,8 +36,29 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   useEffect(() => {
     initViz();
     window.addEventListener("resize", onWindowResize);
+    
+    // Listen for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          updateSphereColors();
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
     return () => {
       window.removeEventListener("resize", onWindowResize);
+      observer.disconnect();
+      // Clean up canvas event listeners
+      if (rendererRef.current?.domElement) {
+        rendererRef.current.domElement.removeEventListener('click', handleCanvasClick);
+        rendererRef.current.domElement.removeEventListener('mousemove', handleMouseMove);
+      }
     };
   }, []);
 
@@ -55,6 +78,15 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   useEffect(() => {
     console.log('[Audio3DOrb] Conversation state changed to:', conversationState);
   }, [conversationState]);
+
+  const getThemeColors = () => {
+    const computedStyle = getComputedStyle(document.documentElement);
+    return {
+      wireframe: computedStyle.getPropertyValue('--orb-wireframe').trim() || '#ffffff',
+      ambientLight: computedStyle.getPropertyValue('--orb-ambient-light').trim() || '#ffffff',
+      spotLight: computedStyle.getPropertyValue('--orb-spot-light').trim() || '#ffffff'
+    };
+  };
 
   const initViz = () => {
     const scene = new THREE.Scene();
@@ -92,13 +124,22 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
       renderer.domElement.style.objectFit = 'contain';
       renderer.domElement.style.display = 'block';
       renderer.domElement.style.margin = 'auto';
+      renderer.domElement.style.cursor = 'default';
+      
+      // Add click event listener for raycasting
+      renderer.domElement.addEventListener('click', handleCanvasClick);
+      renderer.domElement.addEventListener('mousemove', handleMouseMove);
     }
  
     rendererRef.current = renderer;
  
+    // Get theme-aware colors
+    const themeColors = getThemeColors();
+    const wireframeColor = new THREE.Color(themeColors.wireframe);
+
     const icosahedronGeometry = new THREE.IcosahedronGeometry(10, 8);
     const lambertMaterial = new THREE.MeshLambertMaterial({
-      color: 0xffffff,
+      color: wireframeColor,
       wireframe: true,
     });
  
@@ -118,10 +159,14 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
  
     group.add(ball);
  
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Theme-aware lighting
+    const ambientLightColor = new THREE.Color(themeColors.ambientLight);
+    const spotLightColor = new THREE.Color(themeColors.spotLight);
+    
+    const ambientLight = new THREE.AmbientLight(ambientLightColor, 0.5);
     scene.add(ambientLight);
  
-    const spotLight = new THREE.SpotLight(0xffffff);
+    const spotLight = new THREE.SpotLight(spotLightColor);
     spotLight.intensity = 0.9;
     spotLight.position.set(-10, 40, 20);
     spotLight.lookAt(ball.position);
@@ -272,12 +317,83 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     geometry.computeVertexNormals();
   };
 
+  const updateSphereColors = () => {
+    if (!ballRef.current || !sceneRef.current) return;
+    
+    // Get current theme colors
+    const themeColors = getThemeColors();
+    const wireframeColor = new THREE.Color(themeColors.wireframe);
+    
+    // Update sphere material color
+    const material = ballRef.current.material as THREE.MeshLambertMaterial;
+    material.color = wireframeColor;
+    
+    // Update lighting colors
+    const ambientLightColor = new THREE.Color(themeColors.ambientLight);
+    const spotLightColor = new THREE.Color(themeColors.spotLight);
+    
+    sceneRef.current.traverse((child) => {
+      if (child instanceof THREE.AmbientLight) {
+        child.color = ambientLightColor;
+      } else if (child instanceof THREE.SpotLight) {
+        child.color = spotLightColor;
+      }
+    });
+  };
+
+  const handleMouseMove = (event: MouseEvent) => {
+    if (!containerRef.current || !cameraRef.current || !sceneRef.current || !ballRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+    mouseRef.current.x = (x / rect.width) * 2 - 1;
+    mouseRef.current.y = -(y / rect.height) * 2 + 1;
+
+    // Update raycaster
+    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+    // Check for intersections with the ball
+    const intersects = raycasterRef.current.intersectObject(ballRef.current);
+    
+    // Update cursor based on intersection
+    if (intersects.length > 0) {
+      containerRef.current.style.cursor = 'pointer';
+    } else {
+      containerRef.current.style.cursor = 'default';
+    }
+  };
+
+  const handleCanvasClick = (event: MouseEvent) => {
+    if (!containerRef.current || !cameraRef.current || !sceneRef.current || !ballRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // Convert mouse coordinates to normalized device coordinates (-1 to +1)
+    mouseRef.current.x = (x / rect.width) * 2 - 1;
+    mouseRef.current.y = -(y / rect.height) * 2 + 1;
+
+    // Update raycaster
+    raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+    // Check for intersections with the ball
+    const intersects = raycasterRef.current.intersectObject(ballRef.current);
+    
+    if (intersects.length > 0) {
+      // Clicked on the sphere!
+      handleStartStopClick();
+    }
+  };
+
   return (
     <div style={{ height: "100%", width: "100%" }}>
       <div
         ref={containerRef}
-        className="hover:cursor-pointer w-full h-full flex items-center justify-center"
-        onClick={handleStartStopClick}
+        className="w-full h-full flex items-center justify-center"
       ></div>
     </div>
   );

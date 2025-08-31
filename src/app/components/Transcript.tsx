@@ -71,21 +71,21 @@ function Transcript({
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-white min-h-0 rounded-xl">
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base border-b bg-white rounded-t-xl">
-          <span className="font-semibold">Transcript</span>
+        <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">Transcript</span>
           <div className="flex gap-x-2">
             <button
               onClick={handleCopyTranscript}
-              className="w-24 text-sm px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 flex items-center justify-center gap-x-1"
+              className="w-24 text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 flex items-center justify-center gap-x-1"
             >
               <ClipboardCopyIcon />
               {justCopied ? "Copied!" : "Copy"}
             </button>
             <button
               onClick={downloadRecording}
-              className="w-40 text-sm px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 flex items-center justify-center gap-x-1"
+              className="w-40 text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 flex items-center justify-center gap-x-1"
             >
               <DownloadIcon />
               <span>Download Audio</span>
@@ -123,12 +123,12 @@ function Transcript({
                 isUser ? "items-end" : "items-start"
               }`;
               const bubbleBase = `max-w-lg p-3 ${
-                isUser ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-black"
+                isUser ? "bg-gray-900 dark:bg-gray-700 text-gray-100" : "bg-gray-100 dark:bg-gray-700 text-black dark:text-gray-100"
               }`;
               const isBracketedMessage =
                 title.startsWith("[") && title.endsWith("]");
               const messageStyle = isBracketedMessage
-                ? 'italic text-gray-400'
+                ? 'italic text-gray-400 dark:text-gray-500'
                 : '';
               const displayTitle = isBracketedMessage
                 ? title.slice(1, -1)
@@ -144,7 +144,7 @@ function Transcript({
                     >
                       <div
                         className={`text-xs ${
-                          isUser ? "text-gray-400" : "text-gray-500"
+                          isUser ? "text-gray-400 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
                         } font-mono`}
                       >
                         {timestamp}
@@ -154,7 +154,7 @@ function Transcript({
                       </div>
                     </div>
                     {guardrailResult && (
-                      <div className="bg-gray-200 px-3 py-2 rounded-b-xl">
+                      <div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-b-xl">
                         <GuardrailChip guardrailResult={guardrailResult} />
                       </div>
                     )}
@@ -165,18 +165,18 @@ function Transcript({
               return (
                 <div
                   key={itemId}
-                  className="flex flex-col justify-start items-start text-gray-500 text-sm"
+                  className="flex flex-col justify-start items-start text-gray-500 dark:text-gray-400 text-sm"
                 >
                   <span className="text-xs font-mono">{timestamp}</span>
                   <div
-                    className={`whitespace-pre-wrap flex items-center font-mono text-sm text-gray-800 ${
+                    className={`whitespace-pre-wrap flex items-center font-mono text-sm text-gray-800 dark:text-gray-200 ${
                       data ? "cursor-pointer" : ""
                     }`}
                     onClick={() => data && toggleTranscriptItemExpand(itemId)}
                   >
                     {data && (
                       <span
-                        className={`text-gray-400 mr-1 transform transition-transform duration-200 select-none font-mono ${
+                        className={`text-gray-400 dark:text-gray-500 mr-1 transform transition-transform duration-200 select-none font-mono ${
                           expanded ? "rotate-90" : "rotate-0"
                         }`}
                       >
@@ -186,8 +186,8 @@ function Transcript({
                     {title}
                   </div>
                   {expanded && data && (
-                    <div className="text-gray-800 text-left">
-                      <pre className="border-l-2 ml-1 border-gray-200 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
+                    <div className="text-gray-800 dark:text-gray-200 text-left">
+                      <pre className="border-l-2 ml-1 border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
                         {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
@@ -199,7 +199,7 @@ function Transcript({
               return (
                 <div
                   key={itemId}
-                  className="flex justify-center text-gray-500 text-sm italic font-mono"
+                  className="flex justify-center text-gray-500 dark:text-gray-400 text-sm italic font-mono"
                 >
                   Unknown item type: {type}{" "}
                   <span className="ml-2 text-xs">{timestamp}</span>
@@ -210,7 +210,7 @@ function Transcript({
         </div>
       </div>
 
-      <div className="p-4 flex items-center gap-x-2 flex-shrink-0 border-t border-gray-200">
+      <div className="p-4 flex items-center gap-x-2 flex-shrink-0">
         <input
           ref={inputRef}
           type="text"
@@ -221,13 +221,13 @@ function Transcript({
               onSendMessage();
             }
           }}
-          className="flex-1 px-4 py-2 focus:outline-none"
+          className="flex-1 px-4 py-2 focus:outline-none bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           placeholder="Type a message..."
         />
         <button
           onClick={onSendMessage}
           disabled={!canSend || !userText.trim()}
-          className="bg-gray-900 text-white rounded-full px-2 py-2 disabled:opacity-50"
+          className="bg-gray-900 dark:bg-gray-600 text-white rounded-full px-2 py-2 disabled:opacity-50 hover:bg-gray-800 dark:hover:bg-gray-500"
         >
           <Image src="arrow.svg" alt="Send" width={24} height={24} />
         </button>

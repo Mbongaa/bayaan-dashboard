@@ -10,6 +10,8 @@ import Transcript from "./components/Transcript";
 import Events from "./components/Events";
 import BottomToolbar from "./components/BottomToolbar";
 import Audio3DOrb from "./components/Audio3DOrb";
+import AgentSettingsMenu from "./components/AgentSettingsMenu";
+import ThemeToggle from "./components/ThemeToggle";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -474,8 +476,8 @@ function App() {
   const agentSetKey = searchParams.get("agentConfig") || "default";
 
   return (
-    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
-      <div className="p-5 text-lg font-semibold flex justify-between items-center">
+    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 relative">
+      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div
           className="flex items-center cursor-pointer"
           onClick={() => window.location.reload()}
@@ -490,179 +492,38 @@ function App() {
             />
           </div>
           <div>
-            Realtime API <span className="text-gray-500">Agents</span>
+            Realtime API <span className="text-gray-500 dark:text-gray-400">Agents</span>
           </div>
         </div>
-        <div className="flex items-center">
-          <label className="flex items-center text-base gap-1 mr-2 font-medium">
-            Scenario
-          </label>
-          <div className="relative inline-block">
-            <select
-              value={agentSetKey}
-              onChange={handleAgentChange}
-              className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
-            >
-              {Object.keys(allAgentSets).map((agentKey) => (
-                <option key={agentKey} value={agentKey}>
-                  {agentKey}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
-
-          {agentSetKey && (
-            <div className="flex items-center ml-6">
-              <label className="flex items-center text-base gap-1 mr-2 font-medium">
-                Agent
-              </label>
-              <div className="relative inline-block">
-                <select
-                  value={selectedAgentName}
-                  onChange={handleSelectedAgentChange}
-                  className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
-                >
-                  {selectedAgentConfigSet?.map((agent) => (
-                    <option key={agent.name} value={agent.name}>
-                      {agent.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VAD Type Selector */}
-          <div className="flex items-center ml-6">
-            <label className="flex items-center text-base gap-1 mr-2 font-medium">
-              Turn Detection
-            </label>
-            <select
-              value={vadType}
-              onChange={(e) => setVadType(e.target.value as 'server_vad' | 'semantic_vad' | 'disabled')}
-              disabled={sessionStatus !== "DISCONNECTED"}
-              className="appearance-none border border-gray-300 rounded-lg text-sm px-2 py-1 pr-6 cursor-pointer font-normal focus:outline-none mr-2"
-            >
-              <option value="server_vad">Server VAD</option>
-              <option value="semantic_vad">Semantic VAD</option>
-              <option value="disabled">Disabled</option>
-            </select>
-            
-            {/* Server VAD Settings */}
-            {vadType === 'server_vad' && (
-              <div className="flex items-center gap-2 p-1 border border-gray-300 rounded-lg">
-                <div className="flex items-center gap-1">
-                  <label className="text-xs text-gray-600">Silence:</label>
-                  <input
-                    type="number"
-                    value={vadSilenceDuration}
-                    onChange={(e) => setVadSilenceDuration(Number(e.target.value))}
-                    min="100"
-                    max="5000"
-                    step="100"
-                    className="w-14 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none"
-                  />
-                  <span className="text-xs text-gray-500">ms</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <label className="text-xs text-gray-600">Thresh:</label>
-                  <input
-                    type="number"
-                    value={vadThreshold}
-                    onChange={(e) => setVadThreshold(Number(e.target.value))}
-                    min="0.1"
-                    max="1.0"
-                    step="0.1"
-                    className="w-12 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none"
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Semantic VAD Settings */}
-            {vadType === 'semantic_vad' && (
-              <div className="flex items-center gap-2 p-1 border border-gray-300 rounded-lg">
-                <label className="text-xs text-gray-600">Eagerness:</label>
-                <select
-                  value={semanticVadEagerness}
-                  onChange={(e) => setSemanticVadEagerness(e.target.value as 'auto' | 'low' | 'medium' | 'high')}
-                  className="text-xs border border-gray-200 rounded px-1 py-0.5 focus:outline-none"
-                >
-                  <option value="auto">Auto</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          {/* Voice Selection */}
-          <div className="flex items-center ml-4">
-            <label className="flex items-center text-base gap-1 mr-2 font-medium">
-              Voice
-            </label>
-            <select
-              value={selectedVoice}
-              onChange={(e) => setSelectedVoice(e.target.value)}
-              disabled={sessionStatus !== "DISCONNECTED"}
-              className="appearance-none border border-gray-300 rounded-lg text-sm px-2 py-1 pr-6 cursor-pointer font-normal focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
-            >
-              <option value="alloy">alloy</option>
-              <option value="ash">ash</option>
-              <option value="ballad">ballad</option>
-              <option value="cedar">cedar</option>
-              <option value="coral">coral</option>
-              <option value="echo">echo</option>
-              <option value="marin">marin</option>
-              <option value="sage">sage</option>
-              <option value="shimmer">shimmer</option>
-              <option value="verse">verse</option>
-            </select>
-          </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <AgentSettingsMenu
+            agentSetKey={agentSetKey}
+            allAgentSets={allAgentSets}
+            selectedAgentName={selectedAgentName}
+            selectedAgentConfigSet={selectedAgentConfigSet}
+            onAgentChange={handleAgentChange}
+            onSelectedAgentChange={handleSelectedAgentChange}
+            vadType={vadType}
+            vadSilenceDuration={vadSilenceDuration}
+            vadThreshold={vadThreshold}
+            semanticVadEagerness={semanticVadEagerness}
+            selectedVoice={selectedVoice}
+            onVadTypeChange={setVadType}
+            onVadSilenceDurationChange={setVadSilenceDuration}
+            onVadThresholdChange={setVadThreshold}
+            onSemanticVadEagernessChange={setSemanticVadEagerness}
+            onVoiceChange={setSelectedVoice}
+            codec={urlCodec}
+            onCodecChange={handleCodecChange}
+            sessionStatus={sessionStatus}
+          />
         </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative">
-        {/* Top half: Transcript and Events */}
-        <div className="flex flex-1 gap-2 overflow-hidden">
-          <Transcript
-            userText={userText}
-            setUserText={setUserText}
-            onSendMessage={handleSendTextMessage}
-            downloadRecording={downloadRecording}
-            canSend={
-              sessionStatus === "CONNECTED"
-            }
-          />
-
-          <Events isExpanded={isEventsPaneExpanded} />
-        </div>
-
-        {/* Bottom half: 3D Audio Visualization */}
-        <div className="flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-300">
+        {/* Top half: 3D Audio Visualization */}
+        <div className="flex-1 min-h-0 max-h-full overflow-hidden">
           <RealtimeProvider 
             value={{
               sessionStatus,
@@ -676,6 +537,21 @@ function App() {
               className="w-full h-full"
             />
           </RealtimeProvider>
+        </div>
+
+        {/* Bottom half: Transcript and Events */}
+        <div className="flex flex-1 gap-2 overflow-hidden">
+          <Transcript
+            userText={userText}
+            setUserText={setUserText}
+            onSendMessage={handleSendTextMessage}
+            downloadRecording={downloadRecording}
+            canSend={
+              sessionStatus === "CONNECTED"
+            }
+          />
+
+          <Events isExpanded={isEventsPaneExpanded} />
         </div>
       </div>
 
