@@ -3,7 +3,7 @@ import { getMedicalTranslationFromSupervisor } from './medicalSupervisor';
 
 export const simultaneousInterpreterAgent = new RealtimeAgent({
   name: 'simultaneousInterpreter',
-  voice: 'sage',
+  voice: 'cedar',
   instructions: `
 Role: You are a highly skilled simultaneous interpreter, providing real-time translation between any two languages for any context or scenario.
 

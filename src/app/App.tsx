@@ -9,6 +9,7 @@ import Image from "next/image";
 import Transcript from "./components/Transcript";
 import Events from "./components/Events";
 import BottomToolbar from "./components/BottomToolbar";
+import Audio3DOrb from "./components/Audio3DOrb";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -17,6 +18,7 @@ import type { RealtimeAgent } from '@openai/agents/realtime';
 // Context providers & hooks
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
+import { RealtimeProvider } from "./contexts/RealtimeContext";
 import { useRealtimeSession } from "./hooks/useRealtimeSession";
 import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 
@@ -103,6 +105,7 @@ function App() {
     sendEvent,
     interrupt,
     mute,
+    sessionRef,
   } = useRealtimeSession({
     onConnectionChange: (s) => setSessionStatus(s as SessionStatus),
     onAgentHandoff: (agentName: string) => {
@@ -121,13 +124,13 @@ function App() {
   const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
   
   // VAD Settings
-  const [vadType, setVadType] = useState<'server_vad' | 'semantic_vad' | 'disabled'>('server_vad');
+  const [vadType, setVadType] = useState<'server_vad' | 'semantic_vad' | 'disabled'>('semantic_vad');
   const [vadSilenceDuration, setVadSilenceDuration] = useState<number>(500);
   const [vadThreshold, setVadThreshold] = useState<number>(0.9);
   const [semanticVadEagerness, setSemanticVadEagerness] = useState<'auto' | 'low' | 'medium' | 'high'>('auto');
   
   // Voice Selection (only changeable before connection)
-  const [selectedVoice, setSelectedVoice] = useState<string>('sage');
+  const [selectedVoice, setSelectedVoice] = useState<string>('cedar');
   
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState<boolean>(
     () => {
@@ -642,18 +645,38 @@ function App() {
         </div>
       </div>
 
-      <div className="flex flex-1 gap-2 px-2 overflow-hidden relative">
-        <Transcript
-          userText={userText}
-          setUserText={setUserText}
-          onSendMessage={handleSendTextMessage}
-          downloadRecording={downloadRecording}
-          canSend={
-            sessionStatus === "CONNECTED"
-          }
-        />
+      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative">
+        {/* Top half: Transcript and Events */}
+        <div className="flex flex-1 gap-2 overflow-hidden">
+          <Transcript
+            userText={userText}
+            setUserText={setUserText}
+            onSendMessage={handleSendTextMessage}
+            downloadRecording={downloadRecording}
+            canSend={
+              sessionStatus === "CONNECTED"
+            }
+          />
 
-        <Events isExpanded={isEventsPaneExpanded} />
+          <Events isExpanded={isEventsPaneExpanded} />
+        </div>
+
+        {/* Bottom half: 3D Audio Visualization */}
+        <div className="flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-lg overflow-hidden border border-gray-300">
+          <RealtimeProvider 
+            value={{
+              sessionStatus,
+              onToggleConnection,
+              audioElement: audioElementRef.current,
+              sessionRef
+            }}
+          >
+            <Audio3DOrb
+              intensity={3.5}
+              className="w-full h-full"
+            />
+          </RealtimeProvider>
+        </div>
       </div>
 
       <BottomToolbar

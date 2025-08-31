@@ -14,7 +14,13 @@
       "Bash(ss:*)",
       "Bash(kill:*)",
       "WebSearch",
-      "WebFetch(domain:openai.com)"
+      "WebFetch(domain:openai.com)",
+      "WebFetch(domain:www.vapiblocks.com)",
+      "WebFetch(domain:openai-realtime-blocks.vercel.app)",
+      "WebFetch(domain:openai-realtime-blocks.vercel.app)",
+      "Bash(npm install:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_install"
     ],
     "deny": [],
     "ask": []

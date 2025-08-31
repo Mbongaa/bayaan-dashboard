@@ -3,7 +3,7 @@ import { getTranslationFromSupervisor } from './translationSupervisor';
 
 export const translationAgent = new RealtimeAgent({
   name: 'translationAgent',
-  voice: 'sage',
+  voice: 'cedar',
   instructions: `
 You are a voice interface for real-time translation between two languages.
 

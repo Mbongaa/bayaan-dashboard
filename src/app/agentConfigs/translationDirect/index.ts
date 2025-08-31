@@ -2,7 +2,7 @@ import { RealtimeAgent } from '@openai/agents/realtime'
 
 export const translationDirectAgent = new RealtimeAgent({
   name: 'translationDirectAgent',
-  voice: 'sage',
+  voice: 'cedar',
   instructions: `
 You are a real-time voice translation agent that handles direct translation between two languages without using any external tools or APIs.
 
