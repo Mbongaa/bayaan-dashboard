@@ -27,12 +27,21 @@ import { chatSupervisorScenario } from "@/app/agentConfigs/chatSupervisor";
 import { customerServiceRetailCompanyName } from "@/app/agentConfigs/customerServiceRetail";
 import { chatSupervisorCompanyName } from "@/app/agentConfigs/chatSupervisor";
 import { simpleHandoffScenario } from "@/app/agentConfigs/simpleHandoff";
+import { medicalTranslationScenario } from "@/app/agentConfigs/medicalTranslation";
+import { medicalTranslationCompanyName } from "@/app/agentConfigs/medicalTranslation";
+import { translationScenario } from "@/app/agentConfigs/translation";
+import { translationCompanyName } from "@/app/agentConfigs/translation";
+import { translationDirectScenario } from "@/app/agentConfigs/translationDirect";
+import { translationDirectCompanyName } from "@/app/agentConfigs/translationDirect";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
   simpleHandoff: simpleHandoffScenario,
   customerServiceRetail: customerServiceRetailScenario,
   chatSupervisor: chatSupervisorScenario,
+  medicalTranslation: medicalTranslationScenario,
+  translation: translationScenario,
+  translationDirect: translationDirectScenario,
 };
 
 import useAudioDownload from "./hooks/useAudioDownload";
@@ -110,6 +119,16 @@ function App() {
   const [userText, setUserText] = useState<string>("");
   const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
   const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
+  
+  // VAD Settings
+  const [vadType, setVadType] = useState<'server_vad' | 'semantic_vad' | 'disabled'>('server_vad');
+  const [vadSilenceDuration, setVadSilenceDuration] = useState<number>(500);
+  const [vadThreshold, setVadThreshold] = useState<number>(0.9);
+  const [semanticVadEagerness, setSemanticVadEagerness] = useState<'auto' | 'low' | 'medium' | 'high'>('auto');
+  
+  // Voice Selection (only changeable before connection)
+  const [selectedVoice, setSelectedVoice] = useState<string>('sage');
+  
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState<boolean>(
     () => {
       if (typeof window === 'undefined') return true;
@@ -150,11 +169,12 @@ function App() {
     setSelectedAgentConfigSet(agents);
   }, [searchParams]);
 
-  useEffect(() => {
-    if (selectedAgentName && sessionStatus === "DISCONNECTED") {
-      connectToRealtime();
-    }
-  }, [selectedAgentName]);
+  // Auto-connection disabled - user must manually connect
+  // useEffect(() => {
+  //   if (selectedAgentName && sessionStatus === "DISCONNECTED") {
+  //     connectToRealtime();
+  //   }
+  // }, [selectedAgentName]);
 
   useEffect(() => {
     if (
@@ -176,7 +196,7 @@ function App() {
     if (sessionStatus === "CONNECTED") {
       updateSession();
     }
-  }, [isPTTActive]);
+  }, [isPTTActive, vadType, vadSilenceDuration, vadThreshold, semanticVadEagerness]);
 
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
@@ -206,6 +226,12 @@ function App() {
 
         // Ensure the selectedAgentName is first so that it becomes the root
         const reorderedAgents = [...sdkScenarioMap[agentSetKey]];
+        
+        // Update all agents to use the selected voice
+        reorderedAgents.forEach(agent => {
+          (agent as any).voice = selectedVoice;
+        });
+        
         const idx = reorderedAgents.findIndex((a) => a.name === selectedAgentName);
         if (idx > 0) {
           const [agent] = reorderedAgents.splice(idx, 1);
@@ -214,6 +240,12 @@ function App() {
 
         const companyName = agentSetKey === 'customerServiceRetail'
           ? customerServiceRetailCompanyName
+          : agentSetKey === 'medicalTranslation'
+          ? medicalTranslationCompanyName
+          : agentSetKey === 'translation'
+          ? translationCompanyName
+          : agentSetKey === 'translationDirect'
+          ? translationDirectCompanyName
           : chatSupervisorCompanyName;
         const guardrail = createModerationGuardrail(companyName);
 
@@ -260,13 +292,19 @@ function App() {
     // Reflect Push-to-Talk UI state by (de)activating server VAD on the
     // backend. The Realtime SDK supports live session updates via the
     // `session.update` event.
-    const turnDetection = isPTTActive
+    const turnDetection = isPTTActive || vadType === 'disabled'
       ? null
+      : vadType === 'semantic_vad'
+      ? {
+          type: 'semantic_vad',
+          eagerness: semanticVadEagerness,
+          create_response: true,
+        }
       : {
           type: 'server_vad',
-          threshold: 0.9,
+          threshold: vadThreshold,
           prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          silence_duration_ms: vadSilenceDuration,
           create_response: true,
         };
 
@@ -512,6 +550,95 @@ function App() {
               </div>
             </div>
           )}
+
+          {/* VAD Type Selector */}
+          <div className="flex items-center ml-6">
+            <label className="flex items-center text-base gap-1 mr-2 font-medium">
+              Turn Detection
+            </label>
+            <select
+              value={vadType}
+              onChange={(e) => setVadType(e.target.value as 'server_vad' | 'semantic_vad' | 'disabled')}
+              disabled={sessionStatus !== "DISCONNECTED"}
+              className="appearance-none border border-gray-300 rounded-lg text-sm px-2 py-1 pr-6 cursor-pointer font-normal focus:outline-none mr-2"
+            >
+              <option value="server_vad">Server VAD</option>
+              <option value="semantic_vad">Semantic VAD</option>
+              <option value="disabled">Disabled</option>
+            </select>
+            
+            {/* Server VAD Settings */}
+            {vadType === 'server_vad' && (
+              <div className="flex items-center gap-2 p-1 border border-gray-300 rounded-lg">
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-gray-600">Silence:</label>
+                  <input
+                    type="number"
+                    value={vadSilenceDuration}
+                    onChange={(e) => setVadSilenceDuration(Number(e.target.value))}
+                    min="100"
+                    max="5000"
+                    step="100"
+                    className="w-14 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none"
+                  />
+                  <span className="text-xs text-gray-500">ms</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-gray-600">Thresh:</label>
+                  <input
+                    type="number"
+                    value={vadThreshold}
+                    onChange={(e) => setVadThreshold(Number(e.target.value))}
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    className="w-12 px-1 py-0.5 text-xs border border-gray-200 rounded focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Semantic VAD Settings */}
+            {vadType === 'semantic_vad' && (
+              <div className="flex items-center gap-2 p-1 border border-gray-300 rounded-lg">
+                <label className="text-xs text-gray-600">Eagerness:</label>
+                <select
+                  value={semanticVadEagerness}
+                  onChange={(e) => setSemanticVadEagerness(e.target.value as 'auto' | 'low' | 'medium' | 'high')}
+                  className="text-xs border border-gray-200 rounded px-1 py-0.5 focus:outline-none"
+                >
+                  <option value="auto">Auto</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Voice Selection */}
+          <div className="flex items-center ml-4">
+            <label className="flex items-center text-base gap-1 mr-2 font-medium">
+              Voice
+            </label>
+            <select
+              value={selectedVoice}
+              onChange={(e) => setSelectedVoice(e.target.value)}
+              disabled={sessionStatus !== "DISCONNECTED"}
+              className="appearance-none border border-gray-300 rounded-lg text-sm px-2 py-1 pr-6 cursor-pointer font-normal focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
+            >
+              <option value="alloy">alloy</option>
+              <option value="ash">ash</option>
+              <option value="ballad">ballad</option>
+              <option value="cedar">cedar</option>
+              <option value="coral">coral</option>
+              <option value="echo">echo</option>
+              <option value="marin">marin</option>
+              <option value="sage">sage</option>
+              <option value="shimmer">shimmer</option>
+              <option value="verse">verse</option>
+            </select>
+          </div>
         </div>
       </div>
 

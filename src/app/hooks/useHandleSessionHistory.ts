@@ -127,9 +127,11 @@ export function useHandleSessionHistory() {
 
   function handleTranscriptionDelta(item: any) {
     const itemId = item.item_id;
-    const deltaText = item.delta || "";
+    // const deltaText = item.delta || ""; // Unused - we're not showing partial transcriptions
     if (itemId) {
-      updateTranscriptMessage(itemId, deltaText, true);
+      // Skip showing partial transcriptions to avoid encoding issues
+      // Only show "[listening...]" placeholder during transcription
+      updateTranscriptMessage(itemId, "[listening...]", false);
     }
   }
 
