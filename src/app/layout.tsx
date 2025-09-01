@@ -36,7 +36,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+      <body className="antialiased bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100">
         {children}
       </body>
     </html>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
@@ -12,6 +12,7 @@ import BottomToolbar from "./components/BottomToolbar";
 import Audio3DOrb from "./components/Audio3DOrb";
 import AgentSettingsMenu from "./components/AgentSettingsMenu";
 import ThemeToggle from "./components/ThemeToggle";
+import Galaxy from "./components/Galaxy";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -142,6 +143,55 @@ function App() {
     },
   );
 
+  // Theme detection for dynamic Galaxy colors
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return document.documentElement.classList.contains('dark');
+  });
+
+  // 🎛️ GALAXY CONFIGURATION - Separate settings for each mode
+  const GALAXY_CONFIG = {
+    // ===== LIGHT MODE - Complete independent settings =====
+    light: {
+      transparent: true,
+      mouseInteraction: true,
+      mouseRepulsion: true,
+      density: 8,              // 🎛️ Light mode star count
+      glowIntensity: 0.03,    // 🎛️ Light mode brightness/size
+      hueShift: 140,           // 🎛️ Light mode color hue (140 = teal/cyan)
+      saturation: 0,           // 🎛️ Light mode color intensity (0 = grayscale)
+      rotationSpeed: 0.05,     // 🎛️ Light mode rotation speed
+      twinkleIntensity: 0,     // 🎛️ Light mode twinkling (0 = off)
+      repulsionStrength: 0.5,  // 🎛️ Light mode mouse repulsion
+      starSpeed: 0.1,          // 🎛️ Light mode star movement
+      speed: 0.6,              // 🎛️ Light mode animation speed
+      autoCenterRepulsion: 0   // 🎛️ Light mode center force (0 = off)
+    },
+    
+    // ===== DARK MODE - Complete independent settings =====
+    dark: {
+      transparent: true,
+      mouseInteraction: true,
+      mouseRepulsion: true,
+      density: 1.4,              // 🎛️ Dark mode star count
+      glowIntensity: 0.06,    // 🎛️ Dark mode brightness/size
+      hueShift: 240,           // 🎛️ Dark mode color hue (200 = blue tones)
+      saturation: 0,         // 🎛️ Dark mode color intensity (slight color)
+      rotationSpeed: 0.05,     // 🎛️ Dark mode rotation speed
+      twinkleIntensity: 0,     // 🎛️ Dark mode twinkling (0 = off)
+      repulsionStrength: 0.5,  // 🎛️ Dark mode mouse repulsion
+      starSpeed: 0.1,          // 🎛️ Dark mode star movement
+      speed: 0.6,              // 🎛️ Dark mode animation speed
+      autoCenterRepulsion: 0   // 🎛️ Dark mode center force (0 = off)
+    }
+  };
+
+  // Get current theme settings (memoized to prevent unnecessary re-renders)
+  const currentGalaxySettings = useMemo(() => 
+    isDarkMode ? GALAXY_CONFIG.dark : GALAXY_CONFIG.light, 
+    [isDarkMode]
+  );
+
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
     useAudioDownload();
@@ -156,6 +206,20 @@ function App() {
   };
 
   useHandleSessionHistory();
+
+  // Monitor theme changes for dynamic Galaxy colors
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let finalAgentConfig = searchParams.get("agentConfig");
@@ -359,14 +423,22 @@ function App() {
     sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
   };
 
-  const onToggleConnection = () => {
+  const onToggleConnection = useCallback(() => {
     if (sessionStatus === "CONNECTED" || sessionStatus === "CONNECTING") {
       disconnectFromRealtime();
       setSessionStatus("DISCONNECTED");
     } else {
       connectToRealtime();
     }
-  };
+  }, [sessionStatus]);
+
+  // Memoize RealtimeProvider context value to prevent unnecessary child re-renders
+  const realtimeContextValue = useMemo(() => ({
+    sessionStatus,
+    onToggleConnection,
+    audioElement: audioElementRef.current,
+    sessionRef
+  }), [sessionStatus, onToggleConnection, audioElementRef.current, sessionRef]);
 
   const handleAgentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newAgentConfig = e.target.value;
@@ -476,8 +548,13 @@ function App() {
   const agentSetKey = searchParams.get("agentConfig") || "default";
 
   return (
-    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100 relative">
-      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
+      {/* Galaxy Background */}
+      <div className="fixed inset-0 z-0" style={{ pointerEvents: 'auto' }}>
+        <Galaxy {...currentGalaxySettings} />
+      </div>
+      
+      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10">
         <div
           className="flex items-center cursor-pointer"
           onClick={() => window.location.reload()}
@@ -521,16 +598,11 @@ function App() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative">
+      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10">
         {/* Top half: 3D Audio Visualization */}
         <div className="flex-1 min-h-0 max-h-full overflow-hidden">
           <RealtimeProvider 
-            value={{
-              sessionStatus,
-              onToggleConnection,
-              audioElement: audioElementRef.current,
-              sessionRef
-            }}
+            value={realtimeContextValue}
           >
             <Audio3DOrb
               intensity={3.5}
@@ -555,7 +627,8 @@ function App() {
         </div>
       </div>
 
-      <BottomToolbar
+      <div className="relative z-10">
+        <BottomToolbar
         sessionStatus={sessionStatus}
         onToggleConnection={onToggleConnection}
         isPTTActive={isPTTActive}
@@ -569,7 +642,8 @@ function App() {
         setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
         codec={urlCodec}
         onCodecChange={handleCodecChange}
-      />
+        />
+      </div>
     </div>
   );
 }

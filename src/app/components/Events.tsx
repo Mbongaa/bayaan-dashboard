@@ -54,7 +54,7 @@ function Events({ isExpanded }: EventsProps) {
               return (
                 <div
                   key={`${log.id}-${idx}`}
-                  className="border-t border-gray-200 dark:border-gray-700 py-2 px-6 font-mono"
+                  className="border-t border-white/10 py-2 px-6 font-mono"
                 >
                   <div
                     onClick={() => toggleExpand(log.id)}
@@ -83,7 +83,7 @@ function Events({ isExpanded }: EventsProps) {
 
                   {log.expanded && log.eventData && (
                     <div className="text-gray-800 dark:text-gray-200 text-left">
-                      <pre className="border-l-2 ml-1 border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
+                      <pre className="border-l-2 ml-1 border-white/20 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
                         {JSON.stringify(log.eventData, null, 2)}
                       </pre>
                     </div>

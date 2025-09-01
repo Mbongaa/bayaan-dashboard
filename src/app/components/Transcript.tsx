@@ -75,22 +75,6 @@ function Transcript({
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base">
           <span className="font-semibold text-gray-900 dark:text-gray-100">Transcript</span>
-          <div className="flex gap-x-2">
-            <button
-              onClick={handleCopyTranscript}
-              className="w-24 text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 flex items-center justify-center gap-x-1"
-            >
-              <ClipboardCopyIcon />
-              {justCopied ? "Copied!" : "Copy"}
-            </button>
-            <button
-              onClick={downloadRecording}
-              className="w-40 text-sm px-3 py-1 rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 flex items-center justify-center gap-x-1"
-            >
-              <DownloadIcon />
-              <span>Download Audio</span>
-            </button>
-          </div>
         </div>
 
         {/* Transcript Content */}
@@ -123,7 +107,7 @@ function Transcript({
                 isUser ? "items-end" : "items-start"
               }`;
               const bubbleBase = `max-w-lg p-3 ${
-                isUser ? "bg-gray-900 dark:bg-gray-700 text-gray-100" : "bg-gray-100 dark:bg-gray-700 text-black dark:text-gray-100"
+                isUser ? "bg-black/20 backdrop-blur-sm text-gray-100 dark:text-gray-100" : "bg-white/10 backdrop-blur-sm text-gray-900 dark:text-gray-100"
               }`;
               const isBracketedMessage =
                 title.startsWith("[") && title.endsWith("]");
@@ -154,7 +138,7 @@ function Transcript({
                       </div>
                     </div>
                     {guardrailResult && (
-                      <div className="bg-gray-200 dark:bg-gray-700 px-3 py-2 rounded-b-xl">
+                      <div className="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-b-xl">
                         <GuardrailChip guardrailResult={guardrailResult} />
                       </div>
                     )}
@@ -187,7 +171,7 @@ function Transcript({
                   </div>
                   {expanded && data && (
                     <div className="text-gray-800 dark:text-gray-200 text-left">
-                      <pre className="border-l-2 ml-1 border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
+                      <pre className="border-l-2 ml-1 border-white/20 whitespace-pre-wrap break-words font-mono text-xs mb-2 mt-2 pl-2">
                         {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
@@ -221,13 +205,13 @@ function Transcript({
               onSendMessage();
             }
           }}
-          className="flex-1 px-4 py-2 focus:outline-none bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+          className="flex-1 px-4 py-2 focus:outline-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-400"
           placeholder="Type a message..."
         />
         <button
           onClick={onSendMessage}
           disabled={!canSend || !userText.trim()}
-          className="bg-gray-900 dark:bg-gray-600 text-white rounded-full px-2 py-2 disabled:opacity-50 hover:bg-gray-800 dark:hover:bg-gray-500"
+          className="bg-black/30 backdrop-blur-sm text-white rounded-full px-2 py-2 disabled:opacity-50 hover:bg-black/40"
         >
           <Image src="arrow.svg" alt="Send" width={24} height={24} />
         </button>
