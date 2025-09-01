@@ -2,11 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { TranscriptItem } from "@/app/types";
-import Image from "next/image";
+import { TranscriptItem, SessionStatus } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
+import AnimatedChatInput from "./AnimatedChatInput";
+import StandalonePTTIcon from "./StandalonePTTIcon";
 
 export interface TranscriptProps {
   userText: string;
@@ -14,6 +15,14 @@ export interface TranscriptProps {
   onSendMessage: () => void;
   canSend: boolean;
   downloadRecording: () => void;
+  // PTT Props
+  sessionStatus: SessionStatus;
+  isPTTActive: boolean;
+  isRecordingActive: boolean;
+  currentVolume: number;
+  isDarkMode: boolean;
+  handleToggleRecording: () => void;
+  conversationState: string;
 }
 
 function Transcript({
@@ -22,12 +31,18 @@ function Transcript({
   onSendMessage,
   canSend,
   downloadRecording,
+  sessionStatus,
+  isPTTActive,
+  isRecordingActive,
+  currentVolume,
+  isDarkMode,
+  handleToggleRecording,
+  conversationState,
 }: TranscriptProps) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
   const [justCopied, setJustCopied] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
   function scrollToBottom() {
     if (transcriptRef.current) {
@@ -52,12 +67,6 @@ function Transcript({
     setPrevLogs(transcriptItems);
   }, [transcriptItems]);
 
-  // Autofocus on text box input on load
-  useEffect(() => {
-    if (canSend && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [canSend]);
 
   const handleCopyTranscript = async () => {
     if (!transcriptRef.current) return;
@@ -191,27 +200,26 @@ function Transcript({
         </div>
       </div>
 
-      <div className="p-4 flex items-center gap-x-2 flex-shrink-0 pointer-events-auto">
-        <input
-          ref={inputRef}
-          type="text"
-          value={userText}
-          onChange={(e) => setUserText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && canSend) {
-              onSendMessage();
-            }
-          }}
-          className="flex-1 px-4 py-2 focus:outline-none bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-600 dark:placeholder-gray-400"
-          placeholder="Type a message..."
+      {/* Bottom Input Controls - Dual Icon Layout */}
+      <div className="relative flex justify-center items-end gap-4 p-4 pointer-events-auto">
+        {/* Text Chat Input */}
+        <AnimatedChatInput
+          userText={userText}
+          setUserText={setUserText}
+          onSendMessage={onSendMessage}
+          canSend={canSend}
         />
-        <button
-          onClick={onSendMessage}
-          disabled={!canSend || !userText.trim()}
-          className="bg-black/30 backdrop-blur-sm text-white rounded-full px-2 py-2 disabled:opacity-50 hover:bg-black/40"
-        >
-          <Image src="arrow.svg" alt="Send" width={24} height={24} />
-        </button>
+        
+        {/* Voice PTT Input */}
+        <StandalonePTTIcon
+          sessionStatus={sessionStatus}
+          isPTTActive={isPTTActive}
+          isRecordingActive={isRecordingActive}
+          volumeLevel={currentVolume}
+          onToggleRecording={handleToggleRecording}
+          isDarkMode={isDarkMode}
+          conversationState={conversationState}
+        />
       </div>
     </div>
   );

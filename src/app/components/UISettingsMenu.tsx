@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { RiSettings4Line, RiVolumeUpLine, RiFileTextLine } from "@remixicon/react";
+import { RiSettings4Line, RiVolumeUpLine, RiFileTextLine, RiMicLine } from "@remixicon/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,9 @@ interface UISettingsMenuProps {
   setIsAudioPlaybackEnabled: (enabled: boolean) => void;
   isEventsPaneExpanded: boolean;
   setIsEventsPaneExpanded: (expanded: boolean) => void;
+  isPTTActive: boolean;
+  setIsPTTActive: (active: boolean) => void;
+  sessionStatus: string;
 }
 
 export default function UISettingsMenu({
@@ -23,6 +26,9 @@ export default function UISettingsMenu({
   setIsAudioPlaybackEnabled,
   isEventsPaneExpanded,
   setIsEventsPaneExpanded,
+  isPTTActive,
+  setIsPTTActive,
+  sessionStatus,
 }: UISettingsMenuProps) {
   return (
     <DropdownMenu>
@@ -54,6 +60,15 @@ export default function UISettingsMenu({
           >
             <RiFileTextLine className="h-4 w-4" />
             Show Logs
+          </DropdownMenuCheckboxItem>
+
+          <DropdownMenuCheckboxItem
+            checked={isPTTActive}
+            onCheckedChange={setIsPTTActive}
+            className="flex items-center gap-2"
+          >
+            <RiMicLine className="h-4 w-4" />
+            Push to Talk Mode
           </DropdownMenuCheckboxItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

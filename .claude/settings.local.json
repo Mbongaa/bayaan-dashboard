@@ -20,7 +20,8 @@
       "WebFetch(domain:openai-realtime-blocks.vercel.app)",
       "Bash(npm install:*)",
       "mcp__playwright__browser_navigate",
-      "mcp__playwright__browser_install"
+      "mcp__playwright__browser_install",
+      "Bash(npm run lint -- --quiet)"
     ],
     "deny": [],
     "ask": []

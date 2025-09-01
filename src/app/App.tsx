@@ -124,8 +124,14 @@ function App() {
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
   const [userText, setUserText] = useState<string>("");
-  const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
-  const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
+  const [isPTTActive, setIsPTTActive] = useState<boolean>(
+    () => {
+      if (typeof window === 'undefined') return false;
+      const stored = localStorage.getItem('pushToTalkActive');
+      return stored ? stored === 'true' : false;
+    },
+  );
+  const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
   
   // VAD Settings
   const [vadType, setVadType] = useState<'server_vad' | 'semantic_vad' | 'disabled'>('semantic_vad');
@@ -196,6 +202,12 @@ function App() {
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
     useAudioDownload();
+
+  // Simple volume simulation for SiriStylePTT component - will show active animation during recording
+  const currentVolume = isRecordingActive ? 0.3 : 0;
+  
+  // Conversation state for dynamic PTT icon behavior (simplified tracking)
+  const [conversationState, setConversationState] = useState<string>('idle');
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
@@ -339,7 +351,7 @@ function App() {
   const disconnectFromRealtime = () => {
     disconnect();
     setSessionStatus("DISCONNECTED");
-    setIsPTTUserSpeaking(false);
+    setIsRecordingActive(false);
   };
 
   const sendSimulatedUserMessage = (text: string) => {
@@ -405,23 +417,22 @@ function App() {
     setUserText("");
   };
 
-  const handleTalkButtonDown = () => {
+  const handleToggleRecording = () => {
     if (sessionStatus !== 'CONNECTED') return;
-    interrupt();
 
-    setIsPTTUserSpeaking(true);
-    sendClientEvent({ type: 'input_audio_buffer.clear' }, 'clear PTT buffer');
-
-    // No placeholder; we'll rely on server transcript once ready.
-  };
-
-  const handleTalkButtonUp = () => {
-    if (sessionStatus !== 'CONNECTED' || !isPTTUserSpeaking)
-      return;
-
-    setIsPTTUserSpeaking(false);
-    sendClientEvent({ type: 'input_audio_buffer.commit' }, 'commit PTT');
-    sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
+    if (!isRecordingActive) {
+      // Start recording
+      interrupt();
+      setIsRecordingActive(true);
+      setConversationState('user_speaking'); // Update conversation state
+      sendClientEvent({ type: 'input_audio_buffer.clear' }, 'start PTT recording');
+    } else {
+      // Stop recording and send
+      setIsRecordingActive(false);
+      setConversationState('idle'); // Reset conversation state
+      sendClientEvent({ type: 'input_audio_buffer.commit' }, 'commit PTT recording');
+      sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
+    }
   };
 
   const onToggleConnection = useCallback(() => {
@@ -467,10 +478,6 @@ function App() {
   };
 
   useEffect(() => {
-    const storedPushToTalkUI = localStorage.getItem("pushToTalkUI");
-    if (storedPushToTalkUI) {
-      setIsPTTActive(storedPushToTalkUI === "true");
-    }
     const storedLogsExpanded = localStorage.getItem("logsExpanded");
     if (storedLogsExpanded) {
       setIsEventsPaneExpanded(storedLogsExpanded === "true");
@@ -484,7 +491,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pushToTalkUI", isPTTActive.toString());
+    localStorage.setItem("pushToTalkActive", isPTTActive.toString());
   }, [isPTTActive]);
 
   useEffect(() => {
@@ -580,6 +587,9 @@ function App() {
             setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
             isEventsPaneExpanded={isEventsPaneExpanded}
             setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+            isPTTActive={isPTTActive}
+            setIsPTTActive={setIsPTTActive}
+            sessionStatus={sessionStatus}
           />
           <AgentSettingsMenu
             agentSetKey={agentSetKey}
@@ -628,6 +638,13 @@ function App() {
             canSend={
               sessionStatus === "CONNECTED"
             }
+            sessionStatus={sessionStatus}
+            isPTTActive={isPTTActive}
+            isRecordingActive={isRecordingActive}
+            currentVolume={currentVolume}
+            isDarkMode={isDarkMode}
+            handleToggleRecording={handleToggleRecording}
+            conversationState={conversationState}
           />
 
           <Events isExpanded={isEventsPaneExpanded} />
@@ -638,13 +655,6 @@ function App() {
         <BottomToolbar
         sessionStatus={sessionStatus}
         onToggleConnection={onToggleConnection}
-        isPTTActive={isPTTActive}
-        setIsPTTActive={setIsPTTActive}
-        isPTTUserSpeaking={isPTTUserSpeaking}
-        handleTalkButtonDown={handleTalkButtonDown}
-        handleTalkButtonUp={handleTalkButtonUp}
-        codec={urlCodec}
-        onCodecChange={handleCodecChange}
         />
       </div>
     </div>

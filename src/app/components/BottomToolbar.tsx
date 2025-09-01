@@ -4,33 +4,15 @@ import { SessionStatus } from "@/app/types";
 interface BottomToolbarProps {
   sessionStatus: SessionStatus;
   onToggleConnection: () => void;
-  isPTTActive: boolean;
-  setIsPTTActive: (val: boolean) => void;
-  isPTTUserSpeaking: boolean;
-  handleTalkButtonDown: () => void;
-  handleTalkButtonUp: () => void;
-  codec: string;
-  onCodecChange: (newCodec: string) => void;
 }
 
 function BottomToolbar({
   sessionStatus,
   onToggleConnection,
-  isPTTActive,
-  setIsPTTActive,
-  isPTTUserSpeaking,
-  handleTalkButtonDown,
-  handleTalkButtonUp,
-  codec,
-  onCodecChange,
 }: BottomToolbarProps) {
   const isConnected = sessionStatus === "CONNECTED";
   const isConnecting = sessionStatus === "CONNECTING";
 
-  const handleCodecChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newCodec = e.target.value;
-    onCodecChange(newCodec);
-  };
 
   function getConnectionButtonLabel() {
     if (isConnected) return "Disconnect";
@@ -60,36 +42,6 @@ function BottomToolbar({
         {getConnectionButtonLabel()}
       </button>
 
-      <div className="flex flex-row items-center gap-2 pointer-events-auto">
-        <input
-          id="push-to-talk"
-          type="checkbox"
-          checked={isPTTActive}
-          onChange={(e) => setIsPTTActive(e.target.checked)}
-          disabled={!isConnected}
-          className="w-4 h-4"
-        />
-        <label
-          htmlFor="push-to-talk"
-          className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200"
-        >
-          Push to talk
-        </label>
-        <button
-          onMouseDown={handleTalkButtonDown}
-          onMouseUp={handleTalkButtonUp}
-          onTouchStart={handleTalkButtonDown}
-          onTouchEnd={handleTalkButtonUp}
-          disabled={!isPTTActive}
-          className={
-            (isPTTUserSpeaking ? "bg-gray-300 dark:bg-gray-600" : "bg-gray-200 dark:bg-gray-700") +
-            " py-1 px-4 cursor-pointer rounded-md text-gray-800 dark:text-gray-200" +
-            (!isPTTActive ? " bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500" : "")
-          }
-        >
-          Talk
-        </button>
-      </div>
 
 
       {/* Codec dropdown hidden per user request */}
