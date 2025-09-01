@@ -12,9 +12,9 @@ interface Audio3DOrbProps {
 
 const Audio3DOrb: React.FC<Audio3DOrbProps> = ({ 
   intensity = 3,
-  className: _ = "" 
+  className = "" 
 }) => {
-  const { currentVolume, isSessionActive, conversationState, handleStartStopClick } = useWebRTCAudioSession('alloy');
+  const { currentVolume, sessionStatus, conversationState, handleStartStopClick } = useWebRTCAudioSession('alloy');
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -63,21 +63,21 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isSessionActive && ballRef.current) {
+    if ((sessionStatus === 'CONNECTED' || sessionStatus === 'CONNECTING') && ballRef.current) {
       updateBallMorph(ballRef.current, currentVolume, conversationState);
     } else if (
-      !isSessionActive &&
+      sessionStatus === 'DISCONNECTED' &&
       ballRef.current &&
       originalPositionsRef.current
     ) {
       resetBallMorph(ballRef.current, originalPositionsRef.current);
     }
-  }, [currentVolume, isSessionActive, conversationState]);
+  }, [currentVolume, sessionStatus, conversationState]);
 
-  // Debug logging for conversation state changes
+  // Debug logging for session and conversation state changes
   useEffect(() => {
-    console.log('[Audio3DOrb] Conversation state changed to:', conversationState);
-  }, [conversationState]);
+    console.log('[Audio3DOrb] Session status:', sessionStatus, 'Conversation state:', conversationState);
+  }, [sessionStatus, conversationState]);
 
   const getThemeColors = () => {
     const computedStyle = getComputedStyle(document.documentElement);
@@ -215,13 +215,15 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     const geometry = mesh.geometry as THREE.BufferGeometry;
     const positionAttribute = geometry.getAttribute("position");
     
-    // Handle conversation state-based behavior
+    // Handle session status and conversation state-based behavior
+    const isConnecting = sessionStatus === 'CONNECTING';
     const isListening = state === 'user_speaking';
-    const isAgentSpeaking = state === 'agent_speaking';
-    const isIdle = state === 'idle';
     
-    // Set target shrink factor
-    if (isListening) {
+    // Set target shrink factor and spin speed based on state
+    if (isConnecting) {
+      targetShrinkFactor.current = 1.0; // Normal size like idle
+      targetSpinSpeed.current = 2.0; // Racing speed - absolutely blazing fast
+    } else if (isListening) {
       targetShrinkFactor.current = 0.7; // Shrink to 70% when listening
       targetSpinSpeed.current = 0.02; // Spin faster when listening
     } else {
@@ -237,12 +239,12 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     
     // Debug logging every 100 frames
     if (Math.random() < 0.01) {
-      console.log('[Audio3DOrb] State:', state, 'shrinkFactor:', shrinkFactorRef.current.toFixed(2), 'spinSpeed:', spinSpeedRef.current.toFixed(3));
+      console.log('[Audio3DOrb] SessionStatus:', sessionStatus, 'ConversationState:', state, 'shrinkFactor:', shrinkFactorRef.current.toFixed(2), 'spinSpeed:', spinSpeedRef.current.toFixed(3));
     }
     
-    // Volume processing (only used when not listening)
+    // Volume processing (only used when not listening and not connecting)
     let processedVolume = 0;
-    if (!isListening) {
+    if (!isListening && !isConnecting) {
       // Smooth volume interpolation for natural movement
       targetVolume.current = volume;
       const volumeLerpSpeed = 0.08; // Slow interpolation for smooth transitions
@@ -271,8 +273,9 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
       // Calculate target distance with enhanced growth or shrinking
       let targetDistance;
       
-      if (isListening) {
-        // Listening mode: Just shrink to 60% - no morphing, just spinning
+      if (isConnecting || isListening) {
+        // Connecting mode: Normal size, fastest spin, no morphing (like listening but faster spin)
+        // Listening mode: Shrunk size, fast spin, no morphing
         targetDistance = offset * shrinkFactorRef.current;
       } else {
         // Speaking/idle mode: Enhanced growth with audio response

@@ -11,6 +11,7 @@ import Events from "./components/Events";
 import BottomToolbar from "./components/BottomToolbar";
 import Audio3DOrb from "./components/Audio3DOrb";
 import AgentSettingsMenu from "./components/AgentSettingsMenu";
+import UISettingsMenu from "./components/UISettingsMenu";
 import ThemeToggle from "./components/ThemeToggle";
 import Galaxy from "./components/Galaxy";
 
@@ -551,12 +552,12 @@ function App() {
     <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
       {/* Galaxy Background */}
       <div className="fixed inset-0 z-0" style={{ pointerEvents: 'auto' }}>
-        <Galaxy {...currentGalaxySettings} />
+        <Galaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
       </div>
       
-      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10">
+      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
         <div
-          className="flex items-center cursor-pointer"
+          className="flex items-center cursor-pointer pointer-events-auto"
           onClick={() => window.location.reload()}
         >
           <div>
@@ -572,8 +573,14 @@ function App() {
             Realtime API <span className="text-gray-500 dark:text-gray-400">Agents</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pointer-events-auto">
           <ThemeToggle />
+          <UISettingsMenu
+            isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+            setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+            isEventsPaneExpanded={isEventsPaneExpanded}
+            setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+          />
           <AgentSettingsMenu
             agentSetKey={agentSetKey}
             allAgentSets={allAgentSets}
@@ -598,9 +605,9 @@ function App() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10">
+      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
         {/* Top half: 3D Audio Visualization */}
-        <div className="flex-1 min-h-0 max-h-full overflow-hidden">
+        <div className="flex-1 min-h-0 max-h-full overflow-hidden pointer-events-auto">
           <RealtimeProvider 
             value={realtimeContextValue}
           >
@@ -612,7 +619,7 @@ function App() {
         </div>
 
         {/* Bottom half: Transcript and Events */}
-        <div className="flex flex-1 gap-2 overflow-hidden">
+        <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
           <Transcript
             userText={userText}
             setUserText={setUserText}
@@ -636,10 +643,6 @@ function App() {
         isPTTUserSpeaking={isPTTUserSpeaking}
         handleTalkButtonDown={handleTalkButtonDown}
         handleTalkButtonUp={handleTalkButtonUp}
-        isEventsPaneExpanded={isEventsPaneExpanded}
-        setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-        isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-        setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
         codec={urlCodec}
         onCodecChange={handleCodecChange}
         />

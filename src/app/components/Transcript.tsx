@@ -71,16 +71,13 @@ function Transcript({
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 pointer-events-none">
       <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex items-center justify-between px-6 py-3 sticky top-0 z-10 text-base">
-          <span className="font-semibold text-gray-900 dark:text-gray-100">Transcript</span>
-        </div>
 
         {/* Transcript Content */}
         <div
           ref={transcriptRef}
-          className="overflow-auto p-4 flex flex-col gap-y-4 h-full"
+          className="overflow-auto p-4 flex flex-col gap-y-4 h-full pointer-events-auto"
         >
           {[...transcriptItems]
             .sort((a, b) => a.createdAtMs - b.createdAtMs)
@@ -194,7 +191,7 @@ function Transcript({
         </div>
       </div>
 
-      <div className="p-4 flex items-center gap-x-2 flex-shrink-0">
+      <div className="p-4 flex items-center gap-x-2 flex-shrink-0 pointer-events-auto">
         <input
           ref={inputRef}
           type="text"

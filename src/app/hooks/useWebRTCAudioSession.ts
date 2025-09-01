@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRealtimeContext } from '../contexts/RealtimeContext';
+import { SessionStatus } from '../types';
 
 export type { ConversationState };
 
@@ -8,6 +9,7 @@ type ConversationState = 'idle' | 'user_speaking' | 'agent_speaking';
 interface UseWebRTCAudioSessionReturn {
   currentVolume: number;
   isSessionActive: boolean;
+  sessionStatus: SessionStatus;
   conversationState: ConversationState;
   handleStartStopClick: () => void;
 }
@@ -178,6 +180,7 @@ export function useWebRTCAudioSession(_voice: string): UseWebRTCAudioSessionRetu
   return {
     currentVolume,
     isSessionActive,
+    sessionStatus,
     conversationState,
     handleStartStopClick,
   };

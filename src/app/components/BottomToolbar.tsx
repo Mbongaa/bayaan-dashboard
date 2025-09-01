@@ -9,10 +9,6 @@ interface BottomToolbarProps {
   isPTTUserSpeaking: boolean;
   handleTalkButtonDown: () => void;
   handleTalkButtonUp: () => void;
-  isEventsPaneExpanded: boolean;
-  setIsEventsPaneExpanded: (val: boolean) => void;
-  isAudioPlaybackEnabled: boolean;
-  setIsAudioPlaybackEnabled: (val: boolean) => void;
   codec: string;
   onCodecChange: (newCodec: string) => void;
 }
@@ -25,10 +21,6 @@ function BottomToolbar({
   isPTTUserSpeaking,
   handleTalkButtonDown,
   handleTalkButtonUp,
-  isEventsPaneExpanded,
-  setIsEventsPaneExpanded,
-  isAudioPlaybackEnabled,
-  setIsAudioPlaybackEnabled,
   codec,
   onCodecChange,
 }: BottomToolbarProps) {
@@ -59,16 +51,16 @@ function BottomToolbar({
   }
 
   return (
-    <div className="p-4 flex flex-row items-center justify-center gap-x-8 bg-transparent border-t border-transparent">
+    <div className="p-4 flex flex-row items-center justify-center gap-x-8 bg-transparent border-t border-transparent pointer-events-none">
       <button
         onClick={onToggleConnection}
-        className={getConnectionButtonClasses()}
+        className={`${getConnectionButtonClasses()} pointer-events-auto`}
         disabled={isConnecting}
       >
         {getConnectionButtonLabel()}
       </button>
 
-      <div className="flex flex-row items-center gap-2">
+      <div className="flex flex-row items-center gap-2 pointer-events-auto">
         <input
           id="push-to-talk"
           type="checkbox"
@@ -99,35 +91,6 @@ function BottomToolbar({
         </button>
       </div>
 
-      <div className="flex flex-row items-center gap-1">
-        <input
-          id="audio-playback"
-          type="checkbox"
-          checked={isAudioPlaybackEnabled}
-          onChange={(e) => setIsAudioPlaybackEnabled(e.target.checked)}
-          disabled={!isConnected}
-          className="w-4 h-4"
-        />
-        <label
-          htmlFor="audio-playback"
-          className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200"
-        >
-          Audio playback
-        </label>
-      </div>
-
-      <div className="flex flex-row items-center gap-2">
-        <input
-          id="logs"
-          type="checkbox"
-          checked={isEventsPaneExpanded}
-          onChange={(e) => setIsEventsPaneExpanded(e.target.checked)}
-          className="w-4 h-4"
-        />
-        <label htmlFor="logs" className="flex items-center cursor-pointer text-gray-800 dark:text-gray-200">
-          Logs
-        </label>
-      </div>
 
       {/* Codec dropdown hidden per user request */}
       {/* 

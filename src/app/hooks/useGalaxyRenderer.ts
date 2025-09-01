@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
+import { SessionStatus } from '../types';
 
 interface GalaxyConfig {
   focal: [number, number];
@@ -18,6 +19,7 @@ interface GalaxyConfig {
   rotationSpeed: number;
   autoCenterRepulsion: number;
   transparent: boolean;
+  sessionStatus?: SessionStatus;
 }
 
 interface WebGLResources {
@@ -207,6 +209,10 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
   const smoothMousePos = useRef({ x: 0.5, y: 0.5 });
   const targetMouseActive = useRef(0.0);
   const smoothMouseActive = useRef(0.0);
+  
+  // Smooth speed transition for connecting state
+  const targetSpeedRef = useRef(config.speed);
+  const currentSpeedRef = useRef(config.speed);
 
   // Initialize WebGL context only when container or transparency changes
   useEffect(() => {
@@ -289,6 +295,15 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
     };
   }, [container, config.transparent]); // Only recreate on container or transparency change
 
+  // Handle sessionStatus changes for smooth speed transitions
+  useEffect(() => {
+    if (config.sessionStatus === 'CONNECTING') {
+      targetSpeedRef.current = 1.0; // Boost to 1.0 during connecting
+    } else {
+      targetSpeedRef.current = config.speed; // Return to base speed
+    }
+  }, [config.sessionStatus, config.speed]);
+
   // Update uniforms when config changes (without recreating WebGL context)
   useEffect(() => {
     const { program } = resourcesRef.current;
@@ -299,7 +314,7 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
     program.uniforms.uStarSpeed.value = config.starSpeed;
     program.uniforms.uDensity.value = config.density;
     program.uniforms.uHueShift.value = config.hueShift;
-    program.uniforms.uSpeed.value = config.speed;
+    // Note: uSpeed is updated in animation loop for smooth transitions
     program.uniforms.uGlowIntensity.value = config.glowIntensity;
     program.uniforms.uSaturation.value = config.saturation;
     program.uniforms.uMouseRepulsion.value = config.mouseRepulsion;
@@ -314,7 +329,7 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
     config.starSpeed,
     config.density,
     config.hueShift,
-    config.speed,
+    // Removed config.speed from dependencies to avoid reinitialization
     config.glowIntensity,
     config.saturation,
     config.mouseRepulsion,
@@ -369,9 +384,18 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
 
       resourcesRef.current.animateId = requestAnimationFrame(update);
 
+      // Smooth speed interpolation for connecting state
+      const speedLerpFactor = 0.08;
+      const speedDiff = targetSpeedRef.current - currentSpeedRef.current;
+      if (Math.abs(speedDiff) > 0.001) {
+        currentSpeedRef.current += speedDiff * speedLerpFactor;
+      }
+
       if (!config.disableAnimation) {
         program.uniforms.uTime.value = t * 0.001;
         program.uniforms.uStarSpeed.value = (t * 0.001 * config.starSpeed) / 10.0;
+        // Use smoothly interpolated speed instead of config.speed
+        program.uniforms.uSpeed.value = currentSpeedRef.current;
       }
 
       // Smooth mouse interpolation
@@ -419,6 +443,7 @@ export function useGalaxyRenderer(container: HTMLElement | null, config: GalaxyC
 
   return {
     isInitialized: !!resourcesRef.current.renderer,
+    program: resourcesRef.current.program,
     cleanup: cleanupWebGL
   };
 }

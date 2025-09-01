@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import React, { useState } from 'react';
 import { useGalaxyRenderer } from '../hooks/useGalaxyRenderer';
+import { SessionStatus } from '../types';
 import './Galaxy.css';
 
 interface GalaxyProps {
@@ -19,10 +20,11 @@ interface GalaxyProps {
   rotationSpeed?: number;
   autoCenterRepulsion?: number;
   transparent?: boolean;
+  sessionStatus?: SessionStatus;
   [key: string]: any;
 }
 
-export default function Galaxy({
+const Galaxy = React.memo(function Galaxy({
   focal = [0.5, 0.5],
   rotation = [1.0, 0.0],
   starSpeed = 0.5,
@@ -39,12 +41,13 @@ export default function Galaxy({
   rotationSpeed = 0.1,
   autoCenterRepulsion = 0,
   transparent = true,
+  sessionStatus = 'DISCONNECTED',
   ...rest
 }: GalaxyProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
-  // Use the custom WebGL hook for stable rendering
-  useGalaxyRenderer(containerRef.current, {
+  // Use the custom WebGL hook with sessionStatus for smooth transitions
+  useGalaxyRenderer(container, {
     focal,
     rotation,
     starSpeed,
@@ -60,8 +63,11 @@ export default function Galaxy({
     twinkleIntensity,
     rotationSpeed,
     autoCenterRepulsion,
-    transparent
+    transparent,
+    sessionStatus
   });
 
-  return <div ref={containerRef} className="galaxy-container" {...rest} />;
-}
+  return <div ref={setContainer} className="galaxy-container" {...rest} />;
+});
+
+export default Galaxy;
