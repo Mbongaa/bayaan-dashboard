@@ -397,7 +397,7 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   };
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div className={className} style={{ height: "100%", width: "100%" }}>
       <div
         ref={containerRef}
         className="w-full h-full flex items-center justify-center"

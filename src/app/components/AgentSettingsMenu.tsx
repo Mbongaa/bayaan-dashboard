@@ -45,6 +45,8 @@ interface AgentSettingsMenuProps {
   setIsPTTActive: (active: boolean) => void;
   isAutoConnectEnabled: boolean;
   setIsAutoConnectEnabled: (enabled: boolean) => void;
+  isDockVisible: boolean;
+  setIsDockVisible: (visible: boolean) => void;
   
   // Session Status
   sessionStatus: string;
@@ -77,6 +79,8 @@ export default function AgentSettingsMenu({
   setIsPTTActive,
   isAutoConnectEnabled,
   setIsAutoConnectEnabled,
+  isDockVisible,
+  setIsDockVisible,
   sessionStatus,
 }: AgentSettingsMenuProps) {
   return (
@@ -306,6 +310,15 @@ export default function AgentSettingsMenu({
           >
             <RiWifiLine className="h-4 w-4" />
             Automatic Connections
+          </DropdownMenuCheckboxItem>
+
+          <DropdownMenuCheckboxItem
+            checked={isDockVisible}
+            onCheckedChange={setIsDockVisible}
+            className="flex items-center gap-2"
+          >
+            <RiSettings3Line className="h-4 w-4" />
+            Show Agent Dock
           </DropdownMenuCheckboxItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

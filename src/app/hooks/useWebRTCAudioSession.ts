@@ -14,7 +14,9 @@ interface UseWebRTCAudioSessionReturn {
   handleStartStopClick: () => void;
 }
 
-export function useWebRTCAudioSession(_voice: string): UseWebRTCAudioSessionReturn {
+export function useWebRTCAudioSession(voice: string): UseWebRTCAudioSessionReturn {
+  // Voice parameter is reserved for future voice selection functionality
+  void voice;
   const [currentVolume, setCurrentVolume] = useState<number>(0);
   const [conversationState, setConversationState] = useState<ConversationState>('idle');
   

@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 import MiniOrb from "./components/MiniOrb";
+import DockExample from "./components/DockExample";
 
 // UI components
 import Transcript from "./components/Transcript";
@@ -157,6 +158,8 @@ function App() {
     },
   );
 
+  const [isDockVisible, setIsDockVisible] = useState<boolean>(true);
+
   // Theme detection for dynamic Galaxy colors
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -210,11 +213,6 @@ function App() {
   const { startRecording, stopRecording, downloadRecording } =
     useAudioDownload();
 
-  // Simple volume simulation for SiriStylePTT component - will show active animation during recording
-  const currentVolume = isRecordingActive ? 0.3 : 0;
-  
-  // Conversation state for dynamic PTT icon behavior (simplified tracking)
-  const [conversationState, setConversationState] = useState<string>('idle');
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
@@ -435,12 +433,10 @@ function App() {
       // Start recording
       interrupt();
       setIsRecordingActive(true);
-      setConversationState('user_speaking'); // Update conversation state
       sendClientEvent({ type: 'input_audio_buffer.clear' }, 'start PTT recording');
     } else {
       // Stop recording and send
       setIsRecordingActive(false);
-      setConversationState('idle'); // Reset conversation state
       sendClientEvent({ type: 'input_audio_buffer.commit' }, 'commit PTT recording');
       sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
     }
@@ -468,6 +464,35 @@ function App() {
     const url = new URL(window.location.toString());
     url.searchParams.set("agentConfig", newAgentConfig);
     window.location.replace(url.toString());
+  };
+
+  const handleDockScenarioSelect = (scenarioKey: string) => {
+    // Update URL without page reload using history API
+    const url = new URL(window.location.toString());
+    url.searchParams.set("agentConfig", scenarioKey);
+    window.history.pushState({}, '', url.toString());
+    
+    // Directly update the agent configuration state
+    const agents = allAgentSets[scenarioKey];
+    if (agents) {
+      const agentKeyToUse = agents[0]?.name || "";
+      setSelectedAgentName(agentKeyToUse);
+      setSelectedAgentConfigSet(agents);
+      
+      // Disconnect current session to switch to new scenario, then auto-connect
+      if (sessionStatus === "CONNECTED") {
+        disconnectFromRealtime();
+        // Auto-connect to new scenario after brief delay
+        setTimeout(() => {
+          connectToRealtime();
+        }, 500);
+      } else {
+        // If not connected, connect immediately to new scenario
+        setTimeout(() => {
+          connectToRealtime();
+        }, 300);
+      }
+    }
   };
 
   const handleSelectedAgentChange = (
@@ -499,6 +524,10 @@ function App() {
     if (storedAudioPlaybackEnabled) {
       setIsAudioPlaybackEnabled(storedAudioPlaybackEnabled === "true");
     }
+    const storedDockVisible = localStorage.getItem("dockVisible");
+    if (storedDockVisible) {
+      setIsDockVisible(storedDockVisible === "true");
+    }
   }, []);
 
   useEffect(() => {
@@ -519,6 +548,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("autoConnectEnabled", isAutoConnectEnabled.toString());
   }, [isAutoConnectEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("dockVisible", isDockVisible.toString());
+  }, [isDockVisible]);
 
   useEffect(() => {
     if (audioElementRef.current) {
@@ -589,6 +622,7 @@ function App() {
             bayaan<span className="text-gray-500 dark:text-gray-400">.ai</span>
           </div>
         </div>
+        
         <div className="flex items-center gap-2 pointer-events-auto">
           <AgentSettingsMenu
             agentSetKey={agentSetKey}
@@ -617,11 +651,28 @@ function App() {
             setIsPTTActive={setIsPTTActive}
             isAutoConnectEnabled={isAutoConnectEnabled}
             setIsAutoConnectEnabled={setIsAutoConnectEnabled}
+            isDockVisible={isDockVisible}
+            setIsDockVisible={setIsDockVisible}
             sessionStatus={sessionStatus}
           />
           <ThemeToggle />
         </div>
       </div>
+
+      {/* Vertical Multi-Agent Dock - Below Header */}
+      {isDockVisible && (
+        <div className="absolute top-20 right-4 z-20 pointer-events-auto">
+          <RealtimeProvider 
+            value={realtimeContextValue}
+          >
+            <DockExample 
+              onScenarioSelect={handleDockScenarioSelect}
+              selectedScenario={agentSetKey}
+              isConnected={sessionStatus === "CONNECTED"}
+            />
+          </RealtimeProvider>
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
         {/* Top half: 3D Audio Visualization */}
@@ -646,7 +697,6 @@ function App() {
             userText={userText}
             setUserText={setUserText}
             onSendMessage={handleSendTextMessage}
-            downloadRecording={downloadRecording}
             canSend={
               sessionStatus === "CONNECTED"
             }

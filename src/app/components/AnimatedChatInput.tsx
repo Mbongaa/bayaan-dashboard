@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { MessageCircle, X } from "lucide-react";
 import Image from "next/image";
 
@@ -56,13 +56,13 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
     setIsExpanded(!isExpanded);
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: { scale: 0, opacity: 0 },
     animate: { 
       scale: 1, 
       opacity: 1,
       transition: { 
-        type: "spring", 
+        type: "spring" as const, 
         stiffness: 200, 
         damping: 15 
       }
@@ -79,7 +79,7 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
     tap: { scale: 0.95 }
   };
 
-  const expandedVariants = {
+  const expandedVariants: Variants = {
     initial: { 
       opacity: 0, 
       y: 20,
@@ -91,7 +91,7 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
       scale: 1,
       transition: { 
         duration: 0.4,
-        ease: "easeOut",
+        ease: "easeOut" as const,
         staggerChildren: 0.1
       }
     },
@@ -103,7 +103,7 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     initial: { opacity: 0, y: 10 },
     animate: { 
       opacity: 1, 

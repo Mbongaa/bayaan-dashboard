@@ -27,10 +27,10 @@ const AudioVisualizationSection: React.FC<AudioVisualizationSectionProps> = ({
   isDarkMode,
 }) => {
   // Get real conversation state from the same hook as the orb
-  const { currentVolume, sessionStatus, conversationState } = useWebRTCAudioSession('alloy');
+  const { sessionStatus, conversationState } = useWebRTCAudioSession('alloy');
   
   // Get user's microphone volume for actual speech visualization
-  const { microphoneVolume, isMicrophoneActive } = useMicrophoneAnalysis(sessionStatus);
+  const { microphoneVolume } = useMicrophoneAnalysis(sessionStatus);
   
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
