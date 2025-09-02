@@ -121,8 +121,13 @@ function App() {
   const [sessionStatus, setSessionStatus] =
     useState<SessionStatus>("DISCONNECTED");
 
-  const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
-    useState<boolean>(false);
+  const [isEventsPaneExpanded, setIsEventsPaneExpanded] = useState<boolean>(
+    () => {
+      if (typeof window === 'undefined') return false;
+      const stored = localStorage.getItem('logsExpanded');
+      return stored ? stored === 'true' : false;
+    },
+  );
   const [userText, setUserText] = useState<string>("");
   const [isPTTActive, setIsPTTActive] = useState<boolean>(
     () => {
@@ -513,10 +518,6 @@ function App() {
   };
 
   useEffect(() => {
-    const storedLogsExpanded = localStorage.getItem("logsExpanded");
-    if (storedLogsExpanded) {
-      setIsEventsPaneExpanded(storedLogsExpanded === "true");
-    }
     const storedAudioPlaybackEnabled = localStorage.getItem(
       "audioPlaybackEnabled"
     );
