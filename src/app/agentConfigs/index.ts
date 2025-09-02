@@ -17,4 +17,4 @@ export const allAgentSets: Record<string, RealtimeAgent[]> = {
   translationDirect: translationDirectScenario,
 };
 
-export const defaultAgentSetKey = 'chatSupervisor';
+export const defaultAgentSetKey = 'translationDirect';
