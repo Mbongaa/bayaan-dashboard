@@ -20,7 +20,6 @@ import {
     useRef,
     useState,
 } from "react";
-import { useWebRTCAudioSession } from "@/app/hooks/useWebRTCAudioSession";
 import { cx } from "@/app/lib/utils";
 
 interface DockContextType {
@@ -47,8 +46,6 @@ const DockContext = createContext<DockContextType>({
     setActiveCardId: () => {},
 });
 
-// Initial width for the dock
-const INITIAL_WIDTH = 36;
 
 // Custom hook to use Dock context
 const useDock = () => useContext(DockContext);

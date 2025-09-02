@@ -210,8 +210,7 @@ function App() {
   );
 
   // Initialize the recording hook.
-  const { startRecording, stopRecording, downloadRecording } =
-    useAudioDownload();
+  const { startRecording, stopRecording } = useAudioDownload();
 
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {

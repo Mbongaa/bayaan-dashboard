@@ -14,7 +14,7 @@ export function useMicrophoneAnalysis(sessionStatus: SessionStatus): UseMicropho
   const micStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const animationFrameRef = useRef<number>(0);
   const volumeHistoryRef = useRef<number[]>([]);
   const smoothedVolumeRef = useRef<number>(0);
@@ -39,7 +39,7 @@ export function useMicrophoneAnalysis(sessionStatus: SessionStatus): UseMicropho
       analyserRef.current.smoothingTimeConstant = 0.8;
       
       const bufferLength = analyserRef.current.frequencyBinCount;
-      dataArrayRef.current = new Uint8Array(bufferLength);
+      dataArrayRef.current = new Uint8Array(bufferLength) as Uint8Array<ArrayBuffer>;
       
       // Connect microphone stream to analyser
       const source = audioContextRef.current.createMediaStreamSource(micStreamRef.current);

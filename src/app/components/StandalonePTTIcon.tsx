@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Mic, Square } from "lucide-react";
 import ReactSiriwave, { IReactSiriwaveProps } from 'react-siriwave';
 import { SessionStatus } from "@/app/types";
@@ -64,13 +64,13 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     }));
   }, [volumeLevel, isShowingActiveState, isDarkMode, isManualMode]);
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     initial: { scale: 0, opacity: 0 },
     animate: { 
       scale: 1, 
       opacity: !isConnected ? 0.6 : 1, // Dimmed when disconnected, full opacity when connected
       transition: { 
-        type: "spring", 
+        type: "spring" as const, 
         stiffness: 200, 
         damping: 15 
       }
@@ -87,7 +87,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     tap: { scale: 0.95 }
   };
 
-  const expandedVariants = {
+  const expandedVariants: Variants = {
     initial: { 
       opacity: 0, 
       width: 60,
@@ -99,7 +99,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
       scale: 1,
       transition: { 
         duration: 0.4,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     },
     exit: { 

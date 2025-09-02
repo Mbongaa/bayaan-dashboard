@@ -2,10 +2,6 @@
 
 import {
     BlocksIcon,
-    CircleIcon,
-    PentagonIcon,
-    SquareIcon,
-    TriangleIcon,
     BrainIcon,
     LanguagesIcon,
     MessageSquareIcon,
