@@ -218,6 +218,7 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     // Handle session status and conversation state-based behavior
     const isConnecting = sessionStatus === 'CONNECTING';
     const isListening = state === 'user_speaking';
+    const isAgentSpeaking = state === 'agent_speaking';
     
     // Set target shrink factor and spin speed based on state
     if (isConnecting) {
@@ -226,6 +227,9 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     } else if (isListening) {
       targetShrinkFactor.current = 0.7; // Shrink to 70% when listening
       targetSpinSpeed.current = 0.02; // Spin faster when listening
+    } else if (isAgentSpeaking) {
+      targetShrinkFactor.current = 1.0; // Normal size during agent speech
+      targetSpinSpeed.current = 0.005; // Normal spin speed during agent speech
     } else {
       targetShrinkFactor.current = 1.0; // Normal size
       targetSpinSpeed.current = 0.005; // Normal spin speed

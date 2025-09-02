@@ -21,7 +21,8 @@
       "Bash(npm install:*)",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_install",
-      "Bash(npm run lint -- --quiet)"
+      "Bash(npm run lint -- --quiet)",
+      "WebFetch(domain:reactbits.dev)"
     ],
     "deny": [],
     "ask": []

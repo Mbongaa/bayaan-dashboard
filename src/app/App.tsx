@@ -3,15 +3,14 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import Image from "next/image";
+import MiniOrb from "./components/MiniOrb";
 
 // UI components
 import Transcript from "./components/Transcript";
 import Events from "./components/Events";
 import BottomToolbar from "./components/BottomToolbar";
-import Audio3DOrb from "./components/Audio3DOrb";
+import AudioVisualizationSection from "./components/AudioVisualizationSection";
 import AgentSettingsMenu from "./components/AgentSettingsMenu";
-import UISettingsMenu from "./components/UISettingsMenu";
 import ThemeToggle from "./components/ThemeToggle";
 import Galaxy from "./components/Galaxy";
 
@@ -150,6 +149,14 @@ function App() {
     },
   );
 
+  const [isAutoConnectEnabled, setIsAutoConnectEnabled] = useState<boolean>(
+    () => {
+      if (typeof window === 'undefined') return false;
+      const stored = localStorage.getItem('autoConnectEnabled');
+      return stored ? stored === 'true' : false;
+    },
+  );
+
   // Theme detection for dynamic Galaxy colors
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -164,7 +171,7 @@ function App() {
       mouseInteraction: true,
       mouseRepulsion: true,
       density: 8,              // 🎛️ Light mode star count
-      glowIntensity: 0.03,    // 🎛️ Light mode brightness/size
+      glowIntensity: 0.04,    // 🎛️ Light mode brightness/size
       hueShift: 140,           // 🎛️ Light mode color hue (140 = teal/cyan)
       saturation: 0,           // 🎛️ Light mode color intensity (0 = grayscale)
       rotationSpeed: 0.05,     // 🎛️ Light mode rotation speed
@@ -180,9 +187,9 @@ function App() {
       transparent: true,
       mouseInteraction: true,
       mouseRepulsion: true,
-      density: 1.4,              // 🎛️ Dark mode star count
-      glowIntensity: 0.06,    // 🎛️ Dark mode brightness/size
-      hueShift: 240,           // 🎛️ Dark mode color hue (200 = blue tones)
+      density: 3,              // 🎛️ Dark mode star count
+      glowIntensity: 0.13,    // 🎛️ Dark mode brightness/size
+      hueShift: 140,           // 🎛️ Dark mode color hue (200 = blue tones)
       saturation: 0,         // 🎛️ Dark mode color intensity (slight color)
       rotationSpeed: 0.05,     // 🎛️ Dark mode rotation speed
       twinkleIntensity: 0,     // 🎛️ Dark mode twinkling (0 = off)
@@ -251,12 +258,16 @@ function App() {
     setSelectedAgentConfigSet(agents);
   }, [searchParams]);
 
-  // Auto-connection disabled - user must manually connect
-  // useEffect(() => {
-  //   if (selectedAgentName && sessionStatus === "DISCONNECTED") {
-  //     connectToRealtime();
-  //   }
-  // }, [selectedAgentName]);
+  // Auto-connection controlled by user toggle with 2-second delay for smooth animations
+  useEffect(() => {
+    if (isAutoConnectEnabled && selectedAgentName && sessionStatus === "DISCONNECTED") {
+      const timer = setTimeout(() => {
+        connectToRealtime();
+      }, 2000); // 2-second delay for smooth animation loading
+      
+      return () => clearTimeout(timer);
+    }
+  }, [selectedAgentName, isAutoConnectEnabled]);
 
   useEffect(() => {
     if (
@@ -506,6 +517,10 @@ function App() {
   }, [isAudioPlaybackEnabled]);
 
   useEffect(() => {
+    localStorage.setItem("autoConnectEnabled", isAutoConnectEnabled.toString());
+  }, [isAutoConnectEnabled]);
+
+  useEffect(() => {
     if (audioElementRef.current) {
       if (isAudioPlaybackEnabled) {
         audioElementRef.current.muted = false;
@@ -562,35 +577,19 @@ function App() {
         <Galaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
       </div>
       
-      <div className="p-5 text-lg font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
+      <div className="p-5 text-2xl font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
         <div
           className="flex items-center cursor-pointer pointer-events-auto"
           onClick={() => window.location.reload()}
         >
-          <div>
-            <Image
-              src="/openai-logomark.svg"
-              alt="OpenAI Logo"
-              width={20}
-              height={20}
-              className="mr-2"
-            />
+          <div className="mr-2">
+            <MiniOrb />
           </div>
-          <div>
-            Realtime API <span className="text-gray-500 dark:text-gray-400">Agents</span>
+          <div style={{ letterSpacing: '-1.3px' }}>
+            bayaan<span className="text-gray-500 dark:text-gray-400">.ai</span>
           </div>
         </div>
         <div className="flex items-center gap-2 pointer-events-auto">
-          <ThemeToggle />
-          <UISettingsMenu
-            isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-            setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
-            isEventsPaneExpanded={isEventsPaneExpanded}
-            setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-            isPTTActive={isPTTActive}
-            setIsPTTActive={setIsPTTActive}
-            sessionStatus={sessionStatus}
-          />
           <AgentSettingsMenu
             agentSetKey={agentSetKey}
             allAgentSets={allAgentSets}
@@ -610,8 +609,17 @@ function App() {
             onVoiceChange={setSelectedVoice}
             codec={urlCodec}
             onCodecChange={handleCodecChange}
+            isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+            setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+            isEventsPaneExpanded={isEventsPaneExpanded}
+            setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+            isPTTActive={isPTTActive}
+            setIsPTTActive={setIsPTTActive}
+            isAutoConnectEnabled={isAutoConnectEnabled}
+            setIsAutoConnectEnabled={setIsAutoConnectEnabled}
             sessionStatus={sessionStatus}
           />
+          <ThemeToggle />
         </div>
       </div>
 
@@ -621,9 +629,13 @@ function App() {
           <RealtimeProvider 
             value={realtimeContextValue}
           >
-            <Audio3DOrb
+            <AudioVisualizationSection
               intensity={3.5}
               className="w-full h-full"
+              isPTTActive={isPTTActive}
+              isRecordingActive={isRecordingActive}
+              onToggleRecording={handleToggleRecording}
+              isDarkMode={isDarkMode}
             />
           </RealtimeProvider>
         </div>
@@ -638,13 +650,6 @@ function App() {
             canSend={
               sessionStatus === "CONNECTED"
             }
-            sessionStatus={sessionStatus}
-            isPTTActive={isPTTActive}
-            isRecordingActive={isRecordingActive}
-            currentVolume={currentVolume}
-            isDarkMode={isDarkMode}
-            handleToggleRecording={handleToggleRecording}
-            conversationState={conversationState}
           />
 
           <Events isExpanded={isEventsPaneExpanded} />

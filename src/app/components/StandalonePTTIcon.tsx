@@ -44,7 +44,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   const isConnected = sessionStatus === "CONNECTED";
   const isManualMode = isPTTActive; // True = manual PTT control, False = automatic listening feedback
   
-  // Dynamic behavior based on mode
+  // Dynamic behavior based on mode - now uses real conversation state from useWebRTCAudioSession
   const isShowingActiveState = isManualMode 
     ? isRecordingActive // Manual mode: show active when user is manually recording
     : conversationState === 'user_speaking'; // Automatic mode: show active when system detects user speaking
@@ -52,17 +52,15 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   const isClickable = isManualMode && isConnected; // Only clickable in manual mode when connected
 
   useEffect(() => {
-    // Dynamic color based on mode
-    const baseColor = isManualMode 
-      ? (isDarkMode ? '#ef4444' : '#dc2626') // Red for manual PTT mode
-      : (isDarkMode ? '#3b82f6' : '#1d4ed8'); // Blue for automatic listening mode
+    // Unified white color for all modes
+    const baseColor = '#ffffff'; // White for all modes
     
     setSiriWaveConfig(prevConfig => ({
       ...prevConfig,
       color: baseColor,
-      amplitude: isShowingActiveState ? Math.max(volumeLevel * 8, 0.5) : 0,
-      speed: isShowingActiveState ? Math.max(volumeLevel * 12, 0.3) : 0,
-      frequency: isShowingActiveState ? Math.max(volumeLevel * 6, 1.5) : 0,
+      amplitude: isShowingActiveState ? Math.max(volumeLevel * 40, 2.5) : 0,
+      speed: isShowingActiveState ? Math.max(volumeLevel * 8, 0.2) : 0,
+      frequency: isShowingActiveState ? Math.max(volumeLevel * 10, 2.0) : 0,
     }));
   }, [volumeLevel, isShowingActiveState, isDarkMode, isManualMode]);
 
@@ -126,10 +124,10 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             className={`
               group relative rounded-full p-4 shadow-lg transition-colors
               ${!isConnected 
-                ? `${isManualMode ? 'bg-red-500/10 border border-red-500/20' : 'bg-blue-500/10 border border-blue-500/20'} backdrop-blur-sm cursor-not-allowed` 
+                ? 'bg-transparent border border-black/20 dark:border-white/20 cursor-not-allowed' 
                 : isManualMode
-                  ? 'bg-red-500/20 backdrop-blur-sm border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50 cursor-pointer'
-                  : 'bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 cursor-default'
+                  ? 'bg-transparent border border-black/30 dark:border-white/30 hover:border-black/50 dark:hover:border-white/50 cursor-pointer'
+                  : 'bg-transparent border border-black/30 dark:border-white/30 cursor-default'
               }
             `}
             variants={iconVariants}
@@ -144,12 +142,8 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
               className={`
                 transition-colors
                 ${!isConnected 
-                  ? isManualMode 
-                    ? 'text-red-400/60 dark:text-red-400/60' 
-                    : 'text-blue-400/60 dark:text-blue-400/60'
-                  : isManualMode
-                    ? 'text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300'
-                    : 'text-blue-600 dark:text-blue-400'
+                  ? 'text-black/60 dark:text-white/60'
+                  : 'text-black dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200'
                 }
               `} 
             />
@@ -157,7 +151,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             {/* Subtle pulse animation when available */}
             {isConnected && (
               <motion.div
-                className={`absolute inset-0 rounded-full ${isManualMode ? 'bg-red-400/10 dark:bg-red-500/10' : 'bg-blue-400/10 dark:bg-blue-500/10'}`}
+                className="absolute inset-0 rounded-full bg-black/10 dark:bg-white/10"
                 animate={{
                   scale: [1, 1.2, 1],
                   opacity: [0.4, 0.1, 0.4],
@@ -174,11 +168,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
           // Recording State - Expanded with Visualizer
           <motion.div
             key="ptt-recording"
-            className={`flex items-center gap-2 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg ${
-              isManualMode 
-                ? 'bg-red-500/20 border border-red-500/40' 
-                : 'bg-blue-500/20 border border-blue-500/40'
-            }`}
+            className="flex items-center gap-2 rounded-full px-3 py-2 shadow-lg bg-transparent border border-black/40 dark:border-white/40"
             variants={expandedVariants}
             initial="initial"
             animate="animate"
@@ -188,10 +178,10 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             <motion.button
               onClick={isManualMode ? onToggleRecording : undefined}
               disabled={!isManualMode}
-              className={`shrink-0 text-white rounded-full p-2 transition-colors ${
+              className={`shrink-0 text-white dark:text-black rounded-full p-2 transition-colors ${
                 isManualMode 
-                  ? 'bg-red-500 hover:bg-red-600 cursor-pointer' 
-                  : 'bg-blue-500 cursor-default'
+                  ? 'bg-transparent border border-black/30 dark:border-white/30 cursor-pointer' 
+                  : 'bg-transparent border border-black/30 dark:border-white/30 cursor-default'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -206,7 +196,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             
             {/* Recording indicator */}
             <motion.div
-              className={`shrink-0 w-2 h-2 rounded-full ${isManualMode ? 'bg-red-500' : 'bg-blue-500'}`}
+              className="shrink-0 w-2 h-2 rounded-full bg-black dark:bg-white"
               animate={{
                 opacity: [1, 0.3, 1],
               }}

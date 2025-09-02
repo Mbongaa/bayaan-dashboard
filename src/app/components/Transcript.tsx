@@ -7,7 +7,7 @@ import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
 import AnimatedChatInput from "./AnimatedChatInput";
-import StandalonePTTIcon from "./StandalonePTTIcon";
+import TypewriterText from "./TypewriterText";
 
 export interface TranscriptProps {
   userText: string;
@@ -15,14 +15,6 @@ export interface TranscriptProps {
   onSendMessage: () => void;
   canSend: boolean;
   downloadRecording: () => void;
-  // PTT Props
-  sessionStatus: SessionStatus;
-  isPTTActive: boolean;
-  isRecordingActive: boolean;
-  currentVolume: number;
-  isDarkMode: boolean;
-  handleToggleRecording: () => void;
-  conversationState: string;
 }
 
 function Transcript({
@@ -31,22 +23,25 @@ function Transcript({
   onSendMessage,
   canSend,
   downloadRecording,
-  sessionStatus,
-  isPTTActive,
-  isRecordingActive,
-  currentVolume,
-  isDarkMode,
-  handleToggleRecording,
-  conversationState,
 }: TranscriptProps) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
   const [justCopied, setJustCopied] = useState(false);
+  const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
 
   function scrollToBottom() {
     if (transcriptRef.current) {
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
+    }
+  }
+
+  function scrollToBottomSmooth() {
+    if (transcriptRef.current) {
+      transcriptRef.current.scrollTo({
+        top: transcriptRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }
 
@@ -86,11 +81,19 @@ function Transcript({
         {/* Transcript Content */}
         <div
           ref={transcriptRef}
-          className="overflow-auto p-4 flex flex-col gap-y-4 h-full pointer-events-auto"
+          className="overflow-auto p-4 flex flex-col gap-y-4 h-full pointer-events-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          {[...transcriptItems]
-            .sort((a, b) => a.createdAtMs - b.createdAtMs)
-            .map((item) => {
+          {(() => {
+            const sortedItems = [...transcriptItems].sort((a, b) => a.createdAtMs - b.createdAtMs);
+            
+            // Find the latest agent message (not user, not breadcrumb)
+            const latestAgentMessage = sortedItems
+              .filter(item => item.type === "MESSAGE" && item.role === "assistant")
+              .pop();
+            const latestAgentMessageId = latestAgentMessage?.itemId;
+            
+            return sortedItems.map((item) => {
               const {
                 itemId,
                 type,
@@ -113,7 +116,9 @@ function Transcript({
                 isUser ? "items-end" : "items-start"
               }`;
               const bubbleBase = `max-w-lg p-3 ${
-                isUser ? "bg-black/20 backdrop-blur-sm text-gray-100 dark:text-gray-100" : "bg-white/10 backdrop-blur-sm text-gray-900 dark:text-gray-100"
+                isUser 
+                  ? "bg-transparent text-gray-600 dark:bg-transparent dark:text-gray-400 text-sm" 
+                  : "bg-transparent text-gray-900 dark:bg-transparent dark:text-gray-100 text-lg"
               }`;
               const isBracketedMessage =
                 title.startsWith("[") && title.endsWith("]");
@@ -140,7 +145,22 @@ function Transcript({
                         {timestamp}
                       </div>
                       <div className={`whitespace-pre-wrap ${messageStyle}`}>
-                        <ReactMarkdown>{displayTitle}</ReactMarkdown>
+                        {!isUser && !isBracketedMessage && !typedMessages.has(`${itemId}-${displayTitle}`) ? (
+                          <TypewriterText
+                            key={`typewriter-${itemId}`}
+                            text={displayTitle}
+                            typingSpeed={35}
+                            showCursor={true}
+                            cursorCharacter="●"
+                            isLatestMessage={itemId === latestAgentMessageId}
+                            onComplete={() => {
+                              setTypedMessages(prev => new Set(prev).add(`${itemId}-${displayTitle}`));
+                              scrollToBottomSmooth();
+                            }}
+                          />
+                        ) : (
+                          <ReactMarkdown>{displayTitle}</ReactMarkdown>
+                        )}
                       </div>
                     </div>
                     {guardrailResult && (
@@ -155,11 +175,11 @@ function Transcript({
               return (
                 <div
                   key={itemId}
-                  className="flex flex-col justify-start items-start text-gray-500 dark:text-gray-400 text-sm"
+                  className="flex flex-col justify-start items-start text-gray-600 dark:text-gray-400 text-sm"
                 >
                   <span className="text-xs font-mono">{timestamp}</span>
                   <div
-                    className={`whitespace-pre-wrap flex items-center font-mono text-sm text-gray-800 dark:text-gray-200 ${
+                    className={`whitespace-pre-wrap flex items-center font-mono text-sm text-gray-600 dark:text-gray-400 ${
                       data ? "cursor-pointer" : ""
                     }`}
                     onClick={() => data && toggleTranscriptItemExpand(itemId)}
@@ -196,13 +216,13 @@ function Transcript({
                 </div>
               );
             }
-          })}
+            });
+          })()}
         </div>
       </div>
 
-      {/* Bottom Input Controls - Dual Icon Layout */}
+      {/* Bottom Input Controls - Chat + PTT Icons */}
       <div className="relative flex justify-center items-end gap-4 p-4 pointer-events-auto">
-        {/* Text Chat Input */}
         <AnimatedChatInput
           userText={userText}
           setUserText={setUserText}
@@ -210,16 +230,8 @@ function Transcript({
           canSend={canSend}
         />
         
-        {/* Voice PTT Input */}
-        <StandalonePTTIcon
-          sessionStatus={sessionStatus}
-          isPTTActive={isPTTActive}
-          isRecordingActive={isRecordingActive}
-          volumeLevel={currentVolume}
-          onToggleRecording={handleToggleRecording}
-          isDarkMode={isDarkMode}
-          conversationState={conversationState}
-        />
+        {/* Portal target for PTT icon */}
+        <div id="ptt-icon-portal" className="flex justify-center items-end"></div>
       </div>
     </div>
   );

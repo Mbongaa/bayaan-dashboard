@@ -119,7 +119,7 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
           <motion.button
             key="chat-icon"
             onClick={handleToggleExpanded}
-            className="group relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-4 hover:bg-white/15 hover:border-white/30 transition-colors shadow-lg"
+            className="group relative bg-transparent border border-black/20 dark:border-white/20 rounded-full p-4 hover:border-black/30 dark:hover:border-white/30 transition-colors shadow-lg"
             variants={iconVariants}
             initial="initial"
             animate="animate"
@@ -129,12 +129,12 @@ const AnimatedChatInput: React.FC<AnimatedChatInputProps> = ({
           >
             <MessageCircle 
               size={24} 
-              className="text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors" 
+              className="text-black dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors" 
             />
             
             {/* Subtle pulse animation for attention */}
             <motion.div
-              className="absolute inset-0 rounded-full bg-blue-400/20 dark:bg-blue-500/20"
+              className="absolute inset-0 rounded-full bg-black/10 dark:bg-white/10"
               animate={{
                 scale: [1, 1.1, 1],
                 opacity: [0.3, 0.1, 0.3],

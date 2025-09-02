@@ -1,14 +1,14 @@
 "use client";
 import React from "react";
-import { RiMenuLine, RiSettings3Line, RiVoiceprintLine, RiSpeakLine } from "@remixicon/react";
+import { RiSettings3Line, RiVoiceprintLine, RiSpeakLine, RiSettings4Line, RiVolumeUpLine, RiFileTextLine, RiMicLine, RiWifiLine } from "@remixicon/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "./DropdownMenu";
 
 interface AgentSettingsMenuProps {
@@ -36,6 +36,16 @@ interface AgentSettingsMenuProps {
   codec: string;
   onCodecChange: (codec: string) => void;
   
+  // UI Settings (consolidated from UISettingsMenu)
+  isAudioPlaybackEnabled: boolean;
+  setIsAudioPlaybackEnabled: (enabled: boolean) => void;
+  isEventsPaneExpanded: boolean;
+  setIsEventsPaneExpanded: (expanded: boolean) => void;
+  isPTTActive: boolean;
+  setIsPTTActive: (active: boolean) => void;
+  isAutoConnectEnabled: boolean;
+  setIsAutoConnectEnabled: (enabled: boolean) => void;
+  
   // Session Status
   sessionStatus: string;
 }
@@ -59,16 +69,24 @@ export default function AgentSettingsMenu({
   onVoiceChange,
   codec,
   onCodecChange,
+  isAudioPlaybackEnabled,
+  setIsAudioPlaybackEnabled,
+  isEventsPaneExpanded,
+  setIsEventsPaneExpanded,
+  isPTTActive,
+  setIsPTTActive,
+  isAutoConnectEnabled,
+  setIsAutoConnectEnabled,
   sessionStatus,
 }: AgentSettingsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4">
-          <RiMenuLine className="h-5 w-5" />
+          <RiSettings3Line className="h-5 w-5" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-80 max-h-[80vh] overflow-y-auto sm:w-96">
         {/* Agent Configuration Section */}
         <DropdownMenuGroup>
           <DropdownMenuLabel className="flex items-center gap-2">
@@ -243,6 +261,52 @@ export default function AgentSettingsMenu({
               </select>
             </div>
           </div>
+        </DropdownMenuGroup>
+
+        <DropdownMenuSeparator />
+
+        {/* UI Settings Section */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <RiSettings4Line className="h-4 w-4" />
+            UI Settings
+          </DropdownMenuLabel>
+          
+          <DropdownMenuCheckboxItem
+            checked={isAudioPlaybackEnabled}
+            onCheckedChange={setIsAudioPlaybackEnabled}
+            className="flex items-center gap-2"
+          >
+            <RiVolumeUpLine className="h-4 w-4" />
+            Audio Playback
+          </DropdownMenuCheckboxItem>
+
+          <DropdownMenuCheckboxItem
+            checked={isEventsPaneExpanded}
+            onCheckedChange={setIsEventsPaneExpanded}
+            className="flex items-center gap-2"
+          >
+            <RiFileTextLine className="h-4 w-4" />
+            Show Logs
+          </DropdownMenuCheckboxItem>
+
+          <DropdownMenuCheckboxItem
+            checked={isPTTActive}
+            onCheckedChange={setIsPTTActive}
+            className="flex items-center gap-2"
+          >
+            <RiMicLine className="h-4 w-4" />
+            Push to Talk Mode
+          </DropdownMenuCheckboxItem>
+
+          <DropdownMenuCheckboxItem
+            checked={isAutoConnectEnabled}
+            onCheckedChange={setIsAutoConnectEnabled}
+            className="flex items-center gap-2"
+          >
+            <RiWifiLine className="h-4 w-4" />
+            Automatic Connections
+          </DropdownMenuCheckboxItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
