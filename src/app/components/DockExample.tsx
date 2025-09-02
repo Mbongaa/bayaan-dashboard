@@ -18,6 +18,7 @@ import {
 
 interface DockExampleProps {
     onScenarioSelect?: (scenarioKey: string) => void;
+    onDisconnect?: () => void;
     selectedScenario?: string;
     isConnected?: boolean;
 }
@@ -41,7 +42,7 @@ const gradients = [
     "https://products.ls.graphics/mesh-gradients/images/36.-Pale-Chestnut-p-130x130q80.jpeg",
 ];
 
-export default function DockExample({ onScenarioSelect, selectedScenario, isConnected }: DockExampleProps) {
+export default function DockExample({ onScenarioSelect, onDisconnect, selectedScenario, isConnected }: DockExampleProps) {
     const openIcons = [
         <BrainIcon
             key="1"
@@ -75,6 +76,7 @@ export default function DockExample({ onScenarioSelect, selectedScenario, isConn
                         id={`${index}`}
                         scenarioKey={scenarioMapping[index]?.key}
                         onScenarioSelect={onScenarioSelect}
+                        onDisconnect={onDisconnect}
                         isSelected={selectedScenario === scenarioMapping[index]?.key}
                         isConnected={isConnected}
                     >

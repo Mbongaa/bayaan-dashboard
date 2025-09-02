@@ -212,12 +212,13 @@ interface DockCardProps {
     id: string;
     scenarioKey?: string;
     onScenarioSelect?: (scenarioKey: string) => void;
+    onDisconnect?: () => void;
     isSelected?: boolean;
     isConnected?: boolean;
 }
 
 // DockCard component: manages individual card behavior within the dock
-function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isConnected }: DockCardProps) {
+function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, isSelected, isConnected }: DockCardProps) {
     const cardRef = useRef<HTMLButtonElement>(null);
     const dock = useDock();
 
@@ -234,8 +235,17 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isC
     const handleClick = () => {
         if (!scenarioKey || !onScenarioSelect) return;
         
-        // If this scenario is already selected, don't do anything
-        if (isSelected) return;
+        // If this scenario is selected and connected, disconnect
+        if (isSelected && isConnected && onDisconnect) {
+            onDisconnect();
+            return;
+        }
+        
+        // If this scenario is selected but not connected, trigger connection
+        if (isSelected && !isConnected) {
+            onScenarioSelect(scenarioKey); // Re-trigger to initiate auto-connect
+            return;
+        }
         
         // Select the new scenario
         onScenarioSelect(scenarioKey);

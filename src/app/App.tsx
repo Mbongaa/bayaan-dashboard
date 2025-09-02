@@ -17,7 +17,6 @@ import Galaxy from "./components/Galaxy";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 // Types
-import { SessionStatus } from "@/app/types";
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Context providers & hooks
@@ -112,16 +111,13 @@ function App() {
     interrupt,
     mute,
     sessionRef,
+    status: sessionStatus,
   } = useRealtimeSession({
-    onConnectionChange: (s) => setSessionStatus(s as SessionStatus),
     onAgentHandoff: (agentName: string) => {
       handoffTriggeredRef.current = true;
       setSelectedAgentName(agentName);
     },
   });
-
-  const [sessionStatus, setSessionStatus] =
-    useState<SessionStatus>("DISCONNECTED");
 
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] = useState<boolean>(
     () => {
@@ -317,7 +313,6 @@ function App() {
     if (!data.client_secret?.value) {
       logClientEvent(data, "error.no_ephemeral_key");
       console.error("No ephemeral key provided by the server");
-      setSessionStatus("DISCONNECTED");
       return null;
     }
 
@@ -328,7 +323,6 @@ function App() {
     const agentSetKey = searchParams.get("agentConfig") || "default";
     if (sdkScenarioMap[agentSetKey]) {
       if (sessionStatus !== "DISCONNECTED") return;
-      setSessionStatus("CONNECTING");
 
       try {
         const EPHEMERAL_KEY = await fetchEphemeralKey();
@@ -370,7 +364,6 @@ function App() {
         });
       } catch (err) {
         console.error("Error connecting via SDK:", err);
-        setSessionStatus("DISCONNECTED");
       }
       return;
     }
@@ -378,7 +371,6 @@ function App() {
 
   const disconnectFromRealtime = () => {
     disconnect();
-    setSessionStatus("DISCONNECTED");
     setIsRecordingActive(false);
   };
 
@@ -464,11 +456,10 @@ function App() {
   const onToggleConnection = useCallback(() => {
     if (sessionStatus === "CONNECTED" || sessionStatus === "CONNECTING") {
       disconnectFromRealtime();
-      setSessionStatus("DISCONNECTED");
     } else {
       connectToRealtime();
     }
-  }, [sessionStatus]);
+  }, [sessionStatus, disconnectFromRealtime, connectToRealtime]);
 
   // Memoize RealtimeProvider context value to prevent unnecessary child re-renders
   const realtimeContextValue = useMemo(() => ({
@@ -495,6 +486,11 @@ function App() {
   };
 
   const handleDockScenarioSelect = (scenarioKey: string) => {
+    // If we're connected and switching to a different scenario, disconnect first
+    if (sessionStatus === "CONNECTED" && agentSetKey !== scenarioKey) {
+      disconnectFromRealtime();
+    }
+    
     // Update URL without page reload using history API
     const url = new URL(window.location.toString());
     url.searchParams.set("agentConfig", scenarioKey);
@@ -688,6 +684,7 @@ function App() {
           >
             <DockExample 
               onScenarioSelect={handleDockScenarioSelect}
+              onDisconnect={disconnectFromRealtime}
               selectedScenario={agentSetKey}
               isConnected={sessionStatus === "CONNECTED"}
             />
