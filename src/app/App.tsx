@@ -611,25 +611,11 @@ function App() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="flex items-center gap-4 pointer-events-auto">
           <ThemeToggle />
         </div>
       </div>
 
-      {/* Vertical Multi-Agent Dock - Below Header */}
-      {isDockVisible && (
-        <div className="absolute top-20 right-4 z-20 pointer-events-auto">
-          <RealtimeProvider 
-            value={realtimeContextValue}
-          >
-            <DockExample 
-              onScenarioSelect={handleDockScenarioSelect}
-              selectedScenario={agentSetKey}
-              isConnected={sessionStatus === "CONNECTED"}
-            />
-          </RealtimeProvider>
-        </div>
-      )}
 
       <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
         {/* Top half: 3D Audio Visualization */}
@@ -665,6 +651,21 @@ function App() {
           />
         </form>
       </div>
+
+      {/* Horizontal Dock at Bottom */}
+      {isDockVisible && (
+        <div className="relative z-10 flex justify-center py-6 pointer-events-auto">
+          <RealtimeProvider 
+            value={realtimeContextValue}
+          >
+            <DockExample 
+              onScenarioSelect={handleDockScenarioSelect}
+              selectedScenario={agentSetKey}
+              isConnected={sessionStatus === "CONNECTED"}
+            />
+          </RealtimeProvider>
+        </div>
+      )}
 
       {/* Settings Menu - portaled into chatbox */}
       <ChatboxSettingsMenu

@@ -95,14 +95,14 @@ function Dock({ className, children }: DockProps) {
             <motion.div
                 ref={dockRef}
                 className={cx(
-                    "flex flex-col w-10 transform items-center gap-2 rounded-lg bg-transparent p-1.5",
+                    "flex flex-row h-10 transform items-center gap-2 rounded-lg bg-transparent p-1.5",
                     "border border-black/5 border-opacity-10 transition-colors dark:border-white/5",
                     "shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)]",
                     "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(0,0,0,0.1),0_2px_2px_0_rgba(0,0,0,0.1),0_4px_4px_0_rgba(0,0,0,0.1),0_8px_8px_0_rgba(0,0,0,0.1)]",
                     className,
                 )}
                 onMouseMove={(e) => {
-                    mouseX.set(e.pageY);
+                    mouseX.set(e.pageX);
                     if (!isZooming.current) {
                         setHovered(true);
                     }
@@ -280,26 +280,26 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isC
 
     const distance = useTransform(dock.mouseX, (val) => {
         const bounds = cardRef.current?.getBoundingClientRect() ?? {
-            y: 0,
-            height: 0,
+            x: 0,
+            width: 0,
         };
-        return val - bounds.y - bounds.height / 2;
+        return val - bounds.x - bounds.width / 2;
     });
 
-    const heightSync = useTransform(distance, [-120, 0, 120], [28, 56, 28]);
-    const height = useSpring(heightSync, {
+    const widthSync = useTransform(distance, [-120, 0, 120], [28, 56, 28]);
+    const width = useSpring(widthSync, {
         mass: 0.1,
         stiffness: 150,
         damping: 12,
     });
 
     return (
-        <div className="flex flex-col items-center gap-1" key={id}>
+        <div className="flex flex-row items-center gap-1" key={id}>
             <motion.button
                 ref={cardRef}
-                className="aspect-square h-full rounded-lg border border-black/5 border-opacity-10 bg-neutral-100 brightness-90 saturate-90 transition-filter duration-200 dark:border-white/5 dark:bg-neutral-800 hover:brightness-112 hover:saturate-100"
+                className="aspect-square w-full rounded-lg border border-black/5 border-opacity-10 bg-neutral-100 brightness-90 saturate-90 transition-filter duration-200 dark:border-white/5 dark:bg-neutral-800 hover:brightness-112 hover:saturate-100"
                 onClick={handleClick}
-                style={{ height }}
+                style={{ width }}
                 animate={controls}
                 whileTap={{ scale: 0.95 }}
             >
@@ -329,11 +329,11 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isC
 function DockDivider() {
     return (
         <motion.div
-            className="flex w-full cursor-ew-resize justify-center p-1.5"
-            drag="x"
-            dragConstraints={{ left: -100, right: 50 }}
+            className="flex h-full cursor-ns-resize items-center p-1.5"
+            drag="y"
+            dragConstraints={{ top: -50, bottom: 100 }}
         >
-            <span className="w-full h-0.5 rounded bg-neutral-800/10 dark:bg-neutral-100/10 " />
+            <span className="h-full w-0.5 rounded bg-neutral-800/10 dark:bg-neutral-100/10 " />
         </motion.div>
     );
 }
