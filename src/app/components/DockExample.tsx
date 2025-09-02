@@ -7,7 +7,6 @@ import {
     MessageSquareIcon,
     HeartHandshakeIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import {
     Dock,
@@ -16,26 +15,6 @@ import {
     DockDivider,
 } from "@/app/components/ui/dock";
 
-function useIsMobile() {
-    const [isMobile, setIsMobile] = useState(false);
-
-    useEffect(() => {
-        const userAgent = navigator.userAgent;
-        const isSmall = window.matchMedia("(max-width: 768px)").matches;
-        const isMobile = Boolean(
-            /Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.exec(
-                userAgent,
-            ),
-        );
-
-        const isDev = process.env.NODE_ENV !== "production";
-        if (isDev) setIsMobile(isSmall || isMobile);
-
-        setIsMobile(isSmall && isMobile);
-    }, []);
-
-    return isMobile;
-}
 
 interface DockExampleProps {
     onScenarioSelect?: (scenarioKey: string) => void;
@@ -87,26 +66,20 @@ export default function DockExample({ onScenarioSelect, selectedScenario, isConn
         />,
     ];
 
-    const isMobile = useIsMobile();
-
-    const responsiveOpenIcons = openIcons;
-    const responsiveGradients = gradients;
-    const responsiveScenarios = scenarioMapping;
-
     return (
         <Dock>
-            {responsiveGradients.map((src, index) =>
+            {gradients.map((src, index) =>
                 src ? (
                     <DockCard
                         key={src}
                         id={`${index}`}
-                        scenarioKey={responsiveScenarios[index]?.key}
+                        scenarioKey={scenarioMapping[index]?.key}
                         onScenarioSelect={onScenarioSelect}
-                        isSelected={selectedScenario === responsiveScenarios[index]?.key}
+                        isSelected={selectedScenario === scenarioMapping[index]?.key}
                         isConnected={isConnected}
                     >
                         <DockCardInner src={src} id={`${index}`}>
-                            {responsiveOpenIcons[index]}
+                            {openIcons[index]}
                         </DockCardInner>
                     </DockCard>
                 ) : (

@@ -29,7 +29,7 @@ interface DockContextType {
     zoomLevel: MotionValue<number>;
     mouseX: MotionValue<number>;
     animatingIndexes: number[];
-    setAnimatingIndexes: (indexes: number[]) => void;
+    setAnimatingIndexes: (indexes: number[] | ((prev: number[]) => number[])) => void;
     activeCardId: number | null;
     setActiveCardId: (id: number | null) => void;
 }
@@ -110,6 +110,29 @@ function Dock({ className, children }: DockProps) {
                 onMouseLeave={() => {
                     mouseX.set(Number.POSITIVE_INFINITY);
                     setHovered(false);
+                }}
+                onTouchStart={(e) => {
+                    if (e.touches.length > 0) {
+                        mouseX.set(e.touches[0].pageX);
+                        if (!isZooming.current) {
+                            setHovered(true);
+                        }
+                    }
+                }}
+                onTouchMove={(e) => {
+                    if (e.touches.length > 0) {
+                        mouseX.set(e.touches[0].pageX);
+                        if (!isZooming.current) {
+                            setHovered(true);
+                        }
+                    }
+                }}
+                onTouchEnd={() => {
+                    // Add a small delay before resetting to allow for a more natural feel on mobile
+                    setTimeout(() => {
+                        mouseX.set(Number.POSITIVE_INFINITY);
+                        setHovered(false);
+                    }, 150);
                 }}
                 style={{
                     scale: zoomLevel,
@@ -217,61 +240,65 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isC
         // Select the new scenario
         onScenarioSelect(scenarioKey);
         
-        // Update visual state
-        dock.setActiveCardId(Number.parseInt(id));
-        dock.setAnimatingIndexes([Number.parseInt(id)]);
-        
-        // Show selection animation briefly
+        // Show brief selection animation (without affecting persistent icon state)
         isAnimating.current = true;
-        opacity.set(0.5);
         controls.start({
-            x: -16,
+            x: -8,
             transition: {
-                repeat: 2,
+                repeat: 1,
                 repeatType: "reverse",
-                duration: 0.3,
+                duration: 0.2,
             },
         }).then(() => {
             controls.start({
                 x: 0,
-                transition: { duration: 0.2 },
+                transition: { duration: 0.1 },
             });
             isAnimating.current = false;
-            opacity.set(0);
         });
     };
 
-    // Start continuous bounce animation when connected and selected
+    // Manage persistent icon display and connection animations
     useEffect(() => {
-        if (isSelected && isConnected) {
-            isAnimating.current = true;
-            dock.setAnimatingIndexes([...dock.animatingIndexes, Number.parseInt(id)]);
-            opacity.set(0.5);
-            controls.start({
-                x: -16,
-                transition: {
-                    repeat: Number.POSITIVE_INFINITY,
-                    repeatType: "reverse",
-                    duration: 0.5,
-                },
+        const currentId = Number.parseInt(id);
+        
+        if (isSelected) {
+            // Add this item to animatingIndexes to show its icon
+            dock.setAnimatingIndexes(prev => {
+                if (!prev.includes(currentId)) {
+                    return [...prev, currentId];
+                }
+                return prev;
             });
-            dock.setActiveCardId(Number.parseInt(id));
-        } else if (!isConnected) {
-            // Stop animation when disconnected
-            isAnimating.current = false;
-            dock.setAnimatingIndexes(
-                dock.animatingIndexes.filter((index) => index !== Number.parseInt(id)),
-            );
+            dock.setActiveCardId(currentId);
+            
+            // If also connected, show bouncing animation
+            if (isConnected) {
+                opacity.set(0.5);
+                controls.start({
+                    x: -12,
+                    transition: {
+                        repeat: Number.POSITIVE_INFINITY,
+                        repeatType: "reverse",
+                        duration: 0.6,
+                    },
+                });
+            } else {
+                // Selected but not connected - just show icon without bounce
+                opacity.set(0.3);
+                controls.start({ x: 0 });
+            }
+        } else {
+            // Not selected - remove from animatingIndexes and stop animations
+            dock.setAnimatingIndexes(prev => prev.filter(index => index !== currentId));
             opacity.set(0);
-            controls.start({
-                x: 0,
-                transition: { duration: 0.5 },
-            });
-            if (dock.activeCardId === Number.parseInt(id)) {
+            controls.start({ x: 0 });
+            
+            if (dock.activeCardId === currentId) {
                 dock.setActiveCardId(null);
             }
         }
-    }, [isSelected, isConnected]);
+    }, [isSelected, isConnected, id]);
 
     useEffect(() => {
         // biome-ignore lint/style/noNonNullAssertion: <explanation>
@@ -297,7 +324,7 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, isSelected, isC
         <div className="flex flex-row items-center gap-1" key={id}>
             <motion.button
                 ref={cardRef}
-                className="aspect-square w-full rounded-lg border border-black/5 border-opacity-10 bg-neutral-100 brightness-90 saturate-90 transition-filter duration-200 dark:border-white/5 dark:bg-neutral-800 hover:brightness-112 hover:saturate-100"
+                className="aspect-square w-full rounded-lg border border-black/5 border-opacity-10 bg-neutral-100 brightness-90 saturate-90 transition-filter duration-200 dark:border-white/5 dark:bg-neutral-800 [@media(hover:hover)]:hover:brightness-112 [@media(hover:hover)]:hover:saturate-100"
                 onClick={handleClick}
                 style={{ width }}
                 animate={controls}

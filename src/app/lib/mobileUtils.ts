@@ -52,7 +52,7 @@ export const checkAudioPermissions = async (): Promise<boolean> => {
     
     const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
     return permission.state === 'granted';
-  } catch (error) {
+  } catch {
     // Fallback: try to access microphone briefly
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -144,7 +144,7 @@ export const triggerHapticFeedback = (type: 'light' | 'medium' | 'heavy' = 'medi
   if ('hapticFeedback' in navigator) {
     try {
       (navigator as any).hapticFeedback.impact(type);
-    } catch (error) {
+    } catch {
       // Silently fail if haptic feedback is not available
     }
   }

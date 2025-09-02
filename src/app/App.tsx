@@ -479,10 +479,19 @@ function App() {
   }), [sessionStatus, onToggleConnection, audioElementRef.current, sessionRef]);
 
   const handleAgentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newAgentConfig = e.target.value;
+    const scenarioKey = e.target.value;
+    // Update URL without page reload using history API
     const url = new URL(window.location.toString());
-    url.searchParams.set("agentConfig", newAgentConfig);
-    window.location.replace(url.toString());
+    url.searchParams.set("agentConfig", scenarioKey);
+    window.history.pushState({}, '', url.toString());
+    
+    // Directly update the agent configuration state
+    const agents = allAgentSets[scenarioKey];
+    if (agents) {
+      const agentKeyToUse = agents[0]?.name || "";
+      setSelectedAgentName(agentKeyToUse);
+      setSelectedAgentConfigSet(agents);
+    }
   };
 
   const handleDockScenarioSelect = (scenarioKey: string) => {
