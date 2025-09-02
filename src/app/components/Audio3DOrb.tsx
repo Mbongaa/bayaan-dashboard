@@ -70,9 +70,38 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
       ballRef.current &&
       originalPositionsRef.current
     ) {
+      // Immediately reset animation state references to prevent interpolation lag
+      shrinkFactorRef.current = 1.0;
+      targetShrinkFactor.current = 1.0;
+      spinSpeedRef.current = 0.005;
+      targetSpinSpeed.current = 0.005;
+      currentSmoothedVolume.current = 0;
+      targetVolume.current = 0;
+      
       resetBallMorph(ballRef.current, originalPositionsRef.current);
     }
   }, [currentVolume, sessionStatus, conversationState]);
+
+  // Dedicated cleanup effect for disconnect state transitions
+  useEffect(() => {
+    if (sessionStatus === 'DISCONNECTED') {
+      // Comprehensive state cleanup to ensure neutral state
+      console.log('[Audio3DOrb] Entering DISCONNECTED state - performing cleanup');
+      
+      // Reset all animation references immediately
+      shrinkFactorRef.current = 1.0;
+      targetShrinkFactor.current = 1.0;
+      spinSpeedRef.current = 0.005;
+      targetSpinSpeed.current = 0.005;
+      currentSmoothedVolume.current = 0;
+      targetVolume.current = 0;
+      
+      // Ensure geometry is also reset if available
+      if (ballRef.current && originalPositionsRef.current) {
+        resetBallMorph(ballRef.current, originalPositionsRef.current);
+      }
+    }
+  }, [sessionStatus]);
 
   // Debug logging for session and conversation state changes
   useEffect(() => {
@@ -212,6 +241,11 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
   };
 
   const updateBallMorph = (mesh: THREE.Mesh, volume: number, state: ConversationState) => {
+    // Early return guard: prevent morphing when disconnected to avoid race conditions
+    if (sessionStatus === 'DISCONNECTED') {
+      return;
+    }
+    
     const geometry = mesh.geometry as THREE.BufferGeometry;
     const positionAttribute = geometry.getAttribute("position");
     

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./lib/envSetup";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Realtime API Agents",
@@ -44,6 +45,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100">
         {children}
+        <Toaster />
       </body>
     </html>
   );

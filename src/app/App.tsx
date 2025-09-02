@@ -9,9 +9,9 @@ import DockExample from "./components/DockExample";
 // UI components
 import Transcript from "./components/Transcript";
 import Events from "./components/Events";
-import BottomToolbar from "./components/BottomToolbar";
+import { PromptBox } from "./components/ui/chatgpt-prompt-input";
 import AudioVisualizationSection from "./components/AudioVisualizationSection";
-import AgentSettingsMenu from "./components/AgentSettingsMenu";
+import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
 import ThemeToggle from "./components/ThemeToggle";
 import Galaxy from "./components/Galaxy";
 
@@ -163,7 +163,13 @@ function App() {
     },
   );
 
-  const [isDockVisible, setIsDockVisible] = useState<boolean>(true);
+  const [isDockVisible, setIsDockVisible] = useState<boolean>(
+    () => {
+      if (typeof window === 'undefined') return true;
+      const stored = localStorage.getItem('dockVisible');
+      return stored ? stored === 'true' : true;
+    },
+  );
 
   // Theme detection for dynamic Galaxy colors
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -482,20 +488,6 @@ function App() {
       const agentKeyToUse = agents[0]?.name || "";
       setSelectedAgentName(agentKeyToUse);
       setSelectedAgentConfigSet(agents);
-      
-      // Disconnect current session to switch to new scenario, then auto-connect
-      if (sessionStatus === "CONNECTED") {
-        disconnectFromRealtime();
-        // Auto-connect to new scenario after brief delay
-        setTimeout(() => {
-          connectToRealtime();
-        }, 500);
-      } else {
-        // If not connected, connect immediately to new scenario
-        setTimeout(() => {
-          connectToRealtime();
-        }, 300);
-      }
     }
   };
 
@@ -523,10 +515,6 @@ function App() {
     );
     if (storedAudioPlaybackEnabled) {
       setIsAudioPlaybackEnabled(storedAudioPlaybackEnabled === "true");
-    }
-    const storedDockVisible = localStorage.getItem("dockVisible");
-    if (storedDockVisible) {
-      setIsDockVisible(storedDockVisible === "true");
     }
   }, []);
 
@@ -624,37 +612,6 @@ function App() {
         </div>
         
         <div className="flex items-center gap-2 pointer-events-auto">
-          <AgentSettingsMenu
-            agentSetKey={agentSetKey}
-            allAgentSets={allAgentSets}
-            selectedAgentName={selectedAgentName}
-            selectedAgentConfigSet={selectedAgentConfigSet}
-            onAgentChange={handleAgentChange}
-            onSelectedAgentChange={handleSelectedAgentChange}
-            vadType={vadType}
-            vadSilenceDuration={vadSilenceDuration}
-            vadThreshold={vadThreshold}
-            semanticVadEagerness={semanticVadEagerness}
-            selectedVoice={selectedVoice}
-            onVadTypeChange={setVadType}
-            onVadSilenceDurationChange={setVadSilenceDuration}
-            onVadThresholdChange={setVadThreshold}
-            onSemanticVadEagernessChange={setSemanticVadEagerness}
-            onVoiceChange={setSelectedVoice}
-            codec={urlCodec}
-            onCodecChange={handleCodecChange}
-            isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-            setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
-            isEventsPaneExpanded={isEventsPaneExpanded}
-            setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-            isPTTActive={isPTTActive}
-            setIsPTTActive={setIsPTTActive}
-            isAutoConnectEnabled={isAutoConnectEnabled}
-            setIsAutoConnectEnabled={setIsAutoConnectEnabled}
-            isDockVisible={isDockVisible}
-            setIsDockVisible={setIsDockVisible}
-            sessionStatus={sessionStatus}
-          />
           <ThemeToggle />
         </div>
       </div>
@@ -693,25 +650,54 @@ function App() {
 
         {/* Bottom half: Transcript and Events */}
         <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
-          <Transcript
-            userText={userText}
-            setUserText={setUserText}
-            onSendMessage={handleSendTextMessage}
-            canSend={
-              sessionStatus === "CONNECTED"
-            }
-          />
+          <Transcript />
 
           <Events isExpanded={isEventsPaneExpanded} />
         </div>
       </div>
 
-      <div className="relative z-10">
-        <BottomToolbar
-        sessionStatus={sessionStatus}
-        onToggleConnection={onToggleConnection}
-        />
+      <div className="relative z-10 p-4 bg-transparent">
+        <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
+          <PromptBox 
+            value={userText}
+            onChange={(e) => setUserText(e.target.value)}
+            placeholder="Type your message..."
+          />
+        </form>
       </div>
+
+      {/* Settings Menu - portaled into chatbox */}
+      <ChatboxSettingsMenu
+        agentSetKey={agentSetKey}
+        allAgentSets={allAgentSets}
+        selectedAgentName={selectedAgentName}
+        selectedAgentConfigSet={selectedAgentConfigSet}
+        onAgentChange={handleAgentChange}
+        onSelectedAgentChange={handleSelectedAgentChange}
+        vadType={vadType}
+        vadSilenceDuration={vadSilenceDuration}
+        vadThreshold={vadThreshold}
+        semanticVadEagerness={semanticVadEagerness}
+        selectedVoice={selectedVoice}
+        onVadTypeChange={setVadType}
+        onVadSilenceDurationChange={setVadSilenceDuration}
+        onVadThresholdChange={setVadThreshold}
+        onSemanticVadEagernessChange={setSemanticVadEagerness}
+        onVoiceChange={setSelectedVoice}
+        codec={urlCodec}
+        onCodecChange={handleCodecChange}
+        isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+        setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+        isEventsPaneExpanded={isEventsPaneExpanded}
+        setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+        isPTTActive={isPTTActive}
+        setIsPTTActive={setIsPTTActive}
+        isAutoConnectEnabled={isAutoConnectEnabled}
+        setIsAutoConnectEnabled={setIsAutoConnectEnabled}
+        isDockVisible={isDockVisible}
+        setIsDockVisible={setIsDockVisible}
+        sessionStatus={sessionStatus}
+      />
     </div>
   );
 }

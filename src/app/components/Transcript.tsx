@@ -5,22 +5,12 @@ import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
-import AnimatedChatInput from "./AnimatedChatInput";
 import TypewriterText from "./TypewriterText";
 
-export interface TranscriptProps {
-  userText: string;
-  setUserText: (val: string) => void;
-  onSendMessage: () => void;
-  canSend: boolean;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface TranscriptProps {}
 
-function Transcript({
-  userText,
-  setUserText,
-  onSendMessage,
-  canSend,
-}: TranscriptProps) {
+function Transcript({}: TranscriptProps) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
@@ -207,18 +197,6 @@ function Transcript({
         </div>
       </div>
 
-      {/* Bottom Input Controls - Chat + PTT Icons */}
-      <div className="relative flex justify-center items-end gap-4 p-4 pointer-events-auto">
-        <AnimatedChatInput
-          userText={userText}
-          setUserText={setUserText}
-          onSendMessage={onSendMessage}
-          canSend={canSend}
-        />
-        
-        {/* Portal target for PTT icon */}
-        <div id="ptt-icon-portal" className="flex justify-center items-end"></div>
-      </div>
     </div>
   );
 }

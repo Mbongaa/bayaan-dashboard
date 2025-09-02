@@ -22,7 +22,9 @@
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_install",
       "Bash(npm run lint -- --quiet)",
-      "WebFetch(domain:reactbits.dev)"
+      "WebFetch(domain:reactbits.dev)",
+      "WebFetch(domain:21st.dev)",
+      "mcp__magic__21st_magic_component_inspiration"
     ],
     "deny": [],
     "ask": []

@@ -15,6 +15,7 @@ interface StandalonePTTIconProps {
   onToggleRecording: () => void;
   isDarkMode: boolean;
   conversationState: ConversationState;
+  onExpandChatbox?: () => void;
 }
 
 const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
@@ -25,6 +26,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   onToggleRecording,
   isDarkMode,
   conversationState,
+  onExpandChatbox,
 }) => {
   const [siriWaveConfig, setSiriWaveConfig] = useState<IReactSiriwaveProps>({
     theme: "ios9",
@@ -33,9 +35,9 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     amplitude: 1,
     frequency: 6,
     color: isDarkMode ? '#ef4444' : '#dc2626',
-    cover: false,
-    width: 200,
-    height: 40,
+    cover: true, // Use cover mode to fill container
+    width: 800, // Large width, but cover mode will make it responsive
+    height: 32,
     autostart: true,
     pixelDepth: 1,
     lerpSpeed: 0.1,
@@ -48,6 +50,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   const isShowingActiveState = isManualMode 
     ? isRecordingActive // Manual mode: show active when user is manually recording
     : conversationState === 'user_speaking'; // Automatic mode: show active when system detects user speaking
+
   
   const isClickable = isManualMode && isConnected; // Only clickable in manual mode when connected
 
@@ -58,7 +61,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     setSiriWaveConfig(prevConfig => ({
       ...prevConfig,
       color: baseColor,
-      amplitude: isShowingActiveState ? Math.max(volumeLevel * 40, 2.5) : 0,
+      amplitude: isShowingActiveState ? Math.max(volumeLevel * 60, 5.0) : 0,
       speed: isShowingActiveState ? Math.max(volumeLevel * 8, 0.2) : 0,
       frequency: isShowingActiveState ? Math.max(volumeLevel * 10, 2.0) : 0,
     }));
@@ -90,12 +93,10 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   const expandedVariants: Variants = {
     initial: { 
       opacity: 0, 
-      width: 60,
       scale: 0.9
     },
     animate: { 
       opacity: 1, 
-      width: 220,
       scale: 1,
       transition: { 
         duration: 0.4,
@@ -104,7 +105,6 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     },
     exit: { 
       opacity: 0, 
-      width: 60,
       scale: 0.9,
       transition: { duration: 0.3 }
     }
@@ -113,7 +113,14 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
   // Icon is now always visible - behavior changes based on mode
 
   return (
-    <div className="relative flex justify-center items-end">
+    <div 
+      className="relative flex justify-start items-center w-full min-w-0"
+      onMouseEnter={() => {
+        // Trigger chatbox expansion directly
+        const expandFn = (window as any).globalExpandChatbox || onExpandChatbox;
+        if (expandFn) expandFn();
+      }}
+    >
       <AnimatePresence mode="wait">
         {!isShowingActiveState ? (
           // Collapsed State - Elegant PTT Icon
@@ -122,12 +129,12 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             onClick={isClickable ? onToggleRecording : undefined}
             disabled={!isClickable}
             className={`
-              group relative rounded-full p-4 shadow-lg transition-colors
+              group relative rounded-full transition-colors h-8 w-8 flex items-center justify-center
               ${!isConnected 
-                ? 'bg-transparent border border-black/20 dark:border-white/20 cursor-not-allowed' 
+                ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' 
                 : isManualMode
-                  ? 'bg-transparent border border-black/30 dark:border-white/30 hover:border-black/50 dark:hover:border-white/50 cursor-pointer'
-                  : 'bg-transparent border border-black/30 dark:border-white/30 cursor-default'
+                  ? 'text-foreground dark:text-white hover:bg-accent dark:hover:bg-[#515151] cursor-pointer'
+                  : 'text-foreground dark:text-white cursor-default'
               }
             `}
             variants={iconVariants}
@@ -138,37 +145,15 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             whileTap={isClickable ? "tap" : {}}
           >
             <Mic 
-              size={24} 
-              className={`
-                transition-colors
-                ${!isConnected 
-                  ? 'text-black/60 dark:text-white/60'
-                  : 'text-black dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200'
-                }
-              `} 
+              size={20} 
+              className="transition-colors" 
             />
-            
-            {/* Subtle pulse animation when available */}
-            {isConnected && (
-              <motion.div
-                className="absolute inset-0 rounded-full bg-black/10 dark:bg-white/10"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.4, 0.1, 0.4],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            )}
           </motion.button>
         ) : (
           // Recording State - Expanded with Visualizer
           <motion.div
             key="ptt-recording"
-            className="flex items-center gap-2 rounded-full px-3 py-2 shadow-lg bg-transparent border border-black/40 dark:border-white/40"
+            className="absolute left-0 right-8 flex items-center gap-1 sm:gap-2 rounded-full px-2 sm:px-3 py-1 bg-transparent z-10"
             variants={expandedVariants}
             initial="initial"
             animate="animate"
@@ -178,10 +163,10 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             <motion.button
               onClick={isManualMode ? onToggleRecording : undefined}
               disabled={!isManualMode}
-              className={`shrink-0 text-white dark:text-black rounded-full p-2 transition-colors ${
+              className={`shrink-0 text-black dark:text-white rounded-full p-2 transition-colors ${
                 isManualMode 
-                  ? 'bg-transparent border border-black/30 dark:border-white/30 cursor-pointer' 
-                  : 'bg-transparent border border-black/30 dark:border-white/30 cursor-default'
+                  ? 'bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 cursor-pointer' 
+                  : 'bg-white/20 dark:bg-black/20 cursor-default'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -190,7 +175,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             </motion.button>
             
             {/* Audio visualizer */}
-            <div className="flex-1 rounded-lg overflow-hidden">
+            <div className="flex-1 rounded-lg overflow-hidden w-full flex items-center justify-center">
               <ReactSiriwave {...siriWaveConfig} />
             </div>
             

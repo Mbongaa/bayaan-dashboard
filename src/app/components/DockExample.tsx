@@ -66,24 +66,24 @@ export default function DockExample({ onScenarioSelect, selectedScenario, isConn
     const openIcons = [
         <BrainIcon
             key="1"
-            className="h-5 w-5 rounded-full fill-black stroke-black"
+            className="h-5 w-5 rounded-full fill-black stroke-black dark:fill-white dark:stroke-white"
         />,
         <LanguagesIcon
             key="2"
-            className="h-5 w-5 rounded-full fill-black stroke-black"
+            className="h-5 w-5 rounded-full fill-black stroke-black dark:fill-white dark:stroke-white"
         />,
         <HeartHandshakeIcon
             key="3"
-            className="h-5 w-5 rounded-full fill-black stroke-black"
+            className="h-5 w-5 rounded-full fill-black stroke-black dark:fill-white dark:stroke-white"
         />,
         <MessageSquareIcon
             key="4"
-            className="h-5 w-5 rounded-full fill-black stroke-black"
+            className="h-5 w-5 rounded-full fill-black stroke-black dark:fill-white dark:stroke-white"
         />,
         null,
         <BlocksIcon
             key="7"
-            className="h-5 w-5 rounded-full fill-black stroke-black"
+            className="h-5 w-5 rounded-full fill-black stroke-black dark:fill-white dark:stroke-white"
         />,
     ];
 
