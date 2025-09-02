@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Mic, Square } from 'lucide-react';
 import ReactSiriwave, { IReactSiriwaveProps } from 'react-siriwave';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SessionStatus } from '@/app/types';
+import { useMobileAudio } from '@/app/hooks/useMobileAudio';
+import { preventMobileScroll } from '@/app/lib/mobileUtils';
 
 interface SiriStylePTTProps {
   sessionStatus: SessionStatus;
@@ -23,6 +25,15 @@ const SiriStylePTT: React.FC<SiriStylePTTProps> = ({
   onToggleRecording,
   isDarkMode,
 }) => {
+  const {
+    isMobileDevice,
+    hasAudioPermission,
+    requestPermissions,
+    handleTouchStart,
+    handleTouchEnd,
+    enableWakeLock,
+    disableWakeLock,
+  } = useMobileAudio();
   const [siriWaveConfig, setSiriWaveConfig] = useState<IReactSiriwaveProps>({
     theme: "ios9",
     ratio: 1,
@@ -51,29 +62,71 @@ const SiriStylePTT: React.FC<SiriStylePTTProps> = ({
     }));
   }, [volumeLevel, isRecordingActive, isDarkMode]);
 
+  // Handle mobile-specific touch interactions
+  const handleMobilePress = useCallback(async () => {
+    if (isMobileDevice && !hasAudioPermission) {
+      const granted = await requestPermissions();
+      if (!granted) {
+        alert('Microphone permission is required for voice recording');
+        return;
+      }
+    }
+    
+    handleTouchStart();
+    onToggleRecording();
+  }, [isMobileDevice, hasAudioPermission, requestPermissions, handleTouchStart, onToggleRecording]);
+
+  const handleMobileRelease = useCallback(() => {
+    if (isMobileDevice) {
+      handleTouchEnd();
+    }
+  }, [isMobileDevice, handleTouchEnd]);
+
+  // Handle wake lock for recording sessions
+  useEffect(() => {
+    if (isRecordingActive) {
+      enableWakeLock();
+      preventMobileScroll(true);
+    } else {
+      disableWakeLock();
+      preventMobileScroll(false);
+    }
+  }, [isRecordingActive, enableWakeLock, disableWakeLock]);
+
   return (
     <div className="flex flex-row items-center gap-2 pointer-events-auto">
       <div className="flex items-center justify-center">
         <motion.button
-          onClick={onToggleRecording}
+          onClick={isMobileDevice ? handleMobilePress : onToggleRecording}
+          onTouchEnd={isMobileDevice ? handleMobileRelease : undefined}
           disabled={isDisabled}
           className={`
-            p-3 rounded-full transition-all duration-200
+            p-3 rounded-full transition-all duration-200 select-none
             ${isRecordingActive 
-              ? 'bg-red-500 hover:bg-red-600 text-white' 
-              : 'bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700'
+              ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30' 
+              : 'bg-blue-500 hover:bg-blue-600 text-white dark:bg-blue-600 dark:hover:bg-blue-700 shadow-lg shadow-blue-500/30'
             }
             ${isDisabled 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400' 
-              : 'cursor-pointer'
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-400 shadow-none' 
+              : 'cursor-pointer active:shadow-xl'
             }
+            ${isMobileDevice ? 'touch-manipulation' : ''}
           `}
           whileTap={{ scale: 0.9 }}
           whileHover={!isDisabled ? { scale: 1.05 } : {}}
           initial={{ x: 0 }}
           animate={{ x: isRecordingActive ? -20 : 0 }}
           transition={{ duration: 0.3 }}
-          style={{ zIndex: 10, position: 'relative' }}
+          style={{ 
+            zIndex: 10, 
+            position: 'relative',
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            userSelect: 'none'
+          }}
         >
           <AnimatePresence>
             {!isRecordingActive ? (

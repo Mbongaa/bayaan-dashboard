@@ -153,3 +153,76 @@ body {
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* PWA and Mobile Optimizations */
+@media (display-mode: standalone) {
+  body {
+    /* Remove any margin/padding when running as PWA */
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide address bar on mobile PWA */
+  .pwa-standalone {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Touch optimizations for mobile */
+@media (pointer: coarse) {
+  /* Increase touch target sizes */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Remove hover states on touch devices */
+  *:hover {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix viewport height on iOS Safari */
+  .ios-vh-fix {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Prevent rubber band scrolling */
+  body {
+    overscroll-behavior-y: none;
+  }
+  
+  /* Fix audio element issues on iOS */
+  audio {
+    -webkit-playsinline: true;
+    playsinline: true;
+  }
+}
+
+/* Android Chrome specific optimizations */
+@media screen and (-webkit-device-pixel-ratio: 1) {
+  .android-audio-fix {
+    /* Android-specific audio optimizations */
+    will-change: transform;
+  }
+}
+
+/* Prevent zoom on input focus (mobile) */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}

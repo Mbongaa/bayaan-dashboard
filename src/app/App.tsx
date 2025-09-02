@@ -14,6 +14,7 @@ import AudioVisualizationSection from "./components/AudioVisualizationSection";
 import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
 import ThemeToggle from "./components/ThemeToggle";
 import Galaxy from "./components/Galaxy";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -52,6 +53,7 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
+import { useMobileAudio } from "./hooks/useMobileAudio";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -157,9 +159,9 @@ function App() {
 
   const [isAutoConnectEnabled, setIsAutoConnectEnabled] = useState<boolean>(
     () => {
-      if (typeof window === 'undefined') return false;
+      if (typeof window === 'undefined') return true;
       const stored = localStorage.getItem('autoConnectEnabled');
-      return stored ? stored === 'true' : false;
+      return stored ? stored === 'true' : true;
     },
   );
 
@@ -222,6 +224,13 @@ function App() {
 
   // Initialize the recording hook.
   const { startRecording, stopRecording } = useAudioDownload();
+  
+  // Initialize mobile audio capabilities
+  const {
+    isMobileDevice,
+    hasAudioPermission,
+    prepareAudioForMobile
+  } = useMobileAudio();
 
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
@@ -543,10 +552,20 @@ function App() {
 
   useEffect(() => {
     if (audioElementRef.current) {
+      // Prepare audio element for mobile if needed
+      if (isMobileDevice && isAudioPlaybackEnabled) {
+        prepareAudioForMobile(audioElementRef.current);
+      }
+      
       if (isAudioPlaybackEnabled) {
         audioElementRef.current.muted = false;
         audioElementRef.current.play().catch((err) => {
           console.warn("Autoplay may be blocked by browser:", err);
+          
+          // On mobile, show a user-friendly message about audio permissions
+          if (isMobileDevice && !hasAudioPermission) {
+            console.info("Tap the microphone button to enable audio");
+          }
         });
       } else {
         // Mute and pause to avoid brief audio blips before pause takes effect.
@@ -562,7 +581,7 @@ function App() {
     } catch (err) {
       console.warn('Failed to toggle SDK mute', err);
     }
-  }, [isAudioPlaybackEnabled]);
+  }, [isAudioPlaybackEnabled, isMobileDevice, hasAudioPermission, prepareAudioForMobile]);
 
   // Ensure mute state is propagated to transport right after we connect or
   // whenever the SDK client reference becomes available.
@@ -642,7 +661,7 @@ function App() {
         </div>
       </div>
 
-      <div className="relative z-10 p-4 bg-transparent">
+      <div className="relative z-10 px-4 pt-4 pb-[5px] bg-transparent">
         <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
           <PromptBox 
             value={userText}
@@ -654,7 +673,7 @@ function App() {
 
       {/* Horizontal Dock at Bottom */}
       {isDockVisible && (
-        <div className="relative z-10 flex justify-center py-6 pointer-events-auto">
+        <div className="relative z-10 flex justify-center py-2 pointer-events-auto">
           <RealtimeProvider 
             value={realtimeContextValue}
           >
@@ -699,6 +718,9 @@ function App() {
         setIsDockVisible={setIsDockVisible}
         sessionStatus={sessionStatus}
       />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

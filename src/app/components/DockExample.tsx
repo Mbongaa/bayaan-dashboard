@@ -89,15 +89,9 @@ export default function DockExample({ onScenarioSelect, selectedScenario, isConn
 
     const isMobile = useIsMobile();
 
-    const responsiveOpenIcons = isMobile
-        ? openIcons.slice(3, openIcons.length)
-        : openIcons;
-    const responsiveGradients = isMobile
-        ? gradients.slice(3, gradients.length)
-        : gradients;
-    const responsiveScenarios = isMobile
-        ? scenarioMapping.slice(3, scenarioMapping.length)
-        : scenarioMapping;
+    const responsiveOpenIcons = openIcons;
+    const responsiveGradients = gradients;
+    const responsiveScenarios = scenarioMapping;
 
     return (
         <Dock>
