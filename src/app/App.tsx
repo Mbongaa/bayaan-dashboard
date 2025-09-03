@@ -119,21 +119,9 @@ function App() {
     },
   });
 
-  const [isEventsPaneExpanded, setIsEventsPaneExpanded] = useState<boolean>(
-    () => {
-      if (typeof window === 'undefined') return false;
-      const stored = localStorage.getItem('logsExpanded');
-      return stored ? stored === 'true' : false;
-    },
-  );
+  const [isEventsPaneExpanded, setIsEventsPaneExpanded] = useState<boolean>(false);
   const [userText, setUserText] = useState<string>("");
-  const [isPTTActive, setIsPTTActive] = useState<boolean>(
-    () => {
-      if (typeof window === 'undefined') return false;
-      const stored = localStorage.getItem('pushToTalkActive');
-      return stored ? stored === 'true' : false;
-    },
-  );
+  const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
   
   // VAD Settings
@@ -351,13 +339,17 @@ function App() {
           : agentSetKey === 'translationDirect'
           ? translationDirectCompanyName
           : chatSupervisorCompanyName;
-        const guardrail = createModerationGuardrail(companyName);
+        // Disable guardrails for translation scenarios only
+        const shouldUseGuardrails = !['translation', 'translationDirect'].includes(agentSetKey);
+        
+        // Only create guardrail if needed
+        const guardrail = shouldUseGuardrails ? createModerationGuardrail(companyName) : null;
 
         await connect({
           getEphemeralKey: async () => EPHEMERAL_KEY,
           initialAgents: reorderedAgents,
           audioElement: sdkAudioElement,
-          outputGuardrails: [guardrail],
+          outputGuardrails: shouldUseGuardrails ? [guardrail] : [],
           extraContext: {
             addTranscriptBreadcrumb,
           },
@@ -470,39 +462,16 @@ function App() {
   }), [sessionStatus, onToggleConnection, audioElementRef.current, sessionRef]);
 
   const handleAgentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const scenarioKey = e.target.value;
-    // Update URL without page reload using history API
+    const newAgentConfig = e.target.value;
     const url = new URL(window.location.toString());
-    url.searchParams.set("agentConfig", scenarioKey);
-    window.history.pushState({}, '', url.toString());
-    
-    // Directly update the agent configuration state
-    const agents = allAgentSets[scenarioKey];
-    if (agents) {
-      const agentKeyToUse = agents[0]?.name || "";
-      setSelectedAgentName(agentKeyToUse);
-      setSelectedAgentConfigSet(agents);
-    }
+    url.searchParams.set("agentConfig", newAgentConfig);
+    window.location.replace(url.toString());
   };
 
   const handleDockScenarioSelect = (scenarioKey: string) => {
-    // If we're connected and switching to a different scenario, disconnect first
-    if (sessionStatus === "CONNECTED" && agentSetKey !== scenarioKey) {
-      disconnectFromRealtime();
-    }
-    
-    // Update URL without page reload using history API
     const url = new URL(window.location.toString());
     url.searchParams.set("agentConfig", scenarioKey);
-    window.history.pushState({}, '', url.toString());
-    
-    // Directly update the agent configuration state
-    const agents = allAgentSets[scenarioKey];
-    if (agents) {
-      const agentKeyToUse = agents[0]?.name || "";
-      setSelectedAgentName(agentKeyToUse);
-      setSelectedAgentConfigSet(agents);
-    }
+    window.location.replace(url.toString());
   };
 
   const handleSelectedAgentChange = (
@@ -535,6 +504,19 @@ function App() {
   useEffect(() => {
     localStorage.setItem("pushToTalkActive", isPTTActive.toString());
   }, [isPTTActive]);
+
+  // Read initial values from localStorage after hydration
+  useEffect(() => {
+    const logsExpanded = localStorage.getItem('logsExpanded');
+    if (logsExpanded !== null) {
+      setIsEventsPaneExpanded(logsExpanded === 'true');
+    }
+
+    const pttActive = localStorage.getItem('pushToTalkActive');
+    if (pttActive !== null) {
+      setIsPTTActive(pttActive === 'true');
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("logsExpanded", isEventsPaneExpanded.toString());
