@@ -25,10 +25,10 @@ interface DockExampleProps {
 
 // Map dock positions to scenario keys
 const scenarioMapping = [
-    { key: "chatSupervisor", name: "Chat Supervisor" },
-    { key: "translation", name: "Translation" },
-    { key: "medicalTranslation", name: "Medical Translation" },
+    { key: "bayaanGeneral", name: "Bayaan General" },
+    { key: "simpleHandoff", name: "Simple Handoff" },
     { key: "customerServiceRetail", name: "Customer Service" },
+    { key: "chatSupervisor", name: "Chat Supervisor" },
     null, // Divider
     { key: "translationDirect", name: "Direct Translation" },
 ];

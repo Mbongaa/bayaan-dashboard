@@ -33,20 +33,17 @@ import { chatSupervisorScenario } from "@/app/agentConfigs/chatSupervisor";
 import { customerServiceRetailCompanyName } from "@/app/agentConfigs/customerServiceRetail";
 import { chatSupervisorCompanyName } from "@/app/agentConfigs/chatSupervisor";
 import { simpleHandoffScenario } from "@/app/agentConfigs/simpleHandoff";
-import { medicalTranslationScenario } from "@/app/agentConfigs/medicalTranslation";
-import { medicalTranslationCompanyName } from "@/app/agentConfigs/medicalTranslation";
-import { translationScenario } from "@/app/agentConfigs/translation";
-import { translationCompanyName } from "@/app/agentConfigs/translation";
 import { translationDirectScenario } from "@/app/agentConfigs/translationDirect";
 import { translationDirectCompanyName } from "@/app/agentConfigs/translationDirect";
+import { bayaanGeneralScenario } from "@/app/agentConfigs/bayaanGeneral";
+import { bayaanGeneralCompanyName } from "@/app/agentConfigs/bayaanGeneral";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
+  bayaanGeneral: bayaanGeneralScenario,
   simpleHandoff: simpleHandoffScenario,
   customerServiceRetail: customerServiceRetailScenario,
   chatSupervisor: chatSupervisorScenario,
-  medicalTranslation: medicalTranslationScenario,
-  translation: translationScenario,
   translationDirect: translationDirectScenario,
 };
 
@@ -332,15 +329,13 @@ function App() {
 
         const companyName = agentSetKey === 'customerServiceRetail'
           ? customerServiceRetailCompanyName
-          : agentSetKey === 'medicalTranslation'
-          ? medicalTranslationCompanyName
-          : agentSetKey === 'translation'
-          ? translationCompanyName
           : agentSetKey === 'translationDirect'
           ? translationDirectCompanyName
+          : agentSetKey === 'bayaanGeneral'
+          ? bayaanGeneralCompanyName
           : chatSupervisorCompanyName;
         // Disable guardrails for translation scenarios only
-        const shouldUseGuardrails = !['translation', 'translationDirect'].includes(agentSetKey);
+        const shouldUseGuardrails = !['translationDirect', 'bayaanGeneral'].includes(agentSetKey);
         
         // Only create guardrail if needed
         const guardrail = shouldUseGuardrails ? createModerationGuardrail(companyName) : null;
