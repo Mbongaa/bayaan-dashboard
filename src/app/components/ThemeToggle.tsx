@@ -1,57 +1,53 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { RiSunLine, RiMoonLine } from "@remixicon/react";
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
-  const [mounted, setMounted] = useState(false);
+import { cn } from "@/app/lib/utils";
+import { MoonIcon, SunIcon, SunMoonIcon } from "lucide-react";
+import { useTheme } from "next-themes";
 
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' | null;
-    setTheme(savedTheme || 'system');
-  }, []);
+export default function ThemeToggle({
+  className,
+}: {
+  className?: string;
+}) {
+  const { setTheme, theme, resolvedTheme } = useTheme();
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    // Apply theme immediately
-    const d = document.documentElement;
-    d.classList.remove('light', 'dark');
-    
-    if (newTheme === 'dark') {
-      d.style.colorScheme = 'dark';
-      d.classList.add('dark');
-    } else {
-      d.style.colorScheme = 'light';
-      d.classList.add('light');
+  const handleSwitchTheme = () => {
+    if (resolvedTheme === "dark") {
+      setTheme("light");
+    }
+    if (resolvedTheme === "light") {
+      setTheme("dark");
     }
   };
 
-  // Don't render on server to avoid hydration mismatch
-  if (!mounted) {
-    return (
-      <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4">
-        <div className="h-5 w-5" />
-      </button>
-    );
-  }
-
-  const isDark = theme === 'dark';
-
   return (
     <button
-      onClick={toggleTheme}
-      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-50 h-10 py-2 px-4"
-      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-    >
-      {isDark ? (
-        <RiSunLine className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-      ) : (
-        <RiMoonLine className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+      type="button"
+      onClick={handleSwitchTheme}
+      className={cn(
+        "group relative h-14 w-10 overflow-hidden transition rounded-full bg-neutral-50/30 dark:bg-neutral-900/30 p-2 border border-neutral-500/20",
+        "hover:scale-110 transform-gpu transition duration-150",
+        className
       )}
+      aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
+    >
+      <SunIcon
+        className={cn(
+          "size-5 text-neutral-600 transition-all dark:text-neutral-300 z-50 duration-300 absolute -translate-x-1/2 left-1/2 top-2 transform-gpu",
+          resolvedTheme === "light"
+            ? "opacity-100 translate-y-0 scale-100 group-hover:scale-75 group-hover:opacity-90"
+            : "opacity-50 -translate-y-8 scale-90  group-hover:-translate-y-3",
+        )}
+      />
+
+      <MoonIcon
+        className={cn(
+          "size-5 text-neutral-600 transition-all dark:text-neutral-300 z-50 duration-300 absolute -translate-x-1/2 left-1/2 bottom-2 transform-gpu",
+          resolvedTheme === "dark"
+            ? "opacity-100 translate-y-0 scale-100 group-hover:scale-75 group-hover:opacity-90"
+            : "opacity-50 translate-y-8 scale-75 group-hover:translate-y-3",
+        )}
+      />
     </button>
   );
 }

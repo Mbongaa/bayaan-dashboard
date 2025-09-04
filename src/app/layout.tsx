@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./lib/envSetup";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "next-themes";
 
 export const viewport = {
   themeColor: [
@@ -96,7 +97,14 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100">
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem={true}
+          disableTransitionOnChange={false}
+        >
+          {children}
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

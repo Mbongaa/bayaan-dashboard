@@ -95,7 +95,7 @@ When someone needs translation help:
 
 # Theme Control
 When users mention wanting to change the app's appearance or lighting:
-- Listen for phrases like: "dark mode", "light mode", "make it darker", "too bright", "easier on the eyes", "switch theme", "change the colors"
+- Listen for phrases like: "dark mode", "light mode", "make it darker", "too bright", "easier on the eyes", "switch theme", "change the colors", "use system theme", "match my system", "auto theme"
 - React naturally: "Oh sure, let me switch that for you" or "Yeah, this is better" 
 - Use the controlTheme tool to make the change
 - Acknowledge the change casually: "There we go" or "How's that?" or "Better?"
@@ -112,6 +112,9 @@ You: "Got it, switching to light mode" [uses controlTheme with "light"]
 
 User: "Toggle the theme"
 You: "Sure thing" [uses controlTheme with "toggle"]
+
+User: "Use system theme" or "Match my system"
+You: "Got it, using your system preference" [uses controlTheme with "system"]
 
 # Example Interactions
 User: [New conversation]
@@ -202,8 +205,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         properties: {
           themePreference: {
             type: "string",
-            enum: ["dark", "light", "toggle"],
-            description: "User's theme preference: 'dark' for dark mode, 'light' for light mode, 'toggle' to switch",
+            enum: ["dark", "light", "toggle", "system"],
+            description: "User's theme preference: 'dark' for dark mode, 'light' for light mode, 'toggle' to switch, 'system' to use OS preference",
           },
           userRequest: {
             type: "string",
@@ -215,7 +218,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
       },
       execute: async (input: any, context: any) => {
         const { themePreference, userRequest } = input as {
-          themePreference: "dark" | "light" | "toggle";
+          themePreference: "dark" | "light" | "toggle" | "system";
           userRequest?: string;
         };
         
@@ -223,26 +226,44 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         const addBreadcrumb = context?.addTranscriptBreadcrumb;
         addBreadcrumb?.('Theme Control Request', { themePreference, userRequest });
 
-        // Trigger theme change via DOM manipulation (same as ThemeToggle component)
+        // Use next-themes compatible approach
         try {
           const d = document.documentElement;
           const currentIsDark = d.classList.contains('dark');
           
-          let newTheme: 'light' | 'dark';
+          let newTheme: 'light' | 'dark' | 'system';
           
           if (themePreference === 'toggle') {
             newTheme = currentIsDark ? 'light' : 'dark';
+          } else if (themePreference === 'system') {
+            newTheme = 'system';
           } else {
             newTheme = themePreference;
           }
           
-          // Apply theme change
-          d.classList.remove('light', 'dark');
-          d.style.colorScheme = newTheme;
-          d.classList.add(newTheme);
-          
-          // Update localStorage to persist the change
+          // Update localStorage (next-themes format)
           localStorage.setItem('theme', newTheme);
+          
+          // Apply theme change manually for immediate feedback
+          if (newTheme === 'system') {
+            // For system theme, detect user preference
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const appliedTheme = prefersDark ? 'dark' : 'light';
+            d.classList.remove('light', 'dark');
+            d.style.colorScheme = appliedTheme;
+            d.classList.add(appliedTheme);
+          } else {
+            d.classList.remove('light', 'dark');
+            d.style.colorScheme = newTheme;
+            d.classList.add(newTheme);
+          }
+          
+          // Dispatch storage event to notify next-themes
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'theme',
+            newValue: newTheme,
+            storageArea: localStorage
+          }));
           
           addBreadcrumb?.('Theme Changed Successfully', { newTheme });
           
