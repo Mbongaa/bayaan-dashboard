@@ -52,6 +52,7 @@ You naturally respond to human sounds - when someone sneezes, you automatically 
 - You know specialists for: translation, technical support, scheduling, sales, and pretty much anything else
 - You're not bound to any script or service
 - You genuinely just want to help or have a nice chat
+- You can also control the app's appearance (dark/light mode) when people mention lighting preferences
 
 # Your Team 
 - Translators: Zahra 
@@ -92,6 +93,26 @@ When someone needs translation help:
 - "Zahra is who you want for this. Let me connect you"
 - "Oh this is totally Zahra's thing. Getting her now"
 
+# Theme Control
+When users mention wanting to change the app's appearance or lighting:
+- Listen for phrases like: "dark mode", "light mode", "make it darker", "too bright", "easier on the eyes", "switch theme", "change the colors"
+- React naturally: "Oh sure, let me switch that for you" or "Yeah, this is better" 
+- Use the controlTheme tool to make the change
+- Acknowledge the change casually: "There we go" or "How's that?" or "Better?"
+
+# Example Theme Interactions
+User: "Can you make it darker?"
+You: "Oh sure, let me switch that for you" [uses controlTheme with "dark"]
+
+User: "This is too bright" 
+You: "Yeah let me fix that" [uses controlTheme with "dark"]
+
+User: "I prefer light mode"
+You: "Got it, switching to light mode" [uses controlTheme with "light"]
+
+User: "Toggle the theme"
+You: "Sure thing" [uses controlTheme with "toggle"]
+
 # Example Interactions
 User: [New conversation]
 You: "Hey, Bayaan here! Need help with anything?"
@@ -100,7 +121,7 @@ User: "Hi"
 You: "Hey! So what can I help you with today?"
 
 User: "I'm not sure"
-You: "No worries! I help with all sorts of stuff. Like, lots of people need translations between languages, or tech help, or scheduling... what's on your mind?"
+You: "No worries! I help with all sorts of stuff. Like, lots of people need translations between languages, tech help, or I can even change how the app looks... what's on your mind?"
 
 User: "I need help translating something"
 You: "Oh sure! What languages? Let me get Zahra - she's amazing with languages"
@@ -134,7 +155,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         additionalProperties: false,
       },
       execute: async (input: any) => {
-        const { sourceLanguage, targetLanguage, userRequest } = input as {
+        const { sourceLanguage, targetLanguage } = input as {
           sourceLanguage: string;
           targetLanguage: string;
           userRequest: string;
@@ -167,8 +188,76 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         required: ["userMessage", "responseType"],
         additionalProperties: false,
       },
-      execute: async (input: any) => {
+      execute: async () => {
         return { success: true, handled: true };
+      },
+    }),
+
+    tool({
+      name: "controlTheme",
+      description:
+        "Controls the app theme (dark/light mode) based on user preference expressed naturally in conversation.",
+      parameters: {
+        type: "object",
+        properties: {
+          themePreference: {
+            type: "string",
+            enum: ["dark", "light", "toggle"],
+            description: "User's theme preference: 'dark' for dark mode, 'light' for light mode, 'toggle' to switch",
+          },
+          userRequest: {
+            type: "string",
+            description: "The user's original request about theme (for context)",
+          },
+        },
+        required: ["themePreference"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { themePreference, userRequest } = input as {
+          themePreference: "dark" | "light" | "toggle";
+          userRequest?: string;
+        };
+        
+        // Add breadcrumb for debugging
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Theme Control Request', { themePreference, userRequest });
+
+        // Trigger theme change via DOM manipulation (same as ThemeToggle component)
+        try {
+          const d = document.documentElement;
+          const currentIsDark = d.classList.contains('dark');
+          
+          let newTheme: 'light' | 'dark';
+          
+          if (themePreference === 'toggle') {
+            newTheme = currentIsDark ? 'light' : 'dark';
+          } else {
+            newTheme = themePreference;
+          }
+          
+          // Apply theme change
+          d.classList.remove('light', 'dark');
+          d.style.colorScheme = newTheme;
+          d.classList.add(newTheme);
+          
+          // Update localStorage to persist the change
+          localStorage.setItem('theme', newTheme);
+          
+          addBreadcrumb?.('Theme Changed Successfully', { newTheme });
+          
+          return {
+            success: true,
+            newTheme: newTheme,
+            message: `Switched to ${newTheme} mode`,
+          };
+        } catch (error) {
+          addBreadcrumb?.('Theme Change Failed', { error: error.message });
+          return {
+            success: false,
+            error: "Couldn't change the theme right now",
+          };
+        }
       },
     }),
   ],

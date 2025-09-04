@@ -31,7 +31,8 @@
       "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/**)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:openai.github.io)"
+      "WebFetch(domain:openai.github.io)",
+      "WebFetch(domain:platform.openai.com)"
     ],
     "deny": [],
     "ask": []
