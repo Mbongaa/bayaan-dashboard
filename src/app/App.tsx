@@ -340,7 +340,7 @@ function App() {
         // Create appropriate guardrail based on scenario
         const guardrail = !shouldUseGuardrails ? null
           : agentSetKey === 'bayaanGeneral' 
-            ? createZahraTranslationGuardrail(companyName)
+            ? createZahraTranslationGuardrail()
             : createModerationGuardrail(companyName);
 
         await connect({

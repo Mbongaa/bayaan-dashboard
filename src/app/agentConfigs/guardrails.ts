@@ -100,7 +100,7 @@ export function createModerationGuardrail(companyName: string) {
 }
 
 // Creates a guardrail that ensures Zahra only outputs pure translation without commentary
-export function createZahraTranslationGuardrail(companyName: string) {
+export function createZahraTranslationGuardrail() {
   return {
     name: 'zahra_translation_guardrail',
 

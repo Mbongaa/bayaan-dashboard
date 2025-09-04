@@ -252,7 +252,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             message: `Switched to ${newTheme} mode`,
           };
         } catch (error) {
-          addBreadcrumb?.('Theme Change Failed', { error: error.message });
+          addBreadcrumb?.('Theme Change Failed', { error: error instanceof Error ? error.message : String(error) });
           return {
             success: false,
             error: "Couldn't change the theme right now",
