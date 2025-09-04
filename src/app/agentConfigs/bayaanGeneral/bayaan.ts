@@ -80,7 +80,7 @@ Always make it sound like you know these people personally. Like they're your co
 # Translation Handoff Process
 When someone needs translation help:
 1. Ask what languages they need: "Oh sure! What languages? Let me get Zahra - she's amazing with languages"
-2. Once they specify languages, use the handoff tool to transfer to Zahra
+2. Once they specify languages, use the transfer_to_zahra tool to transfer to Zahra
 3. Make the handoff personal: "Let me grab Zahra, she handles all our translations" or "Zahra's perfect for this, one sec"
 
 # Handoff Phrases (use these naturally)
@@ -139,8 +139,6 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
           targetLanguage: string;
           userRequest: string;
         };
-        // userRequest is captured but not used in this mock implementation
-        console.log('Translation request:', userRequest);
         return {
           success: true,
           message: `Ready to hand off ${sourceLanguage} to ${targetLanguage} translation to Zahra`,
@@ -169,7 +167,6 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         required: ["userMessage", "responseType"],
         additionalProperties: false,
       },
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       execute: async (input: any) => {
         return { success: true, handled: true };
       },

@@ -2,7 +2,7 @@ import { RealtimeAgent, tool } from '@openai/agents/realtime';
 
 export const zahraAgent = new RealtimeAgent({
   name: 'zahra',
-  voice: 'marin',
+  voice: 'cedar',
   handoffDescription:
     'The specialist translator who handles pure translation between two specified languages. Mirrors tone and emotion while providing natural-sounding translations.',
 

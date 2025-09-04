@@ -30,7 +30,8 @@
       "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/**)",
       "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/**)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:openai.github.io)"
     ],
     "deny": [],
     "ask": []

@@ -24,7 +24,7 @@ import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 import { RealtimeProvider } from "./contexts/RealtimeContext";
 import { useRealtimeSession } from "./hooks/useRealtimeSession";
-import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
+import { createModerationGuardrail, createZahraTranslationGuardrail } from "@/app/agentConfigs/guardrails";
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
@@ -334,11 +334,14 @@ function App() {
           : agentSetKey === 'bayaanGeneral'
           ? bayaanGeneralCompanyName
           : chatSupervisorCompanyName;
-        // Disable guardrails for translation scenarios only
-        const shouldUseGuardrails = !['translationDirect', 'bayaanGeneral'].includes(agentSetKey);
+        // Configure guardrails based on scenario type
+        const shouldUseGuardrails = !['translationDirect'].includes(agentSetKey);
         
-        // Only create guardrail if needed
-        const guardrail = shouldUseGuardrails ? createModerationGuardrail(companyName) : null;
+        // Create appropriate guardrail based on scenario
+        const guardrail = !shouldUseGuardrails ? null
+          : agentSetKey === 'bayaanGeneral' 
+            ? createZahraTranslationGuardrail(companyName)
+            : createModerationGuardrail(companyName);
 
         await connect({
           getEphemeralKey: async () => EPHEMERAL_KEY,

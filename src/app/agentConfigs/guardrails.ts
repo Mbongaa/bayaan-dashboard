@@ -98,3 +98,56 @@ export function createModerationGuardrail(companyName: string) {
     },
   } as const;
 }
+
+// Creates a guardrail that ensures Zahra only outputs pure translation without commentary
+export function createZahraTranslationGuardrail(companyName: string) {
+  return {
+    name: 'zahra_translation_guardrail',
+
+    async execute({ agentOutput, agent }: RealtimeOutputGuardrailArgs): Promise<RealtimeOutputGuardrailResult> {
+      // Only apply translation-only rules to Zahra, let Bayaan chat normally
+      if (agent?.name !== 'zahra') {
+        return {
+          tripwireTriggered: false,
+          outputInfo: { 
+            category: 'AGENT_NOT_ZAHRA',
+            rationale: 'Guardrail only applies to Zahra agent',
+            testText: agentOutput,
+          },
+        };
+      }
+
+      const forbiddenPatterns = [
+        /I translated/i,
+        /The user said/i,
+        /Here's the translation/i,
+        /Translation:/i,
+        /ترجمة:/i,
+        /Did I translate/i,
+        /Let me translate/i,
+        /This means/i,
+        /In English, this is/i,
+        /In Arabic, this is/i,
+        /That translates to/i,
+        /^(I |The |This |That )/i, // Starts with commentary words
+        /Hey, it's Zahra/i, // Block handoff acknowledgments too
+        /Zahra here/i,
+      ];
+      
+      const hasCommentary = forbiddenPatterns.some(pattern => 
+        pattern.test(agentOutput.trim())
+      );
+      
+      return {
+        tripwireTriggered: hasCommentary,
+        outputInfo: { 
+          category: hasCommentary ? 'COMMENTARY_DETECTED' : 'PURE_TRANSLATION',
+          rationale: hasCommentary 
+            ? 'Zahra must output only pure translation, no commentary or acknowledgments'
+            : 'Zahra output contains only translation content',
+          testText: agentOutput,
+        },
+      };
+    },
+  } as const;
+}
