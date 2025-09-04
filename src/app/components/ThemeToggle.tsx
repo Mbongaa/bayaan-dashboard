@@ -1,15 +1,21 @@
 "use client";
 
 import { cn } from "@/app/lib/utils";
-import { MoonIcon, SunIcon, SunMoonIcon } from "lucide-react";
+import { MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export default function ThemeToggle({
   className,
 }: {
   className?: string;
 }) {
-  const { setTheme, theme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSwitchTheme = () => {
     if (resolvedTheme === "dark") {
@@ -19,6 +25,29 @@ export default function ThemeToggle({
       setTheme("dark");
     }
   };
+
+  // Show a neutral state until hydration is complete
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        className={cn(
+          "group relative h-14 w-10 overflow-hidden transition rounded-full bg-neutral-50/30 dark:bg-neutral-900/30 p-2 border border-neutral-500/20",
+          "hover:scale-110 transform-gpu transition duration-150",
+          className
+        )}
+        aria-label="Toggle theme"
+        disabled
+      >
+        <SunIcon
+          className="size-5 text-neutral-600 dark:text-neutral-300 opacity-50 absolute -translate-x-1/2 left-1/2 top-2 transform-gpu"
+        />
+        <MoonIcon
+          className="size-5 text-neutral-600 dark:text-neutral-300 opacity-50 absolute -translate-x-1/2 left-1/2 bottom-2 transform-gpu"
+        />
+      </button>
+    );
+  }
 
   return (
     <button
