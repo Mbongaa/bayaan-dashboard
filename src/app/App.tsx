@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import MiniOrb from "./components/MiniOrb";
 import DockExample from "./components/DockExample";
+import { DashboardSidebar } from "./components/DashboardSidebar";
 
 // UI components
 import Transcript from "./components/Transcript";
@@ -12,7 +12,6 @@ import Events from "./components/Events";
 import { PromptBox } from "./components/ui/chatgpt-prompt-input";
 import AudioVisualizationSection from "./components/AudioVisualizationSection";
 import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
-import ThemeToggle from "./components/ThemeToggle";
 import Galaxy from "./components/Galaxy";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -50,6 +49,7 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 import { useMobileAudio } from "./hooks/useMobileAudio";
+import PTTPortal from "./components/PTTPortal";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -120,6 +120,8 @@ function App() {
   const [userText, setUserText] = useState<string>("");
   const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
+  
+  // Removed PTT portal state - now handled in PTTPortal component
   
   // VAD Settings
   const [vadType, setVadType] = useState<'server_vad' | 'semantic_vad' | 'disabled'>('semantic_vad');
@@ -224,6 +226,8 @@ function App() {
   };
 
   useHandleSessionHistory();
+
+  // PTT portal target now handled in PTTPortal component
 
   // Monitor theme changes for dynamic Galaxy colors
   useEffect(() => {
@@ -596,82 +600,95 @@ function App() {
   const agentSetKey = searchParams.get("agentConfig") || "default";
 
   return (
-    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
-      {/* Galaxy Background */}
+    <div className="text-base h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
+      {/* Galaxy Background - Covers entire screen */}
       <div className="fixed inset-0 z-0" style={{ pointerEvents: 'auto' }}>
         <Galaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
       </div>
       
-      <div className="p-5 text-2xl font-semibold flex justify-between items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
-        <div
-          className="flex items-center cursor-pointer pointer-events-auto"
-          onClick={() => window.location.reload()}
-        >
-          <div className="mr-2">
-            <MiniOrb />
+      {/* Layout wrapper to ensure proper CSS selector relationships */}
+      <div className="dashboard-layout">
+        {/* Sidebar - Fixed positioning, no layout impact */}
+        <DashboardSidebar />
+        
+        {/* Main Content Area - Fixed positioning with CSS-controlled offset */}
+        <div className="main-content-area fixed top-0 right-0 bottom-0 flex flex-col z-10">
+        <div className="p-5 text-2xl font-semibold flex justify-end items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
+          {/* Theme toggle moved to sidebar */}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
+          {/* Desktop: Layered Layout (above 1200px) */}
+          <div className="hidden xl:contents">
+            {/* Transcript and Events - Background layer for desktop */}
+            <div className="absolute right-0 flex gap-2 overflow-hidden pointer-events-auto z-10 pl-6" style={{ left: '0px', top: '80px', bottom: '120px' }}>
+              <Transcript />
+              <Events isExpanded={isEventsPaneExpanded} />
+            </div>
+
+            {/* 3D Audio Visualization - Floating above transcript for desktop */}
+            <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden pointer-events-auto z-20">
+              <RealtimeProvider 
+                value={realtimeContextValue}
+              >
+                <AudioVisualizationSection
+                  intensity={3.5}
+                  className="w-full h-full"
+                />
+              </RealtimeProvider>
+            </div>
           </div>
-          <div style={{ letterSpacing: '-1.3px' }}>
-            bayaan<span className="text-gray-500 dark:text-gray-400">.ai</span>
+
+          {/* Mobile/Tablet/Small Desktop: Stacked Layout (1200px and below) */}
+          <div className="xl:hidden flex flex-1 flex-col gap-2 overflow-hidden">
+            {/* Top half: 3D Audio Visualization */}
+            <div className="flex-1 min-h-0 max-h-full overflow-hidden pointer-events-auto">
+              <RealtimeProvider 
+                value={realtimeContextValue}
+              >
+                <AudioVisualizationSection
+                  intensity={3.5}
+                  className="w-full h-full"
+                />
+              </RealtimeProvider>
+            </div>
+
+            {/* Bottom half: Transcript and Events */}
+            <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
+              <Transcript />
+              <Events isExpanded={isEventsPaneExpanded} />
+            </div>
           </div>
         </div>
         
-        <div className="flex items-center gap-4 pointer-events-auto">
-          <ThemeToggle />
-        </div>
-      </div>
-
-
-      <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
-        {/* Top half: 3D Audio Visualization */}
-        <div className="flex-1 min-h-0 max-h-full overflow-hidden pointer-events-auto">
-          <RealtimeProvider 
-            value={realtimeContextValue}
-          >
-            <AudioVisualizationSection
-              intensity={3.5}
-              className="w-full h-full"
-              isPTTActive={isPTTActive}
-              isRecordingActive={isRecordingActive}
-              onToggleRecording={handleToggleRecording}
-              isDarkMode={isDarkMode}
+        <div className="relative z-10 px-4 pt-4 pb-[5px] bg-transparent">
+          <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
+            <PromptBox 
+              value={userText}
+              onChange={(e) => setUserText(e.target.value)}
+              placeholder="Type your message..."
             />
-          </RealtimeProvider>
+          </form>
         </div>
 
-        {/* Bottom half: Transcript and Events */}
-        <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
-          <Transcript />
-
-          <Events isExpanded={isEventsPaneExpanded} />
+        {/* Horizontal Dock at Bottom */}
+        {isDockVisible && (
+          <div className="relative z-10 flex justify-center py-2 pointer-events-auto">
+            <RealtimeProvider 
+              value={realtimeContextValue}
+            >
+              <DockExample 
+                onScenarioSelect={handleDockScenarioSelect}
+                onDisconnect={disconnectFromRealtime}
+                selectedScenario={agentSetKey}
+                isConnected={sessionStatus === "CONNECTED"}
+              />
+            </RealtimeProvider>
+          </div>
+        )}
         </div>
       </div>
-
-      <div className="relative z-10 px-4 pt-4 pb-[5px] bg-transparent">
-        <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
-          <PromptBox 
-            value={userText}
-            onChange={(e) => setUserText(e.target.value)}
-            placeholder="Type your message..."
-          />
-        </form>
-      </div>
-
-      {/* Horizontal Dock at Bottom */}
-      {isDockVisible && (
-        <div className="relative z-10 flex justify-center py-2 pointer-events-auto">
-          <RealtimeProvider 
-            value={realtimeContextValue}
-          >
-            <DockExample 
-              onScenarioSelect={handleDockScenarioSelect}
-              onDisconnect={disconnectFromRealtime}
-              selectedScenario={agentSetKey}
-              isConnected={sessionStatus === "CONNECTED"}
-            />
-          </RealtimeProvider>
-        </div>
-      )}
-
+      
       {/* Settings Menu - portaled into chatbox */}
       <ChatboxSettingsMenu
         agentSetKey={agentSetKey}
@@ -707,6 +724,16 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* Single PTT Icon - Rendered via Portal with RealtimeProvider context */}
+      <RealtimeProvider value={realtimeContextValue}>
+        <PTTPortal
+          isPTTActive={isPTTActive}
+          isRecordingActive={isRecordingActive}
+          onToggleRecording={handleToggleRecording}
+          isDarkMode={isDarkMode}
+        />
+      </RealtimeProvider>
     </div>
   );
 }

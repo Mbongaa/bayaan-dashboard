@@ -35,7 +35,8 @@
       "WebFetch(domain:platform.openai.com)",
       "Bash(pkill:*)",
       "Bash(fuser:*)",
-      "Bash(sudo fuser:*)"
+      "Bash(sudo fuser:*)",
+      "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/0. real-time-agents/realtime-translation-agent/Screenshots/**)"
     ],
     "deny": [],
     "ask": []

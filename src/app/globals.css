@@ -226,3 +226,49 @@ body {
     font-size: 16px; /* Prevents zoom on iOS */
   }
 }
+
+/* ======================================
+   SIDEBAR CSS-ONLY ANIMATIONS
+   ====================================== */
+
+/* CSS Custom Properties for dynamic sidebar behavior */
+:root {
+  --sidebar-width: 60px;
+  --sidebar-expanded-width: 300px;
+}
+
+/* Main content area responds to sidebar state with CSS variables */
+.main-content-area {
+  left: var(--sidebar-width);
+  transition: left 300ms ease-in-out;
+}
+
+/* When sidebar is hovered, update CSS variables */
+.sidebar-container:hover {
+  --sidebar-width: var(--sidebar-expanded-width);
+}
+
+/* Apply the variable change to main content via layout wrapper */
+.dashboard-layout .sidebar-container:hover ~ .main-content-area {
+  left: var(--sidebar-expanded-width);
+}
+
+/* Show sidebar labels only on sidebar hover */
+.sidebar-container:hover .sidebar-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.sidebar-label {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px);
+  transition: opacity 300ms ease-in-out, visibility 300ms ease-in-out, transform 300ms ease-in-out;
+}
+
+/* Ensure smooth transitions without layout shifts */
+.sidebar-container,
+.main-content-area {
+  will-change: transform;
+}
