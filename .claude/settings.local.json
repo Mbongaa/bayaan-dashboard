@@ -42,7 +42,12 @@
       "Bash(timeout 20s npm run dev)",
       "Bash(timeout 15s npm run dev)",
       "Read(//mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/**)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(cd:*)",
+      "Bash(chmod:*)",
+      "Bash(./update-imports.sh)",
+      "Bash(timeout 10s npm run dev)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

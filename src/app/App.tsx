@@ -3,29 +3,29 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import DockExample from "./components/DockExample";
-import { DashboardSidebar } from "./components/DashboardSidebar";
+import DockExample from "./dashboard/components/navigation/DockExample";
+import { DashboardSidebar } from "./dashboard/components/navigation/DashboardSidebar";
 
 // UI components
-import Transcript from "./components/Transcript";
-import Events from "./components/Events";
-import { PromptBox } from "./components/ui/chatgpt-prompt-input";
-import AudioVisualizationSection from "./components/AudioVisualizationSection";
-import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
-import Galaxy from "./components/Galaxy";
-import ImprovedServicedGalaxy from "./components/ImprovedServicedGalaxy";
-import PWAInstallPrompt from "./components/PWAInstallPrompt";
-import WebRTCServiceTest from "./components/WebRTCServiceTest";
-import ServiceLayerDemo from "./components/ServiceLayerDemo";
+import Transcript from "./foundation/components/Transcript";
+import Events from "./foundation/components/Events";
+import { PromptBox } from "./shared/components/chatgpt-prompt-input";
+import AudioVisualizationSection from "./foundation/components/AudioVisualizationSection";
+import ChatboxSettingsMenu from "./foundation/components/ChatboxSettingsMenu";
+import Galaxy from "./foundation/components/Galaxy";
+import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGalaxy";
+import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
+import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
+import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
 // Types
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Context providers & hooks
-import { useTranscript } from "@/app/contexts/TranscriptContext";
-import { useEvent } from "@/app/contexts/EventContext";
-import { RealtimeProvider } from "./contexts/RealtimeContext";
-import { useRealtimeSession } from "./hooks/useRealtimeSession";
+import { useTranscript } from "@/app/foundation/contexts/TranscriptContext";
+import { useEvent } from "@/app/foundation/contexts/EventContext";
+import { RealtimeProvider } from "./foundation/contexts/RealtimeContext";
+import { useRealtimeSession } from "./foundation/hooks/useRealtimeSession";
 import { createModerationGuardrail, createZahraTranslationGuardrail } from "@/app/agentConfigs/guardrails";
 
 // Agent configs
@@ -49,13 +49,13 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
   translationDirect: translationDirectScenario,
 };
 
-import useAudioDownload from "./hooks/useAudioDownload";
-import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
-import { useMobileAudio } from "./hooks/useMobileAudio";
-import PTTPortal from "./components/PTTPortal";
+import useAudioDownload from "./foundation/hooks/useAudioDownload";
+import { useHandleSessionHistory } from "./foundation/hooks/useHandleSessionHistory";
+import { useMobileAudio } from "./foundation/hooks/useMobileAudio";
+import PTTPortal from "./foundation/components/PTTPortal";
 
 // Foundation Services
-import { foundationServices } from "./services/FoundationServices";
+import { foundationServices } from "./foundation/services/FoundationServices";
 
 function App() {
   const searchParams = useSearchParams()!;
