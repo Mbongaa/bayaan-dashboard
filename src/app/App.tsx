@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import DockExample from "./dashboard/components/navigation/DockExample";
 import { DashboardSidebar } from "./dashboard/components/navigation/DashboardSidebar";
+import DashboardContentRenderer from "./dashboard/components/DashboardContentRenderer";
 
 // UI components
 import Transcript from "./foundation/components/Transcript";
@@ -162,6 +163,14 @@ function App() {
     },
   );
 
+  // Dashboard state management
+  const [selectedDashboardItem, setSelectedDashboardItem] = useState<string | null>(null);
+  const [dashboardContentMode, setDashboardContentMode] = useState<'voice' | 'dashboard'>('voice');
+  const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
+  
+  // Foundation UI mode - controls how foundation components are organized
+  const [foundationUIMode, setFoundationUIMode] = useState<'default' | 'compact'>('default');
+
   // Theme detection for dynamic Galaxy colors
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -169,7 +178,7 @@ function App() {
   });
 
   // Test toggle for Galaxy implementations (development only)
-  const [useImprovedGalaxy, setUseImprovedGalaxy] = useState<boolean>(false);
+  const [useImprovedGalaxy, setUseImprovedGalaxy] = useState<boolean>(true);
   const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   // Hydration effect - load localStorage values after client mount
@@ -532,6 +541,25 @@ function App() {
     window.location.replace(url.toString());
   };
 
+  // Dashboard menu selection handlers
+  const handleDashboardMenuSelect = (menuItem: string) => {
+    if (menuItem === 'logout') {
+      // Handle logout logic - for now, just log
+      console.log('Logout clicked');
+      return;
+    }
+    
+    setSelectedDashboardItem(menuItem);
+    setDashboardContentMode('dashboard');
+    setFoundationUIMode('compact'); // Switch foundation to compact mode
+  };
+
+  const handleBackToVoice = () => {
+    setSelectedDashboardItem(null);
+    setDashboardContentMode('voice');
+    setFoundationUIMode('default'); // Switch foundation back to default mode
+  };
+
   useEffect(() => {
     const storedAudioPlaybackEnabled = localStorage.getItem(
       "audioPlaybackEnabled"
@@ -651,7 +679,26 @@ function App() {
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="dashboard-layout">
         {/* Sidebar - Fixed positioning, no layout impact */}
-        <DashboardSidebar />
+        <div 
+          onMouseEnter={() => setIsSidebarHovered(true)}
+          onMouseLeave={() => setIsSidebarHovered(false)}
+        >
+          <DashboardSidebar 
+            selectedItem={selectedDashboardItem}
+            onMenuSelect={handleDashboardMenuSelect}
+            onBackToVoice={handleBackToVoice}
+          />
+        </div>
+        
+        {/* Dashboard Component Overlay - JavaScript-controlled responsive positioning */}
+        {dashboardContentMode === 'dashboard' && (
+          <div className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-3xl shadow-lg pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}>
+            <DashboardContentRenderer 
+              selectedItem={selectedDashboardItem}
+              onBackToVoice={handleBackToVoice}
+            />
+          </div>
+        )}
         
         {/* Main Content Area - Fixed positioning with CSS-controlled offset */}
         <div className="main-content-area fixed top-0 right-0 bottom-0 flex flex-col z-10">
@@ -659,7 +706,7 @@ function App() {
           {/* Theme toggle moved to sidebar */}
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
+        <div className="flex flex-1 flex-col gap-2 px-2 overflow-visible relative z-10 pointer-events-none">
           {/* Desktop: Layered Layout (above 1200px) */}
           <div className="hidden xl:contents">
             {/* Transcript and Events - Background layer for desktop */}
@@ -668,14 +715,15 @@ function App() {
               <Events isExpanded={isEventsPaneExpanded} />
             </div>
 
-            {/* 3D Audio Visualization - Floating above transcript for desktop */}
-            <div className="absolute top-0 left-0 right-0 h-1/2 overflow-hidden pointer-events-auto z-20">
+            {/* 3D Audio Visualization - Spans from top to current bottom boundary */}
+            <div className="absolute top-0 left-0 right-0 bottom-1/2 overflow-visible pointer-events-auto z-20">
               <RealtimeProvider 
                 value={realtimeContextValue}
               >
                 <AudioVisualizationSection
                   intensity={3.5}
                   className="w-full h-full"
+                  uiMode={foundationUIMode}
                 />
               </RealtimeProvider>
             </div>
@@ -691,6 +739,7 @@ function App() {
                 <AudioVisualizationSection
                   intensity={3.5}
                   className="w-full h-full"
+                  uiMode={foundationUIMode}
                 />
               </RealtimeProvider>
             </div>
@@ -728,6 +777,7 @@ function App() {
             </RealtimeProvider>
           </div>
         )}
+        
         </div>
       </div>
       
@@ -767,14 +817,14 @@ function App() {
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
 
-      {/* WebRTC Service Test (development only) */}
-      <WebRTCServiceTest 
+      {/* WebRTC Service Test (development only) - HIDDEN */}
+      {/* <WebRTCServiceTest 
         useImprovedGalaxy={useImprovedGalaxy} 
         setUseImprovedGalaxy={setUseImprovedGalaxy} 
-      />
+      /> */}
 
-      {/* Service Layer Demo (development only) */}
-      <ServiceLayerDemo />
+      {/* Service Layer Demo (development only) - HIDDEN */}
+      {/* <ServiceLayerDemo /> */}
 
       {/* Single PTT Icon - Rendered via Portal with RealtimeProvider context */}
       <RealtimeProvider value={realtimeContextValue}>

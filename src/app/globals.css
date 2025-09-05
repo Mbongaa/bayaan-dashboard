@@ -64,6 +64,19 @@ body {
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
+/* Dashboard responsive positioning - JavaScript controlled */
+.dashboard-overlay {
+  transition: left 300ms ease-in-out;
+}
+
+.dashboard-overlay-collapsed {
+  left: 96px; /* 60px + 16px margin + 20px gap */
+}
+
+.dashboard-overlay-expanded {
+  left: 340px; /* 300px + 16px margin + 20px gap + 4px extra */
+}
+
 /* Animation keyframes for dropdown menu */
 @keyframes hide {
   from {

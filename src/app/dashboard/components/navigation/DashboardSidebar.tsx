@@ -6,32 +6,38 @@ import Link from "next/link";
 import MiniOrb from "../../../foundation/components/MiniOrb";
 import ThemeToggle from "../../../shared/components/ThemeToggle";
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  selectedItem: string | null;
+  onMenuSelect: (menuItem: string) => void;
+  onBackToVoice?: () => void;
+}
+
+export function DashboardSidebar({ selectedItem, onMenuSelect, onBackToVoice }: DashboardSidebarProps) {
   const links = [
     {
+      id: "dashboard",
       label: "Dashboard",
-      href: "#",
       icon: (
         <LayoutDashboard className="text-gray-700 dark:text-gray-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
+      id: "profile",
       label: "Profile",
-      href: "#",
       icon: (
         <UserCog className="text-gray-700 dark:text-gray-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
+      id: "settings",
       label: "Settings",
-      href: "#",
       icon: (
         <Settings className="text-gray-700 dark:text-gray-200 h-5 w-5 flex-shrink-0" />
       ),
     },
     {
+      id: "logout",
       label: "Logout",
-      href: "#",
       icon: (
         <LogOut className="text-gray-700 dark:text-gray-200 h-5 w-5 flex-shrink-0" />
       ),
@@ -42,10 +48,15 @@ export function DashboardSidebar() {
     <Sidebar>
       <SidebarBody>
         <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-          <Logo />
+          <Logo onBackToVoice={onBackToVoice} />
           <div className="mt-8 flex flex-col gap-2">
             {links.map((link, idx) => (
-              <SidebarLink key={idx} link={link} />
+              <MenuLink 
+                key={idx} 
+                link={link} 
+                isSelected={selectedItem === link.id}
+                onClick={() => onMenuSelect(link.id)}
+              />
             ))}
           </div>
         </div>
@@ -75,12 +86,20 @@ export function DashboardSidebar() {
 }
 
 // Static logo - no conditional rendering, no animations
-export const Logo = () => {
+export const Logo = ({ onBackToVoice }: { onBackToVoice?: () => void }) => {
+  const handleLogoClick = () => {
+    if (onBackToVoice) {
+      onBackToVoice();
+    } else {
+      window.location.reload();
+    }
+  };
+
   return (
     <Link
       href="#"
       className="font-normal flex items-center text-2xl text-gray-800 dark:text-gray-100 py-1 relative z-20 group min-w-[28px]"
-      onClick={() => window.location.reload()}
+      onClick={handleLogoClick}
     >
       {/* MiniOrb container - always visible, positioned for collapsed state */}
       <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
@@ -93,5 +112,50 @@ export const Logo = () => {
         </span>
       </div>
     </Link>
+  );
+};
+
+// Custom menu link component with selection state and click handling
+interface MenuLinkProps {
+  link: {
+    id: string;
+    label: string;
+    icon: React.ReactNode;
+  };
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+const MenuLink = ({ link, isSelected, onClick }: MenuLinkProps) => {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center py-2 group relative w-full text-left
+        min-w-[28px] hover:min-w-[260px]
+        transition-all duration-300
+        ${isSelected 
+          ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' 
+          : 'hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+        }
+        rounded-lg px-2
+      `}
+    >
+      {/* Icon container - always visible, centered in collapsed state */}
+      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+        {link.icon}
+      </div>
+      {/* Label - hidden by default, shown on parent sidebar hover */}
+      <span className={`
+        sidebar-label text-sm whitespace-nowrap ml-2 
+        group-hover:translate-x-1 transition-transform duration-300
+        ${isSelected 
+          ? 'text-blue-600 dark:text-blue-400 font-medium' 
+          : 'text-gray-700 dark:text-gray-200'
+        }
+      `}>
+        {link.label}
+      </span>
+    </button>
   );
 };
