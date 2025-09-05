@@ -36,7 +36,10 @@
       "Bash(pkill:*)",
       "Bash(fuser:*)",
       "Bash(sudo fuser:*)",
-      "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/0. real-time-agents/realtime-translation-agent/Screenshots/**)"
+      "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/0. real-time-agents/realtime-translation-agent/Screenshots/**)",
+      "Bash(timeout 30s npm run dev)",
+      "Bash(timeout 30s npm run build)",
+      "Bash(timeout 20s npm run dev)"
     ],
     "deny": [],
     "ask": []

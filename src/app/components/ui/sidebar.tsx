@@ -75,7 +75,6 @@ export const DesktopSidebar = ({
 
 // Mobile sidebar with minimal JavaScript
 export const MobileSidebar = ({
-  className,
   children,
   ...props
 }: React.ComponentProps<"div">) => {

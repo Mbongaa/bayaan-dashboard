@@ -30,16 +30,16 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
 }) => {
   const [siriWaveConfig, setSiriWaveConfig] = useState<IReactSiriwaveProps>({
     theme: "ios9",
-    ratio: 1,
+    ratio: 1.5,
     speed: 0.2,
     amplitude: 1,
     frequency: 6,
     color: isDarkMode ? '#ef4444' : '#dc2626',
     cover: true, // Use cover mode to fill container
     width: 800, // Large width, but cover mode will make it responsive
-    height: 32,
+    height: 48,
     autostart: true,
-    pixelDepth: 1,
+    pixelDepth: 2,
     lerpSpeed: 0.1,
   });
 
@@ -61,9 +61,9 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
     setSiriWaveConfig(prevConfig => ({
       ...prevConfig,
       color: baseColor,
-      amplitude: isShowingActiveState ? Math.max(volumeLevel * 60, 5.0) : 0,
-      speed: isShowingActiveState ? Math.max(volumeLevel * 8, 0.2) : 0,
-      frequency: isShowingActiveState ? Math.max(volumeLevel * 10, 2.0) : 0,
+      amplitude: isShowingActiveState ? Math.max(volumeLevel * 120, 4.0) : 0,
+      speed: isShowingActiveState ? Math.max(volumeLevel * 12, 0.15) : 0,
+      frequency: isShowingActiveState ? Math.max(volumeLevel * 15, 1.0) : 0,
     }));
   }, [volumeLevel, isShowingActiveState, isDarkMode, isManualMode]);
 
@@ -175,7 +175,7 @@ const StandalonePTTIcon: React.FC<StandalonePTTIconProps> = ({
             </motion.button>
             
             {/* Audio visualizer */}
-            <div className="flex-1 rounded-lg overflow-hidden w-full flex items-center justify-center">
+            <div className="flex-1 rounded-lg overflow-hidden w-full h-12 flex items-center justify-center">
               <ReactSiriwave {...siriWaveConfig} />
             </div>
             

@@ -14,6 +14,7 @@ import AudioVisualizationSection from "./components/AudioVisualizationSection";
 import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
 import Galaxy from "./components/Galaxy";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import WebRTCServiceTest from "./components/WebRTCServiceTest";
 
 // Types
 import type { RealtimeAgent } from '@openai/agents/realtime';
@@ -50,6 +51,9 @@ import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 import { useMobileAudio } from "./hooks/useMobileAudio";
 import PTTPortal from "./components/PTTPortal";
+
+// Foundation Services
+import { foundationServices } from "./services/FoundationServices";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -226,6 +230,19 @@ function App() {
   };
 
   useHandleSessionHistory();
+
+  // Initialize Foundation Services once on app startup
+  useEffect(() => {
+    foundationServices.initialize().catch(error => {
+      console.error('[App] Failed to initialize foundation services:', error);
+    });
+
+    // Cleanup on app unmount (shouldn't happen but good practice)
+    return () => {
+      // Don't shutdown on unmount as services need to persist
+      // Only shutdown would be on actual application close/refresh
+    };
+  }, []);
 
   // PTT portal target now handled in PTTPortal component
 
@@ -724,6 +741,9 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+
+      {/* WebRTC Service Test (development only) */}
+      <WebRTCServiceTest />
 
       {/* Single PTT Icon - Rendered via Portal with RealtimeProvider context */}
       <RealtimeProvider value={realtimeContextValue}>
