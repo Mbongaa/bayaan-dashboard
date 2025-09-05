@@ -13,8 +13,10 @@ import { PromptBox } from "./components/ui/chatgpt-prompt-input";
 import AudioVisualizationSection from "./components/AudioVisualizationSection";
 import ChatboxSettingsMenu from "./components/ChatboxSettingsMenu";
 import Galaxy from "./components/Galaxy";
+import ImprovedServicedGalaxy from "./components/ImprovedServicedGalaxy";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import WebRTCServiceTest from "./components/WebRTCServiceTest";
+import ServiceLayerDemo from "./components/ServiceLayerDemo";
 
 // Types
 import type { RealtimeAgent } from '@openai/agents/realtime';
@@ -165,6 +167,25 @@ function App() {
     if (typeof window === 'undefined') return false;
     return document.documentElement.classList.contains('dark');
   });
+
+  // Test toggle for Galaxy implementations (development only)
+  const [useImprovedGalaxy, setUseImprovedGalaxy] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
+
+  // Hydration effect - load localStorage values after client mount
+  useEffect(() => {
+    setIsHydrated(true);
+    const stored = localStorage.getItem('useImprovedGalaxy');
+    if (stored !== null) {
+      setUseImprovedGalaxy(stored === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem('useImprovedGalaxy', useImprovedGalaxy.toString());
+    }
+  }, [useImprovedGalaxy, isHydrated]);
 
   // 🎛️ GALAXY CONFIGURATION - Separate settings for each mode
   const GALAXY_CONFIG = {
@@ -620,7 +641,11 @@ function App() {
     <div className="text-base h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
       {/* Galaxy Background - Covers entire screen */}
       <div className="fixed inset-0 z-0" style={{ pointerEvents: 'auto' }}>
-        <Galaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
+        {useImprovedGalaxy ? (
+          <ImprovedServicedGalaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
+        ) : (
+          <Galaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
+        )}
       </div>
       
       {/* Layout wrapper to ensure proper CSS selector relationships */}
@@ -743,7 +768,13 @@ function App() {
       <PWAInstallPrompt />
 
       {/* WebRTC Service Test (development only) */}
-      <WebRTCServiceTest />
+      <WebRTCServiceTest 
+        useImprovedGalaxy={useImprovedGalaxy} 
+        setUseImprovedGalaxy={setUseImprovedGalaxy} 
+      />
+
+      {/* Service Layer Demo (development only) */}
+      <ServiceLayerDemo />
 
       {/* Single PTT Icon - Rendered via Portal with RealtimeProvider context */}
       <RealtimeProvider value={realtimeContextValue}>

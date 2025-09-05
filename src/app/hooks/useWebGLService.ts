@@ -80,6 +80,26 @@ export function useWebGLService(
     }
 
     console.log(`[useWebGLService] Got context: ${contextId}`);
+
+    // Force re-render to update component state
+    // This is needed because the context might be created before the component is ready
+    const forceUpdate = () => {
+      // Trigger a state update to ensure component re-renders with context
+      if (contextRef.current && !isMountedRef.current && containerRef.current) {
+        const success = foundationServices.webgl.mountContext(contextId, containerRef.current);
+        if (success) {
+          isMountedRef.current = true;
+          console.log(`[useWebGLService] Force-mounted context: ${contextId}`);
+        }
+      }
+    };
+
+    // Use a small timeout to ensure DOM is ready
+    const timeoutId = setTimeout(forceUpdate, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [contextId]);
 
   // Auto-mount when container is available

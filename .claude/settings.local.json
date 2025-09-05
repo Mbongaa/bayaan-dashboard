@@ -39,7 +39,10 @@
       "Read(/mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/0. real-time-agents/realtime-translation-agent/Screenshots/**)",
       "Bash(timeout 30s npm run dev)",
       "Bash(timeout 30s npm run build)",
-      "Bash(timeout 20s npm run dev)"
+      "Bash(timeout 20s npm run dev)",
+      "Bash(timeout 15s npm run dev)",
+      "Read(//mnt/c/Users/hassa/OneDrive/Desktop/Bayaan/**)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

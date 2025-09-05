@@ -8,10 +8,19 @@ import { foundationServices } from '../services/FoundationServices';
  * and working. This runs alongside the existing implementation without
  * interfering with it.
  */
-export function WebRTCServiceTest() {
+interface WebRTCServiceTestProps {
+  useImprovedGalaxy?: boolean;
+  setUseImprovedGalaxy?: (value: boolean) => void;
+}
+
+export function WebRTCServiceTest({ useImprovedGalaxy, setUseImprovedGalaxy }: WebRTCServiceTestProps) {
   const [healthStatus, setHealthStatus] = useState(foundationServices.getHealthStatus());
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Mark as client-side rendered
+    setIsClient(true);
+    
     // Update health status every 5 seconds
     const interval = setInterval(() => {
       setHealthStatus(foundationServices.getHealthStatus());
@@ -66,6 +75,25 @@ export function WebRTCServiceTest() {
         <span style={{ color: '#a78bfa' }}>●</span>
         {' '}Event Listeners: {healthStatus.eventBus.totalListeners}
       </div>
+      
+      {setUseImprovedGalaxy && isClient && (
+        <div style={{ marginTop: '5px', paddingTop: '5px', borderTop: '1px solid #374151' }}>
+          <button
+            onClick={() => setUseImprovedGalaxy(!useImprovedGalaxy)}
+            style={{
+              background: useImprovedGalaxy ? '#059669' : '#dc2626',
+              color: 'white',
+              border: 'none',
+              borderRadius: '3px',
+              padding: '4px 8px',
+              fontSize: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            {useImprovedGalaxy ? '⚠️ Improved Galaxy (Debug)' : '✅ Original Galaxy'}
+          </button>
+        </div>
+      )}
       
       <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '5px' }}>
         Service Layer Active
