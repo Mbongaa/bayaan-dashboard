@@ -16,6 +16,7 @@ import ChatboxSettingsMenu from "./foundation/components/ChatboxSettingsMenu";
 import Galaxy from "./foundation/components/Galaxy";
 import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGalaxy";
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
+import ThemeToggle from "./shared/components/ThemeToggle";
 import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
 import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
@@ -678,6 +679,11 @@ function App() {
       
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="dashboard-layout">
+        {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
+        <div className="fixed left-[1.25rem] top-[6vh] z-40 pointer-events-auto flex justify-center w-[60px]">
+          <ThemeToggle />
+        </div>
+        
         {/* Sidebar - Fixed positioning, no layout impact */}
         <div 
           onMouseEnter={() => setIsSidebarHovered(true)}
@@ -692,7 +698,7 @@ function App() {
         
         {/* Dashboard Component Overlay - JavaScript-controlled responsive positioning */}
         {dashboardContentMode === 'dashboard' && (
-          <div className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-3xl shadow-lg pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}>
+          <div className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}>
             <DashboardContentRenderer 
               selectedItem={selectedDashboardItem}
               onBackToVoice={handleBackToVoice}
@@ -710,8 +716,8 @@ function App() {
           {/* Desktop: Layered Layout (above 1200px) */}
           <div className="hidden xl:contents">
             {/* Transcript and Events - Background layer for desktop */}
-            <div className="absolute right-0 flex gap-2 overflow-hidden pointer-events-auto z-10 pl-6" style={{ left: '0px', top: '80px', bottom: '120px' }}>
-              <Transcript />
+            <div className="absolute right-0 flex gap-2 overflow-visible pointer-events-auto z-10 pl-6" style={{ left: '0px', top: '80px', bottom: '120px' }}>
+              <Transcript uiMode={foundationUIMode} />
               <Events isExpanded={isEventsPaneExpanded} />
             </div>
 
@@ -746,13 +752,14 @@ function App() {
 
             {/* Bottom half: Transcript and Events */}
             <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
-              <Transcript />
+              <Transcript uiMode={foundationUIMode} />
               <Events isExpanded={isEventsPaneExpanded} />
             </div>
           </div>
         </div>
         
-        <div className="relative z-10 px-4 pt-4 pb-[5px] bg-transparent">
+        {/* Fixed positioned chatbox - isolated from layout flow */}
+        <div className="fixed bottom-5 left-0 right-0 z-10 px-4">
           <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
             <PromptBox 
               value={userText}

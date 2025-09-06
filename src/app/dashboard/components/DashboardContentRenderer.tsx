@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardHome } from './pages/DashboardHome';
 
 /**
@@ -22,13 +22,37 @@ export function DashboardContentRenderer({
   selectedItem, 
   onBackToVoice 
 }: DashboardContentRendererProps) {
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [currentPage, setCurrentPage] = useState(selectedItem);
+  const [showContent, setShowContent] = useState(true);
+
+  // Handle page transitions with fade effect
+  useEffect(() => {
+    if (selectedItem !== currentPage && selectedItem) {
+      // Start transition
+      setIsTransitioning(true);
+      setShowContent(false);
+      
+      // Wait for fade out, then switch content
+      setTimeout(() => {
+        setCurrentPage(selectedItem);
+        
+        // Start fade in after a brief pause
+        setTimeout(() => {
+          setShowContent(true);
+          setIsTransitioning(false);
+        }, 150);
+      }, 300);
+    }
+  }, [selectedItem, currentPage]);
+
   // If no item selected, return null (voice assistant mode)
-  if (!selectedItem) {
+  if (!currentPage) {
     return null;
   }
 
   const renderContent = () => {
-    switch (selectedItem) {
+    switch (currentPage) {
       case 'dashboard':
         return <DashboardHome />;
       
@@ -41,7 +65,7 @@ export function DashboardContentRenderer({
       default:
         return (
           <div className="p-6 h-full flex items-center justify-center">
-            <div className="text-center">
+            <div className="text-center animate-fadeIn">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Page Not Found
               </h2>
@@ -61,7 +85,8 @@ export function DashboardContentRenderer({
   };
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className={`h-full overflow-y-auto transition-all duration-300 ease-out
+      ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       {renderContent()}
     </div>
   );
@@ -70,9 +95,9 @@ export function DashboardContentRenderer({
 // Placeholder components for Profile and Settings pages
 const ProfilePage = () => {
   return (
-    <div className="p-6 h-full">
+    <div className="p-6 h-full animate-fadeIn">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 animate-slideDown">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Profile Settings
           </h1>
@@ -82,7 +107,7 @@ const ProfilePage = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-100">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Account Information
             </h2>
@@ -110,7 +135,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-200">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Voice Preferences
             </h2>
@@ -145,9 +170,9 @@ const ProfilePage = () => {
 
 const SettingsPage = () => {
   return (
-    <div className="p-6 h-full">
+    <div className="p-6 h-full animate-fadeIn">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 animate-slideDown">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             System Settings
           </h1>
@@ -157,7 +182,7 @@ const SettingsPage = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-100">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Audio Settings
             </h2>
@@ -189,7 +214,7 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-200">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Visual Settings
             </h2>
@@ -217,7 +242,7 @@ const SettingsPage = () => {
             </div>
           </div>
 
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-300">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Advanced Settings
             </h2>

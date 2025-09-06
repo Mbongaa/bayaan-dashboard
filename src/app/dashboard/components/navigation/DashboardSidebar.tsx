@@ -4,7 +4,6 @@ import { Sidebar, SidebarBody, SidebarLink } from "@/app/shared/components/sideb
 import { LayoutDashboard, UserCog, Settings, LogOut } from "lucide-react";
 import Link from "next/link";
 import MiniOrb from "../../../foundation/components/MiniOrb";
-import ThemeToggle from "../../../shared/components/ThemeToggle";
 
 interface DashboardSidebarProps {
   selectedItem: string | null;
@@ -61,13 +60,6 @@ export function DashboardSidebar({ selectedItem, onMenuSelect, onBackToVoice }: 
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          {/* Theme Toggle positioned above account - no auto-centering */}
-          <div className="flex items-center justify-center py-3 w-10">
-            <div className="mr-2">
-              <ThemeToggle />
-            </div>
-          </div>
-          
           <SidebarLink
             link={{
               label: "Bayaan AI",
@@ -131,18 +123,18 @@ const MenuLink = ({ link, isSelected, onClick }: MenuLinkProps) => {
     <button
       onClick={onClick}
       className={`
-        flex items-center py-2 group relative w-full text-left
+        flex items-center py-1 group relative w-full text-left
         min-w-[28px] hover:min-w-[260px]
         transition-all duration-300
         ${isSelected 
           ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' 
           : 'hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
         }
-        rounded-lg px-2
+        rounded-lg
       `}
     >
       {/* Icon container - always visible, centered in collapsed state */}
-      <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+      <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
         {link.icon}
       </div>
       {/* Label - hidden by default, shown on parent sidebar hover */}
