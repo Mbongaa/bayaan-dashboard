@@ -19,12 +19,12 @@ const AudioVisualizationSection: React.FC<AudioVisualizationSectionProps> = ({
   
   return (
     <div className={`
-      relative w-full h-full transition-all duration-700 ease-out transform-gpu
+      relative w-full h-full transition-all duration-700 ease-out
       ${isCompactMode 
         ? 'scale-[0.3] translate-x-[43vw] translate-y-[-19vh]' 
         : 'scale-100 translate-x-0 translate-y-0'
       }
-    `}>
+    `} style={{ willChange: 'transform' }}>
       {/* 3D Audio Orb - Animates smoothly between positions */}
       <Audio3DOrb
         intensity={intensity}

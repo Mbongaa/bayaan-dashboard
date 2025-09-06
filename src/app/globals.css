@@ -463,9 +463,11 @@ body {
   will-change: transform, opacity, filter;
 }
 
-/* GPU acceleration for smoother animations */
+/* GPU acceleration for smoother animations 
+   Commented out to prevent transform conflicts - use will-change: transform instead
 .transform-gpu {
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
 }
+*/
