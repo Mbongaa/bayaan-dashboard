@@ -47,7 +47,8 @@
       "Bash(chmod:*)",
       "Bash(./update-imports.sh)",
       "Bash(timeout 10s npm run dev)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(timeout 5s npm run dev)"
     ],
     "deny": [],
     "ask": []

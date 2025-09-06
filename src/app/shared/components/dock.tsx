@@ -23,11 +23,11 @@ import {
 import { cx } from "@/app/shared/lib/utils";
 
 interface DockContextType {
-    width: number;
+    height: number;
     hovered: boolean;
     setIsZooming: (value: boolean) => void;
     zoomLevel: MotionValue<number>;
-    mouseX: MotionValue<number>;
+    mouseY: MotionValue<number>;
     animatingIndexes: number[];
     setAnimatingIndexes: (indexes: number[] | ((prev: number[]) => number[])) => void;
     activeCardId: number | null;
@@ -35,11 +35,11 @@ interface DockContextType {
 }
 
 const DockContext = createContext<DockContextType>({
-    width: 0,
+    height: 0,
     hovered: false,
     setIsZooming: () => {},
     zoomLevel: null as any,
-    mouseX: null as any,
+    mouseY: null as any,
     animatingIndexes: [],
     setAnimatingIndexes: () => {},
     activeCardId: null,
@@ -59,7 +59,7 @@ interface DockProps {
 // Main Dock component: orchestrating the dock's animation behavior
 function Dock({ className, children }: DockProps) {
     const [hovered, setHovered] = useState(false);
-    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
     const dockRef = useRef<HTMLDivElement>(null);
     const isZooming = useRef(false);
     const [animatingIndexes, setAnimatingIndexes] = useState<number[]>([]);
@@ -73,19 +73,19 @@ function Dock({ className, children }: DockProps) {
     const zoomLevel = useMotionValue(1);
 
     useWindowResize(() => {
-        setWidth(dockRef.current?.clientWidth || 0);
+        setHeight(dockRef.current?.clientHeight || 0);
     });
 
-    const mouseX = useMotionValue(Number.POSITIVE_INFINITY);
+    const mouseY = useMotionValue(Number.POSITIVE_INFINITY);
 
     return (
         <DockContext.Provider
             value={{
                 hovered,
                 setIsZooming,
-                width,
+                height,
                 zoomLevel,
-                mouseX,
+                mouseY,
                 animatingIndexes,
                 setAnimatingIndexes,
                 activeCardId,
@@ -95,25 +95,25 @@ function Dock({ className, children }: DockProps) {
             <motion.div
                 ref={dockRef}
                 className={cx(
-                    "flex flex-row h-10 transform items-center gap-2 rounded-lg bg-transparent p-1.5",
-                    "border border-black/5 border-opacity-10 transition-colors dark:border-white/5",
+                    "flex flex-col w-[60px] transform items-center gap-2 rounded-lg bg-transparent p-1.5 overflow-visible",
+                    "border border-transparent",
                     "shadow-[0px_1px_1px_0px_rgba(0,0,0,0.05),0px_1px_1px_0px_rgba(255,252,240,0.5)_inset,0px_0px_0px_1px_hsla(0,0%,100%,0.1)_inset,0px_0px_1px_0px_rgba(28,27,26,0.5)]",
                     "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(255,255,255,0.03)_inset,0_0_0_1px_rgba(0,0,0,0.1),0_2px_2px_0_rgba(0,0,0,0.1),0_4px_4px_0_rgba(0,0,0,0.1),0_8px_8px_0_rgba(0,0,0,0.1)]",
                     className,
                 )}
                 onMouseMove={(e) => {
-                    mouseX.set(e.pageX);
+                    mouseY.set(e.pageY);
                     if (!isZooming.current) {
                         setHovered(true);
                     }
                 }}
                 onMouseLeave={() => {
-                    mouseX.set(Number.POSITIVE_INFINITY);
+                    mouseY.set(Number.POSITIVE_INFINITY);
                     setHovered(false);
                 }}
                 onTouchStart={(e) => {
                     if (e.touches.length > 0) {
-                        mouseX.set(e.touches[0].pageX);
+                        mouseY.set(e.touches[0].pageY);
                         if (!isZooming.current) {
                             setHovered(true);
                         }
@@ -121,7 +121,7 @@ function Dock({ className, children }: DockProps) {
                 }}
                 onTouchMove={(e) => {
                     if (e.touches.length > 0) {
-                        mouseX.set(e.touches[0].pageX);
+                        mouseY.set(e.touches[0].pageY);
                         if (!isZooming.current) {
                             setHovered(true);
                         }
@@ -130,12 +130,9 @@ function Dock({ className, children }: DockProps) {
                 onTouchEnd={() => {
                     // Add a small delay before resetting to allow for a more natural feel on mobile
                     setTimeout(() => {
-                        mouseX.set(Number.POSITIVE_INFINITY);
+                        mouseY.set(Number.POSITIVE_INFINITY);
                         setHovered(false);
                     }, 150);
-                }}
-                style={{
-                    scale: zoomLevel,
                 }}
             >
                 {children}
@@ -253,7 +250,7 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
         // Show brief selection animation (without affecting persistent icon state)
         isAnimating.current = true;
         controls.start({
-            x: -8,
+            y: -8,
             transition: {
                 repeat: 1,
                 repeatType: "reverse",
@@ -261,7 +258,7 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
             },
         }).then(() => {
             controls.start({
-                x: 0,
+                y: 0,
                 transition: { duration: 0.1 },
             });
             isAnimating.current = false;
@@ -286,7 +283,7 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
             if (isConnected) {
                 opacity.set(0.5);
                 controls.start({
-                    x: -12,
+                    y: -12,
                     transition: {
                         repeat: Number.POSITIVE_INFINITY,
                         repeatType: "reverse",
@@ -296,13 +293,13 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
             } else {
                 // Selected but not connected - just show icon without bounce
                 opacity.set(0.3);
-                controls.start({ x: 0 });
+                controls.start({ y: 0 });
             }
         } else {
             // Not selected - remove from animatingIndexes and stop animations
             dock.setAnimatingIndexes(prev => prev.filter(index => index !== currentId));
             opacity.set(0);
-            controls.start({ x: 0 });
+            controls.start({ y: 0 });
             
             if (dock.activeCardId === currentId) {
                 dock.setActiveCardId(null);
@@ -315,12 +312,12 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
         return () => clearTimeout(timeoutRef.current!);
     }, []);
 
-    const distance = useTransform(dock.mouseX, (val) => {
+    const distance = useTransform(dock.mouseY, (val) => {
         const bounds = cardRef.current?.getBoundingClientRect() ?? {
-            x: 0,
-            width: 0,
+            y: 0,
+            height: 0,
         };
-        return val - bounds.x - bounds.width / 2;
+        return val - bounds.y - bounds.height / 2;
     });
 
     const widthSync = useTransform(distance, [-120, 0, 120], [28, 56, 28]);
@@ -331,7 +328,7 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
     });
 
     return (
-        <div className="flex flex-row items-center gap-1" key={id}>
+        <div className="flex flex-col items-center gap-1" key={id}>
             <motion.button
                 ref={cardRef}
                 className="aspect-square w-full rounded-lg border border-black/5 border-opacity-10 bg-neutral-100 brightness-90 saturate-90 transition-filter duration-200 dark:border-white/5 dark:bg-neutral-800 [@media(hover:hover)]:hover:brightness-112 [@media(hover:hover)]:hover:saturate-100"
@@ -366,11 +363,11 @@ function DockCard({ children, id, scenarioKey, onScenarioSelect, onDisconnect, i
 function DockDivider() {
     return (
         <motion.div
-            className="flex h-full cursor-ns-resize items-center p-1.5"
-            drag="y"
-            dragConstraints={{ top: -50, bottom: 100 }}
+            className="flex w-full cursor-ew-resize items-center p-1.5"
+            drag="x"
+            dragConstraints={{ left: -50, right: 100 }}
         >
-            <span className="h-full w-0.5 rounded bg-neutral-800/10 dark:bg-neutral-100/10 " />
+            <span className="w-full h-0.5 rounded bg-neutral-800/10 dark:bg-neutral-100/10 " />
         </motion.div>
     );
 }

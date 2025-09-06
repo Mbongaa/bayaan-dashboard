@@ -17,8 +17,8 @@ import Galaxy from "./foundation/components/Galaxy";
 import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGalaxy";
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
-import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
-import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
+// import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
+// import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
 // Types
 import type { RealtimeAgent } from '@openai/agents/realtime';
@@ -58,6 +58,9 @@ import PTTPortal from "./foundation/components/PTTPortal";
 
 // Foundation Services
 import { foundationServices } from "./foundation/services/FoundationServices";
+import { NavigationStateBridge } from "./foundation/components/NavigationStateBridge";
+import { FormStateBridge } from "./foundation/components/FormStateBridge";
+import { WidgetStateBridge } from "./foundation/components/WidgetStateBridge";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -553,12 +556,18 @@ function App() {
     setSelectedDashboardItem(menuItem);
     setDashboardContentMode('dashboard');
     setFoundationUIMode('compact'); // Switch foundation to compact mode
+    
+    // Sync with navigation service
+    foundationServices.navigation.navigateToSection(menuItem as any);
   };
 
   const handleBackToVoice = () => {
     setSelectedDashboardItem(null);
     setDashboardContentMode('voice');
     setFoundationUIMode('default'); // Switch foundation back to default mode
+    
+    // Sync with navigation service
+    foundationServices.navigation.backToVoice();
   };
 
   useEffect(() => {
@@ -677,17 +686,43 @@ function App() {
         )}
       </div>
       
+      {/* Navigation State Bridge - Connects voice control to navigation */}
+      <NavigationStateBridge 
+        onSidebarStateChange={(state, isHovered) => {
+          setIsSidebarHovered(isHovered);
+        }}
+        onSectionChange={(section, contentMode) => {
+          setSelectedDashboardItem(section);
+          setDashboardContentMode(contentMode);
+          if (contentMode === 'dashboard') {
+            setFoundationUIMode('compact');
+          } else {
+            setFoundationUIMode('default');
+          }
+        }}
+      />
+      
+      {/* Form State Bridge - Connects voice control to forms */}
+      <FormStateBridge />
+      <WidgetStateBridge />
+      
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="dashboard-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
-        <div className="fixed left-[1.25rem] top-[6vh] z-40 pointer-events-auto flex justify-center w-[60px]">
+        <div className="fixed left-4 top-[4vh] z-40 pointer-events-auto px-2.5">
           <ThemeToggle />
         </div>
         
         {/* Sidebar - Fixed positioning, no layout impact */}
         <div 
-          onMouseEnter={() => setIsSidebarHovered(true)}
-          onMouseLeave={() => setIsSidebarHovered(false)}
+          onMouseEnter={() => {
+            setIsSidebarHovered(true);
+            foundationServices.navigation.setSidebarState('expanded');
+          }}
+          onMouseLeave={() => {
+            setIsSidebarHovered(false);
+            foundationServices.navigation.setSidebarState('collapsed');
+          }}
         >
           <DashboardSidebar 
             selectedItem={selectedDashboardItem}
@@ -698,12 +733,11 @@ function App() {
         
         {/* Dashboard Component Overlay - JavaScript-controlled responsive positioning */}
         {dashboardContentMode === 'dashboard' && (
-          <div className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}>
-            <DashboardContentRenderer 
-              selectedItem={selectedDashboardItem}
-              onBackToVoice={handleBackToVoice}
-            />
-          </div>
+          <DashboardContentRenderer 
+            selectedItem={selectedDashboardItem}
+            onBackToVoice={handleBackToVoice}
+            className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}
+          />
         )}
         
         {/* Main Content Area - Fixed positioning with CSS-controlled offset */}
@@ -769,9 +803,9 @@ function App() {
           </form>
         </div>
 
-        {/* Horizontal Dock at Bottom */}
+        {/* Vertical Dock on Right Side */}
         {isDockVisible && (
-          <div className="relative z-10 flex justify-center py-2 pointer-events-auto">
+          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
             <RealtimeProvider 
               value={realtimeContextValue}
             >

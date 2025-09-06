@@ -1,6 +1,8 @@
 import { EventBus, globalEventBus } from './EventBus';
 import { WebGLContextService } from './WebGLContextService';
 import { WebRTCService } from './WebRTCService';
+import { navigationService } from './NavigationService';
+import { dashboardDataService } from './DashboardDataService';
 
 /**
  * Foundation Services Container
@@ -13,6 +15,8 @@ export class FoundationServices {
   public readonly eventBus: EventBus;
   public readonly webgl: WebGLContextService;
   public readonly webrtc: WebRTCService;
+  public readonly navigation = navigationService;
+  public readonly dashboardData = dashboardDataService;
 
   private static _instance: FoundationServices | null = null;
   private isInitialized: boolean = false;
@@ -46,7 +50,8 @@ export class FoundationServices {
       console.log('[FoundationServices] Initializing foundation services...');
       
       // WebGL service is automatically initialized in constructor
-      // Add any additional service initialization here
+      // Initialize navigation service
+      this.navigation.initialize();
 
       this.isInitialized = true;
       
@@ -85,16 +90,38 @@ export class FoundationServices {
       status: ReturnType<WebRTCService['getStatus']>;
       hasSession: boolean;
     };
+    navigation: {
+      sidebarState: string;
+      currentSection: string | null;
+      contentMode: string;
+    };
+    dashboardData: {
+      metricsCount: number;
+      activitiesCount: number;
+      systemHealth: string;
+    };
     eventBus: {
       totalListeners: number;
     };
   } {
+    const dashboardState = this.dashboardData.getState();
+    
     return {
       isInitialized: this.isInitialized,
       webgl: this.webgl.getStats(),
       webrtc: {
         status: this.webrtc.getStatus(),
         hasSession: !!this.webrtc.getSession()
+      },
+      navigation: {
+        sidebarState: this.navigation.getSidebarState(),
+        currentSection: this.navigation.getCurrentSection(),
+        contentMode: this.navigation.getContentMode()
+      },
+      dashboardData: {
+        metricsCount: dashboardState.metrics.length,
+        activitiesCount: dashboardState.activities.length,
+        systemHealth: dashboardState.summary.systemHealth.overall
       },
       eventBus: {
         totalListeners: this.eventBus.getListenerCount()

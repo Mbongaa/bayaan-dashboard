@@ -285,8 +285,8 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
             const { title, timestamp } = latestBreadcrumb;
             
             // Determine icon and color based on breadcrumb content
-            const isAgent = title.toLowerCase().includes('agent');
-            const isTool = title.toLowerCase().includes('tool') || title.toLowerCase().includes('function');
+            const isAgent = title?.toLowerCase().includes('agent') || false;
+            const isTool = title?.toLowerCase().includes('tool') || title?.toLowerCase().includes('function') || false;
             
             return (
               <div className="flex items-center gap-1.5 text-xs font-mono">
@@ -298,7 +298,7 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
                   {isAgent ? '👤' : isTool ? '🔧' : '📍'}
                 </span>
                 <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
-                  {title}
+                  {title || 'Processing...'}
                 </span>
                 <span className="text-[10px] text-gray-500 dark:text-gray-500 ml-1">
                   {timestamp}

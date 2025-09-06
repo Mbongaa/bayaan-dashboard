@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useWidgetControl } from '@/app/foundation/components/WidgetStateBridge';
 
 /**
  * Dashboard Home Page
@@ -10,8 +11,15 @@ import React from 'react';
  * add any functionality without affecting the foundation layer (voice assistant).
  */
 export function DashboardHome() {
+  // Get widget states for controlling visibility and expansion
+  const metricsWidget = useWidgetControl('metrics-widget');
+  const activitiesWidget = useWidgetControl('activities-widget');
+  const statusWidget = useWidgetControl('status-widget');
+  // Performance chart widget could be added here if needed
+  // const performanceWidget = useWidgetControl('performance-chart');
+
   return (
-    <div className="p-6 h-full overflow-y-auto">
+    <div className="p-6 h-full overflow-y-auto" data-widgets-container>
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
@@ -23,8 +31,38 @@ export function DashboardHome() {
           </p>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Quick Stats Grid - Metrics Widget */}
+        <div 
+          data-widget-id="metrics-widget"
+          className={`mb-8 transition-all duration-500 ease-in-out transform-gpu
+            ${metricsWidget.isVisible 
+              ? 'opacity-100 translate-y-0 scale-100' 
+              : 'opacity-0 -translate-y-4 scale-95 pointer-events-none absolute'}`}
+          style={{ 
+            maxHeight: metricsWidget.isVisible ? '1000px' : '0px',
+            overflow: 'hidden'
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              Key Metrics
+            </h2>
+            <button
+              data-widget-toggle
+              onClick={() => metricsWidget.toggleExpansion()}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              aria-expanded={metricsWidget.isExpanded}
+            >
+              {metricsWidget.isExpanded ? '−' : '+'}
+            </button>
+          </div>
+          <div 
+            data-widget-content
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 transition-all duration-300 ease-in-out
+              ${metricsWidget.isExpanded 
+                ? 'opacity-100 max-h-96' 
+                : 'opacity-0 max-h-0 overflow-hidden'}`}
+          >
           <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
             <div className="flex items-center justify-between">
               <div>
@@ -64,15 +102,40 @@ export function DashboardHome() {
               <div className="text-purple-500 text-xl">🚀</div>
             </div>
           </div>
+          </div>
         </div>
 
-        {/* Activity Feed */}
+        {/* Activity Feed and System Status */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Recent Activity
-            </h2>
-            <div className="space-y-4">
+          {/* Activities Widget */}
+          <div 
+            data-widget-id="activities-widget"
+            className={`transition-all duration-500 ease-in-out transform-gpu
+              ${activitiesWidget.isVisible 
+                ? 'opacity-100 translate-x-0 scale-100' 
+                : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'}`}
+          >
+            <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  Recent Activity
+                </h2>
+                <button
+                  data-widget-toggle
+                  onClick={() => activitiesWidget.toggleExpansion()}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  aria-expanded={activitiesWidget.isExpanded}
+                >
+                  {activitiesWidget.isExpanded ? '−' : '+'}
+                </button>
+              </div>
+              <div 
+                data-widget-content
+                className={`space-y-4 transition-all duration-300 ease-in-out
+                  ${activitiesWidget.isExpanded 
+                    ? 'opacity-100 max-h-96 overflow-y-auto' 
+                    : 'opacity-0 max-h-0 overflow-hidden'}`}
+              >
               {[
                 { type: 'voice', message: 'Voice session started with Agent Zahra', time: '2 minutes ago' },
                 { type: 'system', message: 'Foundation services initialized successfully', time: '5 minutes ago' },
@@ -91,14 +154,39 @@ export function DashboardHome() {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           </div>
 
-          <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              System Status
-            </h2>
-            <div className="space-y-4">
+          {/* System Status Widget */}
+          <div 
+            data-widget-id="status-widget"
+            className={`transition-all duration-500 ease-in-out transform-gpu
+              ${statusWidget.isVisible 
+                ? 'opacity-100 translate-x-0 scale-100' 
+                : 'opacity-0 translate-x-4 scale-95 pointer-events-none'}`}
+          >
+            <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  System Status
+                </h2>
+                <button
+                  data-widget-toggle
+                  onClick={() => statusWidget.toggleExpansion()}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  aria-expanded={statusWidget.isExpanded}
+                >
+                  {statusWidget.isExpanded ? '−' : '+'}
+                </button>
+              </div>
+              <div 
+                data-widget-content
+                className={`space-y-4 transition-all duration-300 ease-in-out
+                  ${statusWidget.isExpanded 
+                    ? 'opacity-100 max-h-96 overflow-y-auto' 
+                    : 'opacity-0 max-h-0 overflow-hidden'}`}
+              >
               {[
                 { service: 'Foundation Services', status: 'active', health: '100%' },
                 { service: 'WebRTC Session', status: 'ready', health: '98%' },
@@ -116,6 +204,7 @@ export function DashboardHome() {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           </div>
         </div>

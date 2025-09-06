@@ -16,15 +16,17 @@ import { DashboardHome } from './pages/DashboardHome';
 interface DashboardContentRendererProps {
   selectedItem: string | null;
   onBackToVoice?: () => void;
+  className?: string;
 }
 
 export function DashboardContentRenderer({ 
   selectedItem, 
-  onBackToVoice 
+  onBackToVoice,
+  className 
 }: DashboardContentRendererProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentPage, setCurrentPage] = useState(selectedItem);
-  const [showContent, setShowContent] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   // Handle page transitions with fade effect
   useEffect(() => {
@@ -45,6 +47,17 @@ export function DashboardContentRenderer({
       }, 300);
     }
   }, [selectedItem, currentPage]);
+
+  // Trigger fade-in animation on initial mount
+  useEffect(() => {
+    if (currentPage && !showContent) {
+      // Small delay for initial render, then fade in
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, []); // Empty deps - only run on mount
 
   // If no item selected, return null (voice assistant mode)
   if (!currentPage) {
@@ -85,9 +98,11 @@ export function DashboardContentRenderer({
   };
 
   return (
-    <div className={`h-full overflow-y-auto transition-all duration-300 ease-out
-      ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      {renderContent()}
+    <div className={className}>
+      <div className={`h-full overflow-y-auto transition-all duration-300 ease-out
+        ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {renderContent()}
+      </div>
     </div>
   );
 }
@@ -106,7 +121,7 @@ const ProfilePage = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-form-id="profile">
           <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-100">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Account Information
@@ -118,6 +133,7 @@ const ProfilePage = () => {
                 </label>
                 <input
                   type="text"
+                  data-field-id="fullName"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50"
                   placeholder="Enter your full name"
                 />
@@ -128,6 +144,7 @@ const ProfilePage = () => {
                 </label>
                 <input
                   type="email"
+                  data-field-id="email"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50"
                   placeholder="Enter your email"
                 />
@@ -144,7 +161,10 @@ const ProfilePage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Preferred Language
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select 
+                  data-field-id="language"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50"
+                >
                   <option>English</option>
                   <option>Arabic</option>
                   <option>French</option>
@@ -154,7 +174,10 @@ const ProfilePage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Voice Response Speed
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select 
+                  data-field-id="voiceSpeed"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50"
+                >
                   <option>Normal</option>
                   <option>Fast</option>
                   <option>Slow</option>
@@ -181,7 +204,7 @@ const SettingsPage = () => {
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6" data-form-id="settings">
           <div className="bg-white/30 dark:bg-black/30 backdrop-blur-sm p-6 rounded-xl border border-gray-200/50 dark:border-gray-700/50 animate-fadeInUp animation-delay-100">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Audio Settings
@@ -189,25 +212,25 @@ const SettingsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <input type="checkbox" data-field-id="autoConnect" className="rounded" defaultChecked />
                   <span className="text-gray-700 dark:text-gray-300">Auto-connect on load</span>
                 </label>
               </div>
               <div>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <input type="checkbox" data-field-id="audioPlayback" className="rounded" defaultChecked />
                   <span className="text-gray-700 dark:text-gray-300">Audio playback enabled</span>
                 </label>
               </div>
               <div>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded" />
+                  <input type="checkbox" data-field-id="pushToTalk" className="rounded" />
                   <span className="text-gray-700 dark:text-gray-300">Push-to-talk mode</span>
                 </label>
               </div>
               <div>
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="rounded" defaultChecked />
+                  <input type="checkbox" data-field-id="showDock" className="rounded" defaultChecked />
                   <span className="text-gray-700 dark:text-gray-300">Show dock navigation</span>
                 </label>
               </div>
@@ -223,7 +246,7 @@ const SettingsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Theme
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select data-field-id="theme" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
                   <option>System</option>
                   <option>Light</option>
                   <option>Dark</option>
@@ -233,7 +256,7 @@ const SettingsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Galaxy Animation
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select data-field-id="galaxyAnimation" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
                   <option>Enhanced</option>
                   <option>Classic</option>
                   <option>Minimal</option>
@@ -251,7 +274,7 @@ const SettingsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   VAD Type
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select data-field-id="vadType" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
                   <option>Semantic VAD</option>
                   <option>Server VAD</option>
                   <option>Disabled</option>
@@ -261,7 +284,7 @@ const SettingsPage = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Audio Codec
                 </label>
-                <select className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
+                <select data-field-id="audioCodec" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-black/50">
                   <option>Opus (48kHz)</option>
                   <option>PCMU (8kHz)</option>
                   <option>PCMA (8kHz)</option>
