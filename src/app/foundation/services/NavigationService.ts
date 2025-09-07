@@ -164,6 +164,34 @@ class NavigationService extends EventEmitter {
     });
   }
 
+  // Content mode control methods
+  setContentMode(mode: 'voice' | 'dashboard'): void {
+    if (this.state.contentMode === mode) return;
+    
+    console.log('[NavigationService] Setting content mode:', mode);
+    this.state.contentMode = mode;
+    
+    // Adjust section based on mode
+    if (mode === 'voice') {
+      this.state.currentSection = null;
+    } else if (mode === 'dashboard' && !this.state.currentSection) {
+      this.state.currentSection = 'dashboard';
+    }
+    
+    this.saveState();
+    
+    this.emit('navigation:content-mode', {
+      mode,
+      section: this.state.currentSection,
+      source: 'service'
+    });
+  }
+
+  toggleContentMode(): void {
+    const newMode = this.state.contentMode === 'voice' ? 'dashboard' : 'voice';
+    this.setContentMode(newMode);
+  }
+
   // State getters
   getSidebarState(): SidebarState {
     return this.state.sidebarState;

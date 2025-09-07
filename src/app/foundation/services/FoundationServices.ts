@@ -3,6 +3,7 @@ import { WebGLContextService } from './WebGLContextService';
 import { WebRTCService } from './WebRTCService';
 import { navigationService } from './NavigationService';
 import { dashboardDataService } from './DashboardDataService';
+import { integrationService } from './IntegrationService';
 
 /**
  * Foundation Services Container
@@ -17,6 +18,7 @@ export class FoundationServices {
   public readonly webrtc: WebRTCService;
   public readonly navigation = navigationService;
   public readonly dashboardData = dashboardDataService;
+  public readonly integration = integrationService;
 
   private static _instance: FoundationServices | null = null;
   private isInitialized: boolean = false;
@@ -70,6 +72,7 @@ export class FoundationServices {
   shutdown(): void {
     console.log('[FoundationServices] Shutting down foundation services...');
     
+    this.integration.shutdown();
     this.webrtc.shutdown();
     this.webgl.shutdown();
     this.eventBus.clear();
@@ -100,6 +103,12 @@ export class FoundationServices {
       activitiesCount: number;
       systemHealth: string;
     };
+    integration: {
+      contextTimeOfDay: string;
+      smartSuggestionsCount: number;
+      performanceMode: string;
+      errorRecoveryActive: boolean;
+    };
     eventBus: {
       totalListeners: number;
     };
@@ -122,6 +131,12 @@ export class FoundationServices {
         metricsCount: dashboardState.metrics.length,
         activitiesCount: dashboardState.activities.length,
         systemHealth: dashboardState.summary.systemHealth.overall
+      },
+      integration: {
+        contextTimeOfDay: this.integration.getUserContext().timeOfDay,
+        smartSuggestionsCount: this.integration.getSmartSuggestions().length,
+        performanceMode: this.integration.getUserPreferences().performanceMode,
+        errorRecoveryActive: this.integration.getErrorRecoveryStatus().length > 0
       },
       eventBus: {
         totalListeners: this.eventBus.getListenerCount()

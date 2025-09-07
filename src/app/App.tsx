@@ -17,6 +17,7 @@ import Galaxy from "./foundation/components/Galaxy";
 import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGalaxy";
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
+import ModeToggle from "./shared/components/ModeToggle";
 // import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
 // import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
@@ -61,6 +62,8 @@ import { foundationServices } from "./foundation/services/FoundationServices";
 import { NavigationStateBridge } from "./foundation/components/NavigationStateBridge";
 import { FormStateBridge } from "./foundation/components/FormStateBridge";
 import { WidgetStateBridge } from "./foundation/components/WidgetStateBridge";
+import { WorkflowStateBridge } from "./foundation/components/WorkflowStateBridge";
+import { IntegrationStateBridge } from "./foundation/components/IntegrationStateBridge";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -705,12 +708,28 @@ function App() {
       {/* Form State Bridge - Connects voice control to forms */}
       <FormStateBridge />
       <WidgetStateBridge />
+      <WorkflowStateBridge />
+      <IntegrationStateBridge />
       
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="dashboard-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
         <div className="fixed left-4 top-[4vh] z-40 pointer-events-auto px-2.5">
           <ThemeToggle />
+        </div>
+        
+        {/* Mode Toggle - Positioned below the sidebar */}
+        <div className="fixed left-4 bottom-[4vh] z-40 pointer-events-auto px-2.5">
+          <ModeToggle 
+            contentMode={dashboardContentMode}
+            onModeChange={(mode) => {
+              if (mode === 'dashboard') {
+                handleDashboardMenuSelect('dashboard');
+              } else {
+                handleBackToVoice();
+              }
+            }}
+          />
         </div>
         
         {/* Sidebar - Fixed positioning, no layout impact */}

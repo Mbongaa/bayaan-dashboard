@@ -111,6 +111,92 @@ export interface WidgetFilter {
   expandedOnly?: boolean;
 }
 
+// Workflow-related types
+export interface WorkflowStep {
+  id: string;
+  type: 'navigation' | 'form' | 'widget' | 'data' | 'wait' | 'condition';
+  action: string;
+  parameters: Record<string, any>;
+  description: string;
+  preconditions?: WorkflowCondition[];
+  rollback?: WorkflowStep;
+  retryCount?: number;
+  timeout?: number;
+}
+
+export interface WorkflowCondition {
+  type: 'state' | 'value' | 'exists';
+  target: string;
+  operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+  value: any;
+}
+
+export interface WorkflowDefinition {
+  id: string;
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+  variables?: Record<string, any>;
+  tags?: string[];
+  createdAt: Date;
+  lastUsed?: Date;
+  usageCount: number;
+}
+
+export interface WorkflowExecution {
+  workflowId: string;
+  startedAt: Date;
+  completedAt?: Date;
+  currentStepIndex: number;
+  status: 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
+  results: Record<string, any>;
+  error?: string;
+  executionHistory: WorkflowStepResult[];
+}
+
+export interface WorkflowStepResult {
+  stepId: string;
+  status: 'success' | 'failed' | 'skipped';
+  startedAt: Date;
+  completedAt: Date;
+  result?: any;
+  error?: string;
+}
+
+export interface DashboardMacro {
+  id: string;
+  name: string;
+  description: string;
+  voiceTriggers: string[];
+  workflow: WorkflowDefinition;
+  isEnabled: boolean;
+  createdAt: Date;
+  lastUsed?: Date;
+  usageCount: number;
+}
+
+export interface SearchQuery {
+  query: string;
+  scope: ('metrics' | 'activities' | 'forms' | 'widgets' | 'all')[];
+  filters?: {
+    timeRange?: { start: Date; end: Date };
+    severity?: string[];
+    status?: string[];
+  };
+  limit?: number;
+  sortBy?: 'relevance' | 'date' | 'name';
+}
+
+export interface SearchResult {
+  type: 'metric' | 'activity' | 'form_field' | 'widget';
+  id: string;
+  name: string;
+  description: string;
+  relevanceScore: number;
+  data: any;
+  highlight?: string;
+}
+
 export interface DashboardDataState {
   metrics: Map<string, MetricData>;
   activities: ActivityItem[];
@@ -120,6 +206,10 @@ export interface DashboardDataState {
   formDefinitions: Map<string, FormDefinition>;
   widgets: Map<string, WidgetState>;
   widgetFilters: Map<string, WidgetFilter>;
+  workflows: Map<string, WorkflowDefinition>;
+  macros: Map<string, DashboardMacro>;
+  currentWorkflow: WorkflowExecution | null;
+  workflowHistory: WorkflowExecution[];
   lastRefresh: Date;
 }
 
@@ -143,12 +233,17 @@ export class DashboardDataService extends EventEmitter {
       formDefinitions: new Map(),
       widgets: new Map(),
       widgetFilters: new Map(),
+      workflows: new Map(),
+      macros: new Map(),
+      currentWorkflow: null,
+      workflowHistory: [],
       lastRefresh: new Date()
     };
     this.initializeDefaultData();
     this.initializeThemeSync();
     this.initializeForms();
     this.initializeWidgets();
+    this.initializeWorkflows();
   }
 
   /**
@@ -1357,6 +1452,674 @@ export class DashboardDataService extends EventEmitter {
     return { 
       success: true, 
       message: 'Widget filters cleared' 
+    };
+  }
+
+  /**
+   * Initialize workflow definitions and macros
+   */
+  private initializeWorkflows(): void {
+    // Define some default workflows
+    const defaultWorkflows: WorkflowDefinition[] = [
+      {
+        id: 'morning-routine',
+        name: 'Morning Routine',
+        description: 'Refresh all data and show key metrics',
+        steps: [
+          {
+            id: 'step-1',
+            type: 'data',
+            action: 'refresh_all_metrics',
+            parameters: {},
+            description: 'Refresh all metrics'
+          },
+          {
+            id: 'step-2',
+            type: 'widget',
+            action: 'show_widget',
+            parameters: { widgetId: 'metrics-widget' },
+            description: 'Show metrics widget'
+          },
+          {
+            id: 'step-3',
+            type: 'widget',
+            action: 'expand_widget',
+            parameters: { widgetId: 'metrics-widget' },
+            description: 'Expand metrics widget'
+          },
+          {
+            id: 'step-4',
+            type: 'widget',
+            action: 'show_widget',
+            parameters: { widgetId: 'activities-widget' },
+            description: 'Show activities widget'
+          }
+        ],
+        createdAt: new Date(),
+        usageCount: 0
+      },
+      {
+        id: 'cleanup-view',
+        name: 'Cleanup View',
+        description: 'Hide all widgets and reset filters',
+        steps: [
+          {
+            id: 'step-1',
+            type: 'widget',
+            action: 'hide_all_widgets',
+            parameters: {},
+            description: 'Hide all widgets'
+          },
+          {
+            id: 'step-2',
+            type: 'widget',
+            action: 'clear_filters',
+            parameters: {},
+            description: 'Clear all filters'
+          }
+        ],
+        createdAt: new Date(),
+        usageCount: 0
+      }
+    ];
+
+    // Register default workflows
+    defaultWorkflows.forEach(workflow => {
+      this.state.workflows.set(workflow.id, workflow);
+    });
+
+    // Create a macro for morning routine
+    const morningMacro: DashboardMacro = {
+      id: 'morning-macro',
+      name: 'Morning Routine Macro',
+      description: 'Quick morning dashboard setup',
+      voiceTriggers: ['morning routine', 'start my day', 'morning setup'],
+      workflow: defaultWorkflows[0],
+      isEnabled: true,
+      createdAt: new Date(),
+      usageCount: 0
+    };
+
+    this.state.macros.set(morningMacro.id, morningMacro);
+
+    console.log('[DashboardDataService] Workflows initialized:', this.state.workflows.size);
+  }
+
+  /**
+   * Execute a workflow
+   */
+  async executeWorkflow(workflowId: string, variables?: Record<string, any>): Promise<{ success: boolean; message: string; execution?: WorkflowExecution }> {
+    const workflow = this.state.workflows.get(workflowId);
+    if (!workflow) {
+      return { success: false, message: `Workflow ${workflowId} not found` };
+    }
+
+    // Check if another workflow is running
+    if (this.state.currentWorkflow && this.state.currentWorkflow.status === 'running') {
+      return { success: false, message: 'Another workflow is already running' };
+    }
+
+    // Create execution instance
+    const execution: WorkflowExecution = {
+      workflowId,
+      startedAt: new Date(),
+      currentStepIndex: 0,
+      status: 'running',
+      results: variables || {},
+      executionHistory: []
+    };
+
+    this.state.currentWorkflow = execution;
+    this.emit('workflow:started', { workflowId, workflow: workflow.name });
+
+    // Execute steps
+    for (let i = 0; i < workflow.steps.length; i++) {
+      const step = workflow.steps[i];
+      execution.currentStepIndex = i;
+
+      // Check preconditions
+      if (step.preconditions) {
+        const conditionsMet = await this.checkWorkflowConditions(step.preconditions);
+        if (!conditionsMet) {
+          const stepResult: WorkflowStepResult = {
+            stepId: step.id,
+            status: 'skipped',
+            startedAt: new Date(),
+            completedAt: new Date()
+          };
+          execution.executionHistory.push(stepResult);
+          continue;
+        }
+      }
+
+      // Execute step
+      const stepResult = await this.executeWorkflowStep(step, execution.results);
+      execution.executionHistory.push(stepResult);
+
+      if (stepResult.status === 'failed') {
+        execution.status = 'failed';
+        execution.error = stepResult.error;
+        break;
+      }
+
+      // Store step result
+      if (stepResult.result) {
+        execution.results[step.id] = stepResult.result;
+      }
+
+      this.emit('workflow:step-completed', { 
+        workflowId, 
+        stepId: step.id, 
+        stepIndex: i, 
+        totalSteps: workflow.steps.length 
+      });
+    }
+
+    // Complete workflow
+    if (execution.status === 'running') {
+      execution.status = 'completed';
+    }
+    execution.completedAt = new Date();
+
+    // Update workflow usage
+    workflow.lastUsed = new Date();
+    workflow.usageCount++;
+
+    // Add to history
+    this.state.workflowHistory.unshift(execution);
+    if (this.state.workflowHistory.length > 50) {
+      this.state.workflowHistory = this.state.workflowHistory.slice(0, 50);
+    }
+
+    this.state.currentWorkflow = null;
+    this.emit('workflow:completed', { workflowId, status: execution.status });
+
+    return {
+      success: execution.status === 'completed',
+      message: execution.status === 'completed' 
+        ? `Workflow "${workflow.name}" completed successfully`
+        : `Workflow "${workflow.name}" failed: ${execution.error}`,
+      execution
+    };
+  }
+
+  /**
+   * Execute a single workflow step
+   */
+  private async executeWorkflowStep(step: WorkflowStep, variables: Record<string, any>): Promise<WorkflowStepResult> {
+    const result: WorkflowStepResult = {
+      stepId: step.id,
+      status: 'success',
+      startedAt: new Date(),
+      completedAt: new Date()
+    };
+
+    try {
+      switch (step.type) {
+        case 'widget':
+          result.result = await this.executeWidgetAction(step.action, step.parameters);
+          break;
+        case 'form':
+          result.result = await this.executeFormAction(step.action, step.parameters);
+          break;
+        case 'data':
+          result.result = await this.executeDataAction(step.action, step.parameters);
+          break;
+        case 'navigation':
+          // Would integrate with NavigationService
+          result.result = { success: true, message: 'Navigation action simulated' };
+          break;
+        case 'wait':
+          await new Promise(resolve => setTimeout(resolve, step.parameters.duration || 1000));
+          break;
+        case 'condition':
+          // Conditional logic handled by preconditions
+          break;
+      }
+      
+      result.completedAt = new Date();
+    } catch (error: any) {
+      result.status = 'failed';
+      result.error = error.message;
+      result.completedAt = new Date();
+    }
+
+    return result;
+  }
+
+  /**
+   * Execute widget-related workflow actions
+   */
+  private async executeWidgetAction(action: string, parameters: any): Promise<any> {
+    switch (action) {
+      case 'show_widget':
+        return this.toggleWidget(parameters.widgetId);
+      case 'hide_widget':
+        return this.toggleWidget(parameters.widgetId);
+      case 'expand_widget':
+        return this.expandWidget(parameters.widgetId);
+      case 'collapse_widget':
+        return this.collapseWidget(parameters.widgetId);
+      case 'refresh_widget':
+        return this.refreshWidget(parameters.widgetId);
+      case 'hide_all_widgets':
+        this.state.widgets.forEach(widget => {
+          widget.isVisible = false;
+        });
+        this.emit('widgets:all-hidden', {});
+        return { success: true, message: 'All widgets hidden' };
+      case 'show_all_widgets':
+        this.state.widgets.forEach(widget => {
+          widget.isVisible = true;
+        });
+        this.emit('widgets:all-shown', {});
+        return { success: true, message: 'All widgets shown' };
+      case 'clear_filters':
+        return this.clearWidgetFilters();
+      default:
+        throw new Error(`Unknown widget action: ${action}`);
+    }
+  }
+
+  /**
+   * Execute form-related workflow actions
+   */
+  private async executeFormAction(action: string, parameters: any): Promise<any> {
+    switch (action) {
+      case 'fill_field':
+        return this.setFieldValue(parameters.formId, parameters.fieldId, parameters.value);
+      case 'submit_form':
+        return await this.submitForm(parameters.formId);
+      case 'reset_form':
+        return this.resetForm(parameters.formId);
+      case 'validate_form':
+        const form = this.state.forms.get(parameters.formId);
+        return { 
+          success: true, 
+          isValid: form?.isValid || false,
+          message: form?.isValid ? 'Form is valid' : 'Form has validation errors'
+        };
+      default:
+        throw new Error(`Unknown form action: ${action}`);
+    }
+  }
+
+  /**
+   * Execute data-related workflow actions
+   */
+  private async executeDataAction(action: string, parameters: any): Promise<any> {
+    switch (action) {
+      case 'refresh_all_metrics':
+        await this.refreshAllMetrics();
+        return { success: true, message: 'All metrics refreshed' };
+      case 'refresh_metric':
+        await this.refreshMetric(parameters.metricId);
+        return { success: true, message: `Metric ${parameters.metricId} refreshed` };
+      case 'add_activity':
+        this.addActivity(parameters);
+        return { success: true, message: 'Activity added' };
+      case 'clear_activities':
+        this.clearActivities(parameters.filter);
+        return { success: true, message: 'Activities cleared' };
+      default:
+        throw new Error(`Unknown data action: ${action}`);
+    }
+  }
+
+  /**
+   * Check workflow conditions
+   */
+  private async checkWorkflowConditions(conditions: WorkflowCondition[]): Promise<boolean> {
+    for (const condition of conditions) {
+      const met = await this.evaluateCondition(condition);
+      if (!met) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Evaluate a single condition
+   */
+  private async evaluateCondition(condition: WorkflowCondition): Promise<boolean> {
+    let targetValue: any;
+
+    switch (condition.type) {
+      case 'state':
+        // Check state values
+        if (condition.target.startsWith('widget.')) {
+          const widgetId = condition.target.split('.')[1];
+          const widget = this.state.widgets.get(widgetId);
+          targetValue = widget ? widget.isVisible : false;
+        } else if (condition.target.startsWith('form.')) {
+          const [, formId, fieldId] = condition.target.split('.');
+          const form = this.state.forms.get(formId);
+          const field = form?.fields.get(fieldId);
+          targetValue = field?.value;
+        }
+        break;
+      case 'value':
+        // Direct value comparison
+        targetValue = condition.target;
+        break;
+      case 'exists':
+        // Check if something exists
+        if (condition.target.startsWith('widget.')) {
+          const widgetId = condition.target.split('.')[1];
+          targetValue = this.state.widgets.has(widgetId);
+        } else if (condition.target.startsWith('form.')) {
+          const formId = condition.target.split('.')[1];
+          targetValue = this.state.forms.has(formId);
+        }
+        break;
+    }
+
+    // Evaluate operator
+    switch (condition.operator) {
+      case 'equals':
+        return targetValue === condition.value;
+      case 'not_equals':
+        return targetValue !== condition.value;
+      case 'contains':
+        return String(targetValue).includes(String(condition.value));
+      case 'greater_than':
+        return Number(targetValue) > Number(condition.value);
+      case 'less_than':
+        return Number(targetValue) < Number(condition.value);
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Create a custom workflow
+   */
+  createWorkflow(workflow: Omit<WorkflowDefinition, 'createdAt' | 'usageCount'>): { success: boolean; message: string; workflowId?: string } {
+    if (this.state.workflows.has(workflow.id)) {
+      return { success: false, message: 'Workflow with this ID already exists' };
+    }
+
+    const newWorkflow: WorkflowDefinition = {
+      ...workflow,
+      createdAt: new Date(),
+      usageCount: 0
+    };
+
+    this.state.workflows.set(workflow.id, newWorkflow);
+    this.emit('workflow:created', { workflowId: workflow.id, name: workflow.name });
+
+    return { 
+      success: true, 
+      message: `Workflow "${workflow.name}" created successfully`,
+      workflowId: workflow.id
+    };
+  }
+
+  /**
+   * Get all workflows
+   */
+  getAllWorkflows(): WorkflowDefinition[] {
+    return Array.from(this.state.workflows.values());
+  }
+
+  /**
+   * Get workflow by ID
+   */
+  getWorkflow(workflowId: string): WorkflowDefinition | null {
+    return this.state.workflows.get(workflowId) || null;
+  }
+
+  /**
+   * Create a macro
+   */
+  createMacro(macro: Omit<DashboardMacro, 'createdAt' | 'usageCount'>): { success: boolean; message: string; macroId?: string } {
+    if (this.state.macros.has(macro.id)) {
+      return { success: false, message: 'Macro with this ID already exists' };
+    }
+
+    const newMacro: DashboardMacro = {
+      ...macro,
+      createdAt: new Date(),
+      usageCount: 0
+    };
+
+    this.state.macros.set(macro.id, newMacro);
+    this.emit('macro:created', { macroId: macro.id, name: macro.name });
+
+    return { 
+      success: true, 
+      message: `Macro "${macro.name}" created successfully`,
+      macroId: macro.id
+    };
+  }
+
+  /**
+   * Execute a macro by voice trigger
+   */
+  async executeMacroByTrigger(trigger: string): Promise<{ success: boolean; message: string }> {
+    // Find matching macro
+    const macro = Array.from(this.state.macros.values()).find(m => 
+      m.isEnabled && m.voiceTriggers.some(t => 
+        trigger.toLowerCase().includes(t.toLowerCase())
+      )
+    );
+
+    if (!macro) {
+      return { success: false, message: 'No matching macro found' };
+    }
+
+    // Update macro usage
+    macro.lastUsed = new Date();
+    macro.usageCount++;
+
+    // Execute the macro's workflow
+    return await this.executeWorkflow(macro.workflow.id);
+  }
+
+  /**
+   * Search across dashboard
+   */
+  searchDashboard(query: SearchQuery): SearchResult[] {
+    const results: SearchResult[] = [];
+    const searchTerm = query.query.toLowerCase();
+
+    // Search metrics
+    if (query.scope.includes('metrics') || query.scope.includes('all')) {
+      this.state.metrics.forEach(metric => {
+        if (metric.label.toLowerCase().includes(searchTerm) ||
+            String(metric.value).toLowerCase().includes(searchTerm)) {
+          results.push({
+            type: 'metric',
+            id: metric.id,
+            name: metric.label,
+            description: `Value: ${metric.value}${metric.unit ? ' ' + metric.unit : ''}`,
+            relevanceScore: this.calculateRelevance(searchTerm, metric.label),
+            data: metric,
+            highlight: metric.label
+          });
+        }
+      });
+    }
+
+    // Search activities
+    if (query.scope.includes('activities') || query.scope.includes('all')) {
+      this.state.activities.forEach(activity => {
+        if (activity.message.toLowerCase().includes(searchTerm)) {
+          // Apply filters if provided
+          if (query.filters?.severity && !query.filters.severity.includes(activity.severity || '')) {
+            return;
+          }
+          if (query.filters?.timeRange) {
+            if (activity.timestamp < query.filters.timeRange.start ||
+                activity.timestamp > query.filters.timeRange.end) {
+              return;
+            }
+          }
+
+          results.push({
+            type: 'activity',
+            id: activity.id,
+            name: activity.type,
+            description: activity.message,
+            relevanceScore: this.calculateRelevance(searchTerm, activity.message),
+            data: activity,
+            highlight: activity.message
+          });
+        }
+      });
+    }
+
+    // Search widgets
+    if (query.scope.includes('widgets') || query.scope.includes('all')) {
+      this.state.widgets.forEach(widget => {
+        if (widget.name.toLowerCase().includes(searchTerm)) {
+          results.push({
+            type: 'widget',
+            id: widget.id,
+            name: widget.name,
+            description: `Widget type: ${widget.type}, ${widget.isVisible ? 'visible' : 'hidden'}`,
+            relevanceScore: this.calculateRelevance(searchTerm, widget.name),
+            data: widget,
+            highlight: widget.name
+          });
+        }
+      });
+    }
+
+    // Sort results
+    if (query.sortBy === 'relevance') {
+      results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    } else if (query.sortBy === 'name') {
+      results.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // Apply limit
+    if (query.limit) {
+      return results.slice(0, query.limit);
+    }
+
+    return results;
+  }
+
+  /**
+   * Calculate relevance score for search results
+   */
+  private calculateRelevance(searchTerm: string, text: string): number {
+    const lowerText = text.toLowerCase();
+    const lowerSearch = searchTerm.toLowerCase();
+    
+    // Exact match
+    if (lowerText === lowerSearch) return 100;
+    
+    // Starts with search term
+    if (lowerText.startsWith(lowerSearch)) return 80;
+    
+    // Contains search term
+    if (lowerText.includes(lowerSearch)) return 60;
+    
+    // Partial match
+    const searchWords = lowerSearch.split(' ');
+    const matchedWords = searchWords.filter(word => lowerText.includes(word));
+    return (matchedWords.length / searchWords.length) * 40;
+  }
+
+  /**
+   * Batch control widgets
+   */
+  batchControlWidgets(operations: Array<{ widgetId: string; action: 'show' | 'hide' | 'expand' | 'collapse' | 'refresh' }>): { success: boolean; message: string; results: any[] } {
+    const results: any[] = [];
+    
+    for (const op of operations) {
+      let result: any;
+      
+      switch (op.action) {
+        case 'show':
+        case 'hide':
+          result = this.toggleWidget(op.widgetId);
+          break;
+        case 'expand':
+          result = this.expandWidget(op.widgetId);
+          break;
+        case 'collapse':
+          result = this.collapseWidget(op.widgetId);
+          break;
+        case 'refresh':
+          result = this.refreshWidget(op.widgetId);
+          break;
+      }
+      
+      results.push({ widgetId: op.widgetId, action: op.action, result });
+    }
+    
+    this.emit('widgets:batch-controlled', { operations, results });
+    
+    return {
+      success: true,
+      message: `Performed ${operations.length} widget operations`,
+      results
+    };
+  }
+
+  /**
+   * Get comprehensive dashboard summary
+   */
+  getDashboardSummary(): {
+    metrics: { total: number; critical: number; warning: number };
+    activities: { total: number; recent: number; errors: number };
+    widgets: { total: number; visible: number; expanded: number };
+    forms: { total: number; withData: number; invalid: number };
+    workflows: { total: number; running: boolean; lastCompleted?: string };
+    system: { health: string; uptime: number };
+  } {
+    const criticalMetrics = this.getMetricsByStatus('critical').length;
+    const warningMetrics = this.getMetricsByStatus('warning').length;
+    
+    const recentActivities = this.state.activities.filter(a => 
+      (Date.now() - a.timestamp.getTime()) < 3600000 // Last hour
+    ).length;
+    
+    const errorActivities = this.state.activities.filter(a => 
+      a.severity === 'error'
+    ).length;
+    
+    const visibleWidgets = Array.from(this.state.widgets.values()).filter(w => w.isVisible).length;
+    const expandedWidgets = Array.from(this.state.widgets.values()).filter(w => w.isExpanded).length;
+    
+    const formsWithData = Array.from(this.state.forms.values()).filter(f => f.isDirty).length;
+    const invalidForms = Array.from(this.state.forms.values()).filter(f => !f.isValid).length;
+    
+    const systemHealth = this.getSystemHealthSummary();
+    const uptimeMetric = this.state.metrics.get('uptime');
+    
+    return {
+      metrics: {
+        total: this.state.metrics.size,
+        critical: criticalMetrics,
+        warning: warningMetrics
+      },
+      activities: {
+        total: this.state.activities.length,
+        recent: recentActivities,
+        errors: errorActivities
+      },
+      widgets: {
+        total: this.state.widgets.size,
+        visible: visibleWidgets,
+        expanded: expandedWidgets
+      },
+      forms: {
+        total: this.state.forms.size,
+        withData: formsWithData,
+        invalid: invalidForms
+      },
+      workflows: {
+        total: this.state.workflows.size,
+        running: this.state.currentWorkflow?.status === 'running' || false,
+        lastCompleted: this.state.workflowHistory[0]?.workflowId
+      },
+      system: {
+        health: systemHealth.overall,
+        uptime: Number(uptimeMetric?.value) || 0
+      }
     };
   }
 

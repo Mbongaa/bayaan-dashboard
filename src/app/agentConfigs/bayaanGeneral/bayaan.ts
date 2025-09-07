@@ -394,6 +394,104 @@ You: [controlWidget with refresh on activities-widget] → "Refreshing Recent Ac
 4. Confirm all widget actions with clear responses
 5. Widget states change in real-time - always check current state
 
+## Advanced Workflow Capabilities - AUTOMATED MULTI-STEP OPERATIONS
+
+### Available Workflows
+YOU CAN EXECUTE COMPLEX MULTI-STEP AUTOMATIONS WITH A SINGLE COMMAND:
+
+**Predefined Workflows:**
+- **morning-briefing**: Shows metrics, calendar, weather, and news widgets in perfect order
+- **end-of-day**: Cleans up dashboard - collapses all widgets, navigates home, switches to dark theme
+- **focus-mode**: Hides distractions - shows only tasks and calendar widgets
+- **full-dashboard**: Shows all available widgets in expanded view for complete overview
+
+**Custom Workflows:**
+You can create custom workflows on the fly by providing steps like:
+- Navigate to specific sections
+- Show/hide/expand/collapse widgets
+- Switch themes
+- Refresh data
+- Execute in sequence with proper timing
+
+### Workflow Execution
+Use executeDashboardWorkflow when users want:
+- Multiple coordinated actions
+- Complex dashboard setups
+- Routine configurations
+- Automated sequences
+
+**Examples:**
+User: "Start my morning briefing"
+You: [executeDashboardWorkflow with "morning-briefing"] → "Starting your morning briefing... showing metrics, calendar, weather, and news"
+
+User: "Set up for focus work"
+You: [executeDashboardWorkflow with "focus-mode"] → "Setting up focus mode... hiding distractions, showing only tasks and calendar"
+
+User: "Clean up the dashboard"
+You: [executeDashboardWorkflow with "end-of-day"] → "Cleaning up... collapsing widgets, going home, switching to dark mode"
+
+### Batch Widget Operations
+Use batchControlWidgets for controlling multiple widgets at once:
+- Much faster than individual widget commands
+- Maintains consistency across operations
+- Perfect for "show only X" or "hide everything except Y" requests
+
+**Examples:**
+User: "Hide everything except metrics"
+You: [batchControlWidgets to hide all, then show metrics] → "Hiding all widgets except metrics"
+
+User: "Expand all visible widgets"
+You: [batchControlWidgets with expand for all visible] → "Expanding all visible widgets"
+
+### Dashboard Search
+Use searchDashboard to find information across all dashboard data:
+- Searches widgets, forms, navigation items, settings
+- Returns relevance-scored results
+- Perfect for finding specific data or features
+
+**Examples:**
+User: "Search for sales data"
+You: [searchDashboard with "sales"] → "Found 3 results for 'sales': Sales metrics widget, Q4 sales report, Sales team activities"
+
+User: "Find anything about performance"
+You: [searchDashboard with "performance"] → Lists all performance-related items
+
+### Macros - SAVE AND REUSE WORKFLOWS
+Create reusable command sequences:
+
+**Creating Macros:**
+User: "Save this setup as my productivity mode"
+You: [createDashboardMacro with current workflow] → "Saved 'productivity mode' macro. You can now say 'run productivity mode' anytime"
+
+**Running Macros:**
+User: "Run my morning routine"
+You: [executeMacro with "morning-routine"] → "Running your morning routine macro..."
+
+### Dashboard Summary
+Use getDashboardSummary for comprehensive overview:
+- Widget counts and states
+- Active forms and sections
+- Recent activities
+- System health overview
+
+**Example:**
+User: "Give me a complete dashboard summary"
+You: [getDashboardSummary] → "You have 8 widgets total: 5 visible, 3 expanded. Dashboard section is active. No unsaved forms. System health at 99.9%"
+
+### WORKFLOW BEST PRACTICES:
+1. Suggest workflows when appropriate (morning = briefing, evening = cleanup)
+2. Use batch operations for multiple widgets instead of individual commands
+3. Create macros for frequently requested sequences
+4. Provide progress updates during long workflows
+5. Confirm successful completion of workflows
+
+### INTELLIGENT WORKFLOW SUGGESTIONS:
+- User says "good morning" → Suggest morning briefing workflow
+- User says "I'm done for today" → Suggest end-of-day workflow
+- User says "too cluttered" → Suggest hiding non-essential widgets
+- User says "show me everything" → Run full-dashboard workflow
+- User mentions specific work mode → Offer to create a macro
+
 # Example Interactions
 User: [New conversation]
 You: "Hey, Bayaan here! Need help with anything?"
@@ -1371,6 +1469,796 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             success: false,
             error: error.message,
             message: "I'm having trouble checking the widgets right now",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "executeDashboardWorkflow",
+      description:
+        "Execute multi-step workflows on the dashboard. Use this for complex commands that involve multiple actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          workflowId: {
+            type: "string",
+            description: "ID of the workflow to execute (e.g., 'morning-routine', 'cleanup-view')",
+          },
+          customSteps: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  enum: ["widget", "form", "data", "navigation", "wait"],
+                  description: "Type of workflow step",
+                },
+                action: {
+                  type: "string",
+                  description: "Action to perform",
+                },
+                parameters: {
+                  type: "object",
+                  description: "Parameters for the action",
+                },
+              },
+            },
+            description: "Custom workflow steps to execute (if not using a predefined workflow)",
+          },
+          variables: {
+            type: "object",
+            description: "Variables to pass to the workflow",
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { workflowId, customSteps, variables } = input as {
+          workflowId?: string;
+          customSteps?: any[];
+          variables?: Record<string, any>;
+        };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workflow Execution', { workflowId, customSteps });
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          if (workflowId) {
+            // Execute predefined workflow
+            const result = await dashboardDataService.executeWorkflow(workflowId, variables);
+            return {
+              success: result.success,
+              message: result.message,
+              execution: result.execution,
+            };
+          } else if (customSteps && customSteps.length > 0) {
+            // Create and execute custom workflow
+            const customWorkflow = {
+              id: `custom-${Date.now()}`,
+              name: 'Custom Voice Workflow',
+              description: 'Workflow created from voice command',
+              steps: customSteps.map((step, index) => ({
+                id: `step-${index + 1}`,
+                type: step.type,
+                action: step.action,
+                parameters: step.parameters || {},
+                description: `${step.type} action: ${step.action}`,
+              })),
+            };
+            
+            dashboardDataService.createWorkflow(customWorkflow);
+            const result = await dashboardDataService.executeWorkflow(customWorkflow.id, variables);
+            
+            return {
+              success: result.success,
+              message: result.message,
+              execution: result.execution,
+            };
+          } else {
+            return {
+              success: false,
+              message: "Either workflowId or customSteps must be provided",
+            };
+          }
+        } catch (error: any) {
+          addBreadcrumb?.('Workflow Execution Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't execute the workflow",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "batchControlWidgets",
+      description:
+        "Control multiple widgets at once. Use this for commands that affect multiple widgets simultaneously.",
+      parameters: {
+        type: "object",
+        properties: {
+          operations: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                widgetId: {
+                  type: "string",
+                  description: "Widget ID to control",
+                },
+                action: {
+                  type: "string",
+                  enum: ["show", "hide", "expand", "collapse", "refresh"],
+                  description: "Action to perform on the widget",
+                },
+              },
+              required: ["widgetId", "action"],
+            },
+            description: "List of widget operations to perform",
+          },
+        },
+        required: ["operations"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { operations } = input as {
+          operations: Array<{ widgetId: string; action: string }>;
+        };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Batch Widget Control', { operations });
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          const result = dashboardDataService.batchControlWidgets(operations);
+          
+          return {
+            success: result.success,
+            message: result.message,
+            results: result.results,
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Batch Widget Control Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't perform batch widget operations",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "searchDashboard",
+      description:
+        "Search across all dashboard data including metrics, activities, widgets, and forms.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query string",
+          },
+          scope: {
+            type: "array",
+            items: {
+              type: "string",
+              enum: ["metrics", "activities", "forms", "widgets", "all"],
+            },
+            description: "Scope of the search (default: all)",
+          },
+          filters: {
+            type: "object",
+            properties: {
+              severity: {
+                type: "array",
+                items: { type: "string" },
+                description: "Filter by severity levels",
+              },
+              timeRange: {
+                type: "object",
+                properties: {
+                  startHoursAgo: {
+                    type: "number",
+                    description: "Start time in hours ago",
+                  },
+                  endHoursAgo: {
+                    type: "number",
+                    description: "End time in hours ago (0 for now)",
+                  },
+                },
+                description: "Time range filter",
+              },
+            },
+            description: "Additional filters for the search",
+          },
+          limit: {
+            type: "number",
+            description: "Maximum number of results to return",
+          },
+          sortBy: {
+            type: "string",
+            enum: ["relevance", "date", "name"],
+            description: "How to sort the results",
+          },
+        },
+        required: ["query"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { query, scope = ['all'], filters, limit = 10, sortBy = 'relevance' } = input as {
+          query: string;
+          scope?: string[];
+          filters?: any;
+          limit?: number;
+          sortBy?: 'relevance' | 'date' | 'name';
+        };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Dashboard Search', { query, scope, filters });
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          // Convert time range if provided
+          let searchFilters = filters;
+          if (filters?.timeRange) {
+            const now = new Date();
+            const start = new Date(now.getTime() - (filters.timeRange.startHoursAgo * 3600000));
+            const end = filters.timeRange.endHoursAgo === 0 
+              ? now 
+              : new Date(now.getTime() - (filters.timeRange.endHoursAgo * 3600000));
+            
+            searchFilters = {
+              ...filters,
+              timeRange: { start, end },
+            };
+          }
+          
+          const results = dashboardDataService.searchDashboard({
+            query,
+            scope,
+            filters: searchFilters,
+            limit,
+            sortBy,
+          });
+          
+          const summary = `Found ${results.length} result${results.length !== 1 ? 's' : ''} for "${query}"`;
+          
+          return {
+            success: true,
+            message: summary,
+            results,
+            count: results.length,
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Dashboard Search Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't search the dashboard",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "createDashboardMacro",
+      description:
+        "Create a reusable macro from a sequence of dashboard commands that can be triggered by voice.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Name for the macro",
+          },
+          description: {
+            type: "string",
+            description: "Description of what the macro does",
+          },
+          voiceTriggers: {
+            type: "array",
+            items: { type: "string" },
+            description: "Voice phrases that will trigger this macro",
+          },
+          steps: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                type: {
+                  type: "string",
+                  enum: ["widget", "form", "data", "navigation", "wait"],
+                },
+                action: {
+                  type: "string",
+                },
+                parameters: {
+                  type: "object",
+                },
+              },
+            },
+            description: "Steps that make up the macro",
+          },
+        },
+        required: ["name", "voiceTriggers", "steps"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { name, description, voiceTriggers, steps } = input as {
+          name: string;
+          description?: string;
+          voiceTriggers: string[];
+          steps: any[];
+        };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Create Macro', { name, voiceTriggers });
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          // Create workflow for the macro
+          const workflow = {
+            id: `macro-${Date.now()}`,
+            name,
+            description: description || `Macro: ${name}`,
+            steps: steps.map((step, index) => ({
+              id: `step-${index + 1}`,
+              type: step.type,
+              action: step.action,
+              parameters: step.parameters || {},
+              description: `${step.type} action: ${step.action}`,
+            })),
+          };
+          
+          dashboardDataService.createWorkflow(workflow);
+          
+          // Create the macro
+          const macro = {
+            id: `macro-${Date.now()}`,
+            name,
+            description: description || `Voice macro: ${name}`,
+            voiceTriggers,
+            workflow,
+            isEnabled: true,
+          };
+          
+          const result = dashboardDataService.createMacro(macro);
+          
+          return {
+            success: result.success,
+            message: result.message,
+            macroId: result.macroId,
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Create Macro Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't create the macro",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "executeMacro",
+      description:
+        "Execute a previously created macro by its voice trigger or ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          trigger: {
+            type: "string",
+            description: "Voice trigger phrase or macro ID",
+          },
+        },
+        required: ["trigger"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { trigger } = input as { trigger: string };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Execute Macro', { trigger });
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          const result = await dashboardDataService.executeMacroByTrigger(trigger);
+          
+          return {
+            success: result.success,
+            message: result.message,
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Execute Macro Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't execute the macro",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "getDashboardSummary",
+      description:
+        "Get a comprehensive summary of the entire dashboard state including metrics, activities, widgets, forms, and workflows.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Dashboard Summary Request', {});
+
+        try {
+          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          
+          const summary = dashboardDataService.getDashboardSummary();
+          
+          // Generate human-readable summary
+          const messages: string[] = [];
+          
+          messages.push(`${summary.metrics.total} metrics tracked`);
+          if (summary.metrics.critical > 0) {
+            messages.push(`${summary.metrics.critical} critical metrics need attention`);
+          }
+          
+          messages.push(`${summary.activities.recent} recent activities`);
+          if (summary.activities.errors > 0) {
+            messages.push(`${summary.activities.errors} errors detected`);
+          }
+          
+          messages.push(`${summary.widgets.visible} of ${summary.widgets.total} widgets visible`);
+          
+          if (summary.forms.invalid > 0) {
+            messages.push(`${summary.forms.invalid} forms have validation errors`);
+          }
+          
+          if (summary.workflows.running) {
+            messages.push('A workflow is currently running');
+          }
+          
+          messages.push(`System health: ${summary.system.health} (${summary.system.uptime}% uptime)`);
+          
+          return {
+            success: true,
+            message: messages.join('. '),
+            summary,
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Dashboard Summary Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't get dashboard summary",
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "getSmartSuggestions",
+      description:
+        "Get intelligent suggestions based on user context, time of day, and usage patterns. Returns context-aware recommendations.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Smart Suggestions Request', {});
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          const suggestions = integrationService.getSmartSuggestions();
+          const userContext = integrationService.getUserContext();
+          
+          if (suggestions.length === 0) {
+            return {
+              success: true,
+              suggestions: [],
+              context: userContext,
+              message: "No suggestions available at this time"
+            };
+          }
+          
+          // Format suggestions for voice response
+          const formattedSuggestions = suggestions.map(s => ({
+            suggestion: s.suggestion,
+            reason: s.reason,
+            confidence: Math.round(s.confidence * 100),
+            id: s.id
+          }));
+          
+          const topSuggestion = suggestions[0];
+          const message = `Based on the ${userContext.timeOfDay} and your patterns, I suggest: ${topSuggestion.suggestion}. ${topSuggestion.reason}.`;
+          
+          addBreadcrumb?.('Smart Suggestions Retrieved', { count: suggestions.length });
+          
+          return {
+            success: true,
+            suggestions: formattedSuggestions,
+            context: userContext,
+            message,
+            topSuggestionId: topSuggestion.id
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Smart Suggestions Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't get smart suggestions"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "acceptSmartSuggestion",
+      description:
+        "Execute a smart suggestion that was previously offered. Accepts the suggestion ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          suggestionId: {
+            type: "string",
+            description: "The ID of the suggestion to execute"
+          }
+        },
+        required: ["suggestionId"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { suggestionId } = input as { suggestionId: string };
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Accept Smart Suggestion', { suggestionId });
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          const result = await integrationService.executeSuggestion(suggestionId);
+          
+          addBreadcrumb?.('Smart Suggestion Executed', { suggestionId, result });
+          
+          return {
+            success: true,
+            message: "Suggestion executed successfully",
+            result
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Smart Suggestion Execution Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: `Couldn't execute suggestion: ${error.message}`
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "getPerformanceStatus",
+      description:
+        "Get current performance metrics and optimization status of the dashboard.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Performance Status Request', {});
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          const metrics = integrationService.getPerformanceMetrics();
+          const preferences = integrationService.getUserPreferences();
+          
+          // Generate performance summary
+          const avgResponseTime = Math.round(metrics.averageResponseTime);
+          const performanceLevel = 
+            avgResponseTime < 500 ? 'excellent' :
+            avgResponseTime < 1000 ? 'good' :
+            avgResponseTime < 2000 ? 'fair' : 'needs improvement';
+          
+          const message = `Performance is ${performanceLevel}. Average response time: ${avgResponseTime}ms. ` +
+            `Mode: ${preferences.performanceMode}. ` +
+            `Success rate: ${Math.round(metrics.successRate)}%.`;
+          
+          addBreadcrumb?.('Performance Status Retrieved', metrics);
+          
+          return {
+            success: true,
+            metrics,
+            performanceMode: preferences.performanceMode,
+            performanceLevel,
+            message
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Performance Status Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't get performance status"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "optimizePerformance",
+      description:
+        "Optimize dashboard performance based on the specified mode: performance, battery, or balanced.",
+      parameters: {
+        type: "object",
+        properties: {
+          mode: {
+            type: "string",
+            enum: ["performance", "battery", "balanced"],
+            description: "The performance mode to set"
+          }
+        },
+        required: ["mode"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { mode } = input as { mode: 'performance' | 'battery' | 'balanced' };
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Optimize Performance', { mode });
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          // Update preferences
+          integrationService.updateUserPreferences({ performanceMode: mode });
+          
+          // Apply optimizations
+          integrationService.optimizePerformance();
+          
+          const modeDescriptions = {
+            performance: "Maximum speed with faster refresh rates",
+            battery: "Reduced resource usage for longer battery life",
+            balanced: "Optimal balance between speed and efficiency"
+          };
+          
+          addBreadcrumb?.('Performance Optimized', { mode });
+          
+          return {
+            success: true,
+            mode,
+            message: `Switched to ${mode} mode. ${modeDescriptions[mode]}.`
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Performance Optimization Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: `Couldn't optimize performance: ${error.message}`
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "learnUserBehavior",
+      description:
+        "Record user behavior patterns to improve future suggestions and automations.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            description: "The action performed by the user"
+          },
+          context: {
+            type: "object",
+            description: "Additional context about the action"
+          }
+        },
+        required: ["action"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { action, context: actionContext } = input as { action: string; context?: any };
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Learn User Behavior', { action, context: actionContext });
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          integrationService.learnUserBehavior(action, actionContext || {});
+          
+          addBreadcrumb?.('User Behavior Learned', { action });
+          
+          return {
+            success: true,
+            message: "Learning from your actions to improve future suggestions"
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Learn Behavior Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't record behavior pattern"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "getWorkflowAnalytics",
+      description:
+        "Get analytics and insights about workflow usage patterns and success rates.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workflow Analytics Request', {});
+
+        try {
+          const { integrationService } = await import('../../foundation/services/IntegrationService');
+          
+          const analytics = integrationService.getWorkflowAnalytics();
+          
+          if (analytics.length === 0) {
+            return {
+              success: true,
+              analytics: [],
+              message: "No workflow analytics available yet. Run some workflows to see insights."
+            };
+          }
+          
+          // Find most used workflow
+          const mostUsed = analytics.reduce((prev, current) => 
+            current.executionCount > prev.executionCount ? current : prev
+          );
+          
+          // Calculate overall success rate
+          const overallSuccess = analytics.reduce((sum, w) => sum + w.successRate, 0) / analytics.length;
+          
+          const message = `You've run ${analytics.length} different workflows. ` +
+            `Most used: ${mostUsed.workflowId} (${mostUsed.executionCount} times). ` +
+            `Overall success rate: ${Math.round(overallSuccess)}%.`;
+          
+          addBreadcrumb?.('Workflow Analytics Retrieved', { count: analytics.length });
+          
+          return {
+            success: true,
+            analytics,
+            mostUsed: mostUsed.workflowId,
+            overallSuccessRate: Math.round(overallSuccess),
+            message
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Workflow Analytics Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            message: "Couldn't get workflow analytics"
           };
         }
       },

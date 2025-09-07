@@ -1,806 +1,727 @@
-# Dashboard Architecture Guide: React + WebRTC + WebGL Best Practices
-
-## Executive Summary
-
-This document outlines the correct architectural patterns for building a dashboard with persistent WebRTC connections (OpenAI Realtime API) and WebGL animations (Galaxy background, 3D orbs) without interference from React re-renders.
-
-## Core Architectural Principle
-
-**React components should SUBSCRIBE to persistent services, not OWN them.**
-
-```
-❌ WRONG: React Component Ownership Pattern
-React Component → owns WebRTC Session → owns WebGL Context → UI changes → Everything Recreated
-
-✅ CORRECT: Service Layer Subscription Pattern  
-Persistent Services (WebRTC + WebGL) → React Components Subscribe → UI changes → Services Unaffected
-```
-
-## Layer Architecture
-
-### Layer 1: Persistent Services (Foundation)
-**Purpose**: Manage resources that must survive React re-renders
-**Components**: 
-- WebRTC Session Service (OpenAI Realtime API)
-- WebGL Context Pool (Galaxy, Audio3DOrb, MiniOrb)
-- Event Bus (Service ↔ React communication)
-
-**Key Characteristics**:
-- Initialized once at application startup
-- Live outside React component lifecycle
-- Never destroyed by UI changes
-- Communicate via events, not direct coupling
-
-### Layer 2: React UI Layer (Presentation)
-**Purpose**: Render user interface and handle user interactions
-**Components**:
-- Dashboard components
-- Sidebar navigation
-- Settings panels  
-- Transcript display
-
-**Key Characteristics**:
-- Pure presentation components
-- Subscribe to service events via hooks
-- Trigger service actions via event emission
-- Never directly own persistent resources
-
-## Implementation Patterns
-
-### Pattern 1: WebRTC Service Singleton
-
-```typescript
-// ✅ CORRECT: Persistent Service
-class WebRTCSessionService {
-  private session: RealtimeSession | null = null;
-  
-  async connect(config: ConnectConfig): Promise<void> {
-    // Session persists through all React re-renders
-  }
-}
-
-// React Component Usage
-function VoiceInterface() {
-  const [status, setStatus] = useState('DISCONNECTED');
-  
-  // Subscribe to service events
-  useServiceEvent('webrtc:status', ({ status }) => {
-    setStatus(status);
-  });
-  
-  // Trigger service actions
-  const connect = () => webrtcSessionService.connect(config);
-}
-```
-
-### Pattern 2: WebGL Context Pool
-
-```typescript
-// ✅ CORRECT: Shared Context Management
-class WebGLContextService {
-  private contexts: Map<string, WebGLContext> = new Map();
-  
-  getContext(id: string): WebGLContext {
-    // Return existing or create new context
-    // Contexts persist across component unmounts
-  }
-}
-
-// React Component Usage
-function Galaxy() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    // Mount to existing service-managed context
-    const context = webglContextService.mountCanvas('galaxy', containerRef.current);
-    
-    return () => {
-      // Unmount but preserve context
-      webglContextService.unmountCanvas('galaxy');
-    };
-  }, []); // Empty deps - mount once only
-}
-```
-
-### Pattern 3: Animation Isolation
-
-```typescript
-// ❌ WRONG: React State Animation (triggers re-renders)
-const [sidebarOpen, setSidebarOpen] = useState(false);
-<div style={{ width: sidebarOpen ? 300 : 60 }}>
-
-// ✅ CORRECT: CSS-Only Animation (no React state)
-<div className="sidebar transition-transform duration-200 hover:translate-x-0">
-```
-
-## Critical Anti-Patterns to Avoid
-
-### Anti-Pattern 1: Component-Owned Resources
-```typescript
-// ❌ NEVER DO THIS
-function GalaxyBackground() {
-  const [renderer, setRenderer] = useState<WebGLRenderer>();
-  
-  useEffect(() => {
-    const newRenderer = new WebGLRenderer(); // Creates new context on every re-render
-    setRenderer(newRenderer);
-  }, [props]); // Dependency on props = frequent recreation
-}
-```
-
-### Anti-Pattern 2: Layout-Based Animations  
-```typescript
-// ❌ CAUSES RE-RENDERS
-<motion.div animate={{ width: open ? 300 : 60 }}>
-
-// ✅ NO RE-RENDERS
-<div className="transition-transform hover:scale-110">
-```
-
-### Anti-Pattern 3: Mixed Responsibilities
-```typescript
-// ❌ COMPONENT DOES TOO MUCH
-function App() {
-  const session = useRealtimeSession(); // WebRTC ownership
-  const webgl = useWebGLContext(); // WebGL ownership  
-  const [sidebarOpen, setSidebarOpen] = useState(); // UI state
-  // Any UI state change affects WebRTC/WebGL
-}
-```
-
-## Sidebar Navigation Best Practices
-
-### CSS-Only Hover Expansion
-```css
-/* Sidebar container */
-.sidebar {
-  width: 60px;
-  transition: width 200ms ease-in-out;
-}
-
-.sidebar:hover {
-  width: 300px;
-}
-
-/* Main content offset */
-.main-content {
-  margin-left: 60px;
-  transition: margin-left 200ms ease-in-out;
-}
-
-.sidebar:hover + .main-content {
-  margin-left: 300px;
-}
-```
-
-### Transform-Based Layout Shifts
-```typescript
-// Use transforms instead of layout changes
-const SidebarLayout = () => {
-  return (
-    <div className="flex">
-      <div className="sidebar w-[60px] hover:w-[300px] transition-all">
-        {/* Sidebar content */}
-      </div>
-      <div className="main-content flex-1 transform transition-transform">
-        {/* Main content - transforms smoothly without affecting WebGL */}
-      </div>
-    </div>
-  );
-};
-```
-
-## Event Bus Communication Pattern
-
-### Service → React Communication
-```typescript
-// Service emits events
-webrtcSessionService.on('status_change', (status) => {
-  eventBus.emit('webrtc:status', { status });
-});
-
-// React component subscribes
-function StatusIndicator() {
-  const [status, setStatus] = useState('DISCONNECTED');
-  
-  useServiceEvent('webrtc:status', ({ status }) => {
-    setStatus(status);
-  });
-}
-```
-
-### React → Service Communication
-```typescript
-// React triggers service actions via events
-function ConnectButton() {
-  const handleConnect = () => {
-    eventBus.emit('ui:connect_requested', { agentConfig: 'bayaanGeneral' });
-  };
-}
-
-// Service listens for UI events
-class WebRTCSessionService {
-  constructor() {
-    eventBus.on('ui:connect_requested', this.handleConnect.bind(this));
-  }
-}
-```
-
-## Performance Optimization Techniques
-
-### 1. Component Memoization
-```typescript
-const Galaxy = React.memo(() => {
-  // Component only re-renders if props actually change
-});
-
-const AudioOrb = React.memo(() => {
-  // Isolated from parent re-renders
-});
-```
-
-### 2. Stable Callback References
-```typescript
-// ✅ STABLE - prevents re-renders
-const handleClick = useCallback(() => {
-  action();
-}, []); // Empty deps = stable reference
-
-// ❌ UNSTABLE - creates new function every render
-const handleClick = () => action();
-```
-
-### 3. Context Value Memoization
-```typescript
-const contextValue = useMemo(() => ({
-  session: sessionRef.current,
-  status: connectionStatus
-}), [connectionStatus]); // Only changes when status actually changes
-```
-
-## WebGL Context Management Rules
-
-### Rule 1: One Context Per Logical Unit
-```typescript
-// ✅ GOOD: Shared contexts
-webglContextService.getContext('galaxy');    // One for galaxy
-webglContextService.getContext('audio-orb'); // One for audio visualization
-webglContextService.getContext('ui-elements'); // One for UI WebGL needs
-```
-
-### Rule 2: Context Lifecycle Management
-```typescript
-// Context creation
-const context = webglContextService.getContext('component-id');
-
-// Context sharing (multiple components can use same context)
-const sharedContext = webglContextService.getContext('shared-context');
-
-// Context cleanup (only when truly no longer needed)
-webglContextService.destroyContext('component-id');
-```
-
-### Rule 3: Error Recovery
-```typescript
-// Handle context loss gracefully
-canvas.addEventListener('webglcontextlost', (e) => {
-  e.preventDefault(); // Prevent default context loss behavior
-  // Attempt to restore or degrade gracefully
-});
-
-canvas.addEventListener('webglcontextrestored', () => {
-  // Reinitialize resources with existing context
-});
-```
-
-## React + OpenAI Realtime API Integration
-
-### Correct Session Management Pattern
-```typescript
-// ✅ CORRECT: Service manages session
-class RealtimeSessionService {
-  private session: RealtimeSession | null = null;
-  
-  async connect(agents: RealtimeAgent[]) {
-    this.session = new RealtimeSession(agents[0], config);
-    await this.session.connect();
-    // Session persists through UI changes
-  }
-}
-
-// React component subscribes to session events
-function useRealtimeStatus() {
-  const [status, setStatus] = useState('DISCONNECTED');
-  
-  useEffect(() => {
-    return realtimeSessionService.on('status', setStatus);
-  }, []);
-  
-  return status;
-}
-```
-
-### Event Handler Stability
-```typescript
-// ✅ STABLE: Event handlers don't recreate session
-const disconnect = useCallback(() => {
-  realtimeSessionService.disconnect();
-}, []); // No dependencies = stable reference
-
-// ✅ STABLE: UI state changes don't affect session
-const [sidebarOpen, setSidebarOpen] = useState(false);
-// This state change won't affect WebRTC session
-```
-
-## Dashboard Animation Guidelines
-
-### Safe Animation Properties
-**Properties that DON'T trigger re-renders:**
-- `transform: translateX(), translateY(), scale(), rotate()`
-- `opacity`
-- `filter: blur(), brightness()`
-- `box-shadow`, `border-radius`
-
-**Properties that DO trigger re-renders (avoid):**
-- `width`, `height` (layout changes)
-- `margin`, `padding` (layout changes)  
-- `position` changes that affect other elements
-- `display`, `visibility` (when they affect layout)
-
-### Sidebar Animation Example
-```tsx
-// ✅ CORRECT: Pure CSS, no JavaScript state
-const Sidebar = () => {
-  return (
-    <div className="fixed left-0 top-0 h-full w-[60px] hover:w-[300px] transition-all duration-300 ease-in-out z-10">
-      {/* Sidebar content */}
-    </div>
-  );
-};
-
-// Main content automatically adjusts
-const MainContent = () => {
-  return (
-    <div className="ml-[60px] hover:ml-[300px] transition-all duration-300 ease-in-out">
-      {/* Your voice assistant UI here - never re-renders */}
-    </div>
-  );
-};
-```
-
-## Error Prevention Checklist
-
-### Before Adding Any Animation:
-- [ ] Does this trigger React state changes?
-- [ ] Does this cause layout shifts?
-- [ ] Will this affect components with WebGL/WebRTC?
-- [ ] Can this be achieved with CSS-only?
-
-### Before Creating WebGL Contexts:
-- [ ] Is this context managed by a service?
-- [ ] Is this context shared across components?
-- [ ] Is there proper cleanup on context loss?
-- [ ] Are all shader programs properly managed?
-
-### Before Adding React Effects:
-- [ ] Are dependencies stable?
-- [ ] Is cleanup function implemented?
-- [ ] Does this effect recreate expensive resources?
-- [ ] Can this be moved to service layer?
-
-## Migration Strategy for Existing Applications
-
-### Phase 1: Identify Resource Ownership
-1. Find all `new WebGLRenderer()`, `new RealtimeSession()` calls
-2. Identify which React components own these resources
-3. Map the dependency chain (what triggers their recreation)
-
-### Phase 2: Extract to Services
-1. Create service classes for each resource type
-2. Implement event-based communication
-3. Add error handling and recovery
-
-### Phase 3: Convert Components to Subscribers
-1. Remove resource creation from React components
-2. Add service event subscriptions
-3. Convert to pure presentation components
-
-### Phase 4: Optimize Animations
-1. Convert JavaScript animations to CSS
-2. Use transform properties instead of layout properties
-3. Add performance monitoring
-
-## Debugging Tools
-
-### WebGL Context Monitoring
-```typescript
-// Count active contexts
-const contexts = webglContextService.getActiveContexts();
-console.log(`Active WebGL contexts: ${contexts.length}`);
-
-// Monitor context creation
-webglContextService.on('context_created', ({ id }) => {
-  console.log(`New context created: ${id}`);
-});
-```
-
-### React Render Monitoring  
-```typescript
-// Detect unnecessary re-renders
-const WhyDidYouRender = require('@welldone-software/why-did-you-render');
-WhyDidYouRender(React, {
-  trackAllPureComponents: true,
-});
-```
-
-### Performance Profiling
-```typescript
-// Monitor service layer performance
-const performanceMonitor = {
-  startTime: performance.now(),
-  
-  logOperation(operation: string) {
-    const duration = performance.now() - this.startTime;
-    console.log(`${operation} took ${duration}ms`);
-    this.startTime = performance.now();
-  }
-};
-```
-
-## Future Dashboard Features
-
-With this architecture in place, you can safely add:
-- **Real-time Analytics**: Charts that update without affecting voice assistant
-- **Multi-user Sessions**: Multiple WebRTC connections managed by service layer
-- **Complex Animations**: Smooth transitions without resource recreation
-- **Dynamic Layouts**: Dashboard widgets that rearrange without breaking connections
-- **Mobile Responsiveness**: Touch gestures and responsive layouts
-
-## Conclusion
-
-The service layer architecture transforms React from a resource manager into a pure UI renderer. This separation of concerns ensures that your voice assistant remains stable and performant while providing unlimited flexibility for dashboard features and animations.
-
-**Key Takeaway**: React excels at UI management when it's not burdened with managing persistent connections and graphics resources. The service layer handles the "heavy lifting" while React handles the "beautiful presentation."
-
----
-
-# Current Dashboard Implementation (September 2025)
+# Bayaan VA Dashboard - Complete Architecture Guide
 
 ## Overview
 
-The current implementation follows the layered architecture principles outlined above, with a fully functional dashboard overlay system that works in harmony with the persistent Voice Assistant foundation.
+The Bayaan VA Dashboard is a sophisticated voice-controlled interface built on a service-oriented architecture that enables complete voice control over all dashboard elements. The system follows a clear separation of concerns with persistent services, React components, and voice integration through the OpenAI Realtime API.
 
-## Implemented Architecture
+## Core Architecture Goals
 
-### Layer Structure
+### 1. Complete Voice Control
+**Goal:** Enable the voice assistant to "know all the elements and control all the elements"
+
+**Solution:** 
+- Service layer manages all state and operations
+- Every UI element is controllable through service methods
+- Voice tools map directly to service operations
+- State changes propagate through event-driven architecture
+
+### 2. Service Layer Independence
+**Goal:** Separate business logic from UI rendering to survive React re-renders
+
+**Solution:**
+- Singleton services manage persistent state
+- Services exist outside React lifecycle
+- Bridge components sync service state with React
+- Event-driven communication between layers
+
+### 3. Progressive Enhancement
+**Goal:** Build features incrementally while maintaining stability
+
+**Solution:**
+- 5-phase implementation approach
+- Each phase adds complete, tested features
+- New capabilities build on existing foundation
+- Backward compatibility maintained
+
+### 4. Intelligent Adaptation
+**Goal:** System learns and improves from user behavior
+
+**Solution:**
+- Context awareness (time, location, activity)
+- Pattern recognition and learning
+- Smart suggestions based on usage (available via voice)
+- Performance optimization based on patterns
+
+## Architecture Layers
+
 ```
 ┌─────────────────────────────────────────────┐
-│         Dashboard Layer (z-30)             │  ← Overlay Components
-│       - DashboardSidebar (navigation)      │
-│       - DashboardContentRenderer            │  
-│       - Dashboard Pages (Home/Profile/etc) │
-├─────────────────────────────────────────────┤
-│      Foundation Layer (z-10 to z-20)       │  ← Always Active
-│       - Voice Assistant UI                 │
-│       - Realtime Audio Processing          │
-│       - Transcript & Events                │
-│       - Chat Input & Controls              │
-│       - Dock Navigation                    │
-├─────────────────────────────────────────────┤
-│        Background Layer (z-0)              │  ← Visual Effects  
-│       - Galaxy Animation                   │
-│       - Theme & Visual Effects             │
+│           Voice Layer (OpenAI)              │
+│         Realtime API + Agent SDK            │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│           Agent Configuration               │
+│      Tools + Instructions + Handoffs        │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│           Service Layer (Singletons)        │
+│   Navigation | Data | Workflow | Integration│
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│         Bridge Components (React)           │
+│    State Synchronization + Event Handling   │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│           UI Components (React)             │
+│      Dashboard | Widgets | Forms | Nav      │
 └─────────────────────────────────────────────┘
 ```
 
-## File Structure
+## Service Layer Architecture
 
-```
-src/app/
-├── App.tsx                                  # Main orchestrator with dashboard state
-├── dashboard/
-│   ├── components/
-│   │   ├── navigation/
-│   │   │   └── DashboardSidebar.tsx        # Responsive sidebar navigation
-│   │   ├── pages/
-│   │   │   └── DashboardHome.tsx           # Dashboard landing page
-│   │   └── DashboardContentRenderer.tsx    # Component routing system
-│   └── [future dashboard modules]
-├── foundation/                             # Voice Assistant components (unchanged)
-│   ├── components/                         # Always-active VA UI
-│   ├── contexts/                          # Realtime contexts
-│   ├── hooks/                             # Voice processing hooks
-│   └── services/                          # Foundation services
-└── shared/                                # Shared utilities
-    ├── components/
-    │   └── sidebar.tsx                    # Base sidebar component
-    └── lib/
-```
+### Core Services
 
-## State Management Implementation
-
-### App.tsx Dashboard State
+#### 1. NavigationService
+**Purpose:** Manages navigation state and sidebar control
 ```typescript
-// Dashboard state management
-const [selectedDashboardItem, setSelectedDashboardItem] = useState<string | null>(null);
-const [dashboardContentMode, setDashboardContentMode] = useState<'voice' | 'dashboard'>('voice');
-const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
-
-// Dashboard menu selection handlers
-const handleDashboardMenuSelect = (menuItem: string) => {
-  if (menuItem === 'logout') {
-    console.log('Logout clicked');
-    return;
-  }
-  setSelectedDashboardItem(menuItem);
-  setDashboardContentMode('dashboard');
-};
-
-const handleBackToVoice = () => {
-  setSelectedDashboardItem(null);
-  setDashboardContentMode('voice');
-};
-```
-
-### Sidebar State Management
-```typescript
-// Robust hover detection
-<div 
-  onMouseEnter={() => setIsSidebarHovered(true)}
-  onMouseLeave={() => setIsSidebarHovered(false)}
->
-  <DashboardSidebar 
-    selectedItem={selectedDashboardItem}
-    onMenuSelect={handleDashboardMenuSelect}
-  />
-</div>
-```
-
-## Responsive Positioning System
-
-### CSS Implementation (globals.css)
-```css
-/* Dashboard responsive positioning - JavaScript controlled */
-.dashboard-overlay {
-  transition: left 300ms ease-in-out;
-}
-
-.dashboard-overlay-collapsed {
-  left: 96px; /* 60px sidebar + 36px spacing */
-}
-
-.dashboard-overlay-expanded {  
-  left: 340px; /* 300px expanded sidebar + 40px spacing */
+interface NavigationService {
+  navigateToSection(section: string)
+  setSidebarState(state: 'expanded' | 'collapsed')
+  getCurrentSection(): string | null
+  getContentMode(): 'voice' | 'dashboard'
 }
 ```
 
-### Dynamic Class Application
+#### 2. DashboardDataService  
+**Purpose:** Central state management for all dashboard data
 ```typescript
-// JavaScript-controlled responsive positioning
-<div className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-3xl shadow-lg pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}>
-```
-
-## Positioning Specifications
-
-### Sidebar Positioning
-- **Location**: `fixed left-4 top-[12.5vh] h-[75vh]`
-- **Width**: `w-[60px]` (collapsed) → `hover:w-[300px]` (expanded)
-- **Z-index**: `z-20`
-- **Visual**: Rounded card with backdrop blur and semi-transparent background
-
-### Dashboard Overlay Positioning  
-- **Vertical**: `top-[12.5vh] h-[75vh]` (matches sidebar exactly)
-- **Horizontal**: `right-4` (16px from right edge)
-- **Left Position**: 
-  - Collapsed: `left: 96px` (60px + 36px spacing)
-  - Expanded: `left: 340px` (300px + 40px spacing)
-- **Z-index**: `z-30` (above sidebar, below nothing)
-- **Visual**: Matches sidebar styling perfectly
-
-### Space Allocation
-- **Top 12.5vh**: Available for future components (~80px on 1080p)
-- **Bottom 12.5vh**: Available for future components (~80px on 1080p)
-- **Foundation UI**: Continues working in background underneath overlay
-
-## Component Implementation Details
-
-### DashboardSidebar.tsx
-```typescript
-interface DashboardSidebarProps {
-  selectedItem: string | null;
-  onMenuSelect: (menuItem: string) => void;
-}
-
-// Menu items with IDs and click handlers
-const links = [
-  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard /> },
-  { id: "profile", label: "Profile", icon: <UserCog /> },
-  { id: "settings", label: "Settings", icon: <Settings /> },
-  { id: "logout", label: "Logout", icon: <LogOut /> },
-];
-
-// Custom MenuLink component with selection styling
-const MenuLink = ({ link, isSelected, onClick }) => (
-  <button onClick={onClick} className={isSelected ? 'selected-styles' : 'default-styles'}>
-    {link.icon}
-    <span className="sidebar-label">{link.label}</span>
-  </button>
-);
-```
-
-### DashboardContentRenderer.tsx
-```typescript
-// Component routing based on selection
-const renderContent = () => {
-  switch (selectedItem) {
-    case 'dashboard': return <DashboardHome />;
-    case 'profile': return <ProfilePage />;
-    case 'settings': return <SettingsPage />;
-    default: return <PageNotFound />;
-  }
-};
-```
-
-## Theme Integration
-
-### Consistent Styling
-Both sidebar and dashboard overlay use identical visual styling:
-```css
-bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm 
-border border-gray-200/50 dark:border-gray-700/50 
-rounded-3xl shadow-lg
-```
-
-### Dynamic Theme Detection
-```typescript
-const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-  if (typeof window === 'undefined') return false;
-  return document.documentElement.classList.contains('dark');
-});
-
-// Monitor theme changes for dynamic updates
-useEffect(() => {
-  const observer = new MutationObserver(() => {
-    setIsDarkMode(document.documentElement.classList.contains('dark'));
-  });
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['class']
-  });
-  return () => observer.disconnect();
-}, []);
-```
-
-## Foundation Layer Preservation
-
-### Always-Active Components
-The Voice Assistant foundation layer remains completely functional:
-- **Transcript**: Conversation history (z-10)
-- **Events**: Debug event logging (z-10)  
-- **AudioVisualizationSection**: 3D audio orb (z-20)
-- **PromptBox**: Chat input interface (z-10)
-- **DockExample**: Bottom navigation dock (z-10)
-- **Galaxy**: Background animation (z-0)
-
-### No Interference Architecture
-```typescript
-// Foundation UI renders regardless of dashboard state
-<div className="main-content-area fixed top-0 right-0 bottom-0 flex flex-col z-10">
-  {/* Foundation components always rendered */}
-  <div className="p-5 text-2xl font-semibold flex justify-end items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
-  </div>
-
-  <div className="flex flex-1 flex-col gap-2 px-2 overflow-hidden relative z-10 pointer-events-none">
-    {/* Voice Assistant UI always active */}
-    <Transcript />
-    <Events isExpanded={isEventsPaneExpanded} />
-    <AudioVisualizationSection intensity={3.5} className="w-full h-full" />
-  </div>
+interface DashboardDataService {
+  // Widget Control
+  toggleWidget(widgetId: string)
+  expandWidget(widgetId: string)
+  collapseWidget(widgetId: string)
   
-  <div className="relative z-10 px-4 pt-4 pb-[5px] bg-transparent">
-    <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }}>
-      <PromptBox value={userText} onChange={(e) => setUserText(e.target.value)} placeholder="Type your message..." />
-    </form>
-  </div>
-
-  {/* Dock remains visible and functional */}
-  <DockExample />
-</div>
-
-{/* Dashboard overlay appears on top when needed */}
-{dashboardContentMode === 'dashboard' && (
-  <div className="dashboard-overlay ...">
-    <DashboardContentRenderer selectedItem={selectedDashboardItem} onBackToVoice={handleBackToVoice} />
-  </div>
-)}
+  // Form Management
+  updateFormField(formId: string, field: string, value: any)
+  submitForm(formId: string)
+  
+  // Workflow Execution
+  executeWorkflow(workflowId: string, variables?: any)
+  createMacro(name: string, steps: WorkflowStep[])
+  
+  // Search & Analytics
+  searchDashboard(query: SearchQuery): SearchResult[]
+  getDashboardSummary(): DashboardSummary
+}
 ```
 
-## Performance Optimizations
-
-### Robust Animation System
-- **JavaScript State Control**: Eliminates CSS hover detection issues
-- **Stable Transitions**: 300ms CSS transition with deterministic class switching
-- **No Hanging States**: Event-based hover detection prevents stuck animations
-- **Synchronized Movement**: Sidebar and dashboard move together smoothly
-
-### Minimal Re-renders
-- **Conditional Rendering**: Dashboard overlay only renders when selected
-- **Foundation Isolation**: Voice Assistant components unaffected by dashboard state
-- **Event Handler Stability**: useCallback prevents unnecessary re-renders
-
-## Future Enhancement Architecture
-
-### Phase 2: Voice-Controlled Dashboard (Planned)
+#### 3. IntegrationService
+**Purpose:** Intelligence layer for learning and optimization
 ```typescript
-// Future: Dashboard-aware agent capabilities
-const dashboardContext = {
-  currentPage: selectedDashboardItem,
-  pageData: dashboardState,
-  availableActions: getDashboardActions()
-};
-
-// Future: Voice commands for dashboard navigation  
-const voiceCommands = {
-  'show dashboard': () => handleDashboardMenuSelect('dashboard'),
-  'open settings': () => handleDashboardMenuSelect('settings'),
-  'go to profile': () => handleDashboardMenuSelect('profile'),
-  'back to voice': () => handleBackToVoice()
-};
+interface IntegrationService {
+  getUserContext(): UserContext
+  getSmartSuggestions(): SmartSuggestion[]
+  learnUserBehavior(action: string, context: any)
+  optimizePerformance(): void
+  getWorkflowAnalytics(): WorkflowAnalytics[]
+}
 ```
 
-### Phase 3: Enhanced Integration (Planned)
-- Dashboard widgets visible in voice mode
-- Split-screen layouts with resizable panels
-- Context-sensitive voice assistance based on dashboard state
-- Bidirectional communication between VA and dashboard components
+#### 4. WebRTCService
+**Purpose:** Manages WebRTC connections for voice communication
+```typescript
+interface WebRTCService {
+  connect(config: ConnectionConfig): Promise<void>
+  disconnect(): void
+  getSession(): RTCSession | null
+  sendAudio(stream: MediaStream): void
+}
+```
 
-## Development Guidelines
+#### 5. WebGLContextService
+**Purpose:** Manages WebGL contexts for 3D visualizations
+```typescript
+interface WebGLContextService {
+  createContext(canvas: HTMLCanvasElement): WebGLContext
+  getContext(id: string): WebGLContext | null
+  disposeContext(id: string): void
+}
+```
 
-### Adding New Dashboard Pages
-1. Create component in `src/app/dashboard/components/pages/`
-2. Add case to `DashboardContentRenderer.tsx`
-3. Add menu item to `DashboardSidebar.tsx` links array
-4. Follow existing styling patterns for consistency
+### Service Communication Pattern
 
-### Maintaining Foundation Layer
-- Never modify foundation components for dashboard features
-- Use z-index ranges: foundation (z-10-20), dashboard (z-30+)
-- Preserve all existing voice assistant functionality
-- Test that voice features work in both modes
+Services communicate through:
+1. **Direct Method Calls:** For synchronous operations
+2. **Event Emission:** For state change notifications
+3. **Shared Event Bus:** For cross-service communication
 
-### Performance Best Practices
-- Use conditional rendering for dashboard overlay
-- Maintain stable callback references
-- Follow CSS-only animation patterns where possible
-- Monitor for unnecessary re-renders
+```typescript
+// Example: Widget state change flow
+dashboardService.toggleWidget('metrics-widget')
+  → Updates internal state
+  → Emits 'widgets:updated' event
+  → Bridge component receives event
+  → React component re-renders
+  → UI updates
+```
 
-## Troubleshooting
+## Bridge Component Pattern
 
-### Common Issues
-1. **Dashboard not appearing**: Check `dashboardContentMode` state and z-index layering
-2. **Sidebar hover problems**: Verify `isSidebarHovered` state and mouse event handlers
-3. **Foundation interference**: Ensure dashboard overlay doesn't block foundation UI events
-4. **Animation glitches**: Check CSS class transitions and JavaScript state synchronization
+Bridge components are the key innovation that connects persistent services to React:
 
-### Debug Tools
-- React DevTools for component state inspection
-- Browser DevTools for CSS and positioning verification
-- Console logging for state change tracking
+```typescript
+export function WidgetStateBridge() {
+  const [widgets, setWidgets] = useState<Widget[]>([]);
+  
+  useEffect(() => {
+    // Get initial state from service
+    setWidgets(dashboardService.getWidgets());
+    
+    // Listen for updates from service
+    const handleUpdate = (newWidgets: Widget[]) => {
+      setWidgets(newWidgets);
+    };
+    
+    dashboardService.on('widgets:updated', handleUpdate);
+    
+    // Cleanup listener on unmount
+    return () => {
+      dashboardService.off('widgets:updated', handleUpdate);
+    };
+  }, []);
+  
+  // Bridge doesn't render UI - just syncs state
+  return null;
+}
+```
 
-## Migration Notes for Future Developers
+### Why Bridge Components?
 
-### Current Status (September 2025)
-- ✅ **Phase 1 Complete**: Dashboard overlay system with responsive sidebar
-- ✅ **Foundation Preserved**: Voice Assistant remains fully functional
-- ✅ **Theme Integration**: Consistent styling across light/dark themes
-- ✅ **Performance Optimized**: Minimal re-renders and smooth animations
+1. **Clean Separation:** Services don't know about React
+2. **Performance:** Only relevant components re-render
+3. **Testability:** Services can be tested independently
+4. **Reusability:** Same service works with any UI framework
 
-### Ready for Enhancement
-The current architecture provides a solid foundation for advanced dashboard features while maintaining the robust Voice Assistant functionality. The layered approach ensures that future enhancements can be added without disrupting existing systems.
+### Bridge Components in the System
 
----
+1. **NavigationStateBridge** - Syncs navigation and sidebar state
+2. **FormStateBridge** - Manages form data and validation
+3. **WidgetStateBridge** - Controls widget visibility and state
+4. **WorkflowStateBridge** - Handles workflow execution and progress
+5. **IntegrationStateBridge** - Manages intelligence features (background only)
 
-**Current Implementation Status**: Complete and Production Ready  
-**Last Updated**: September 2025  
-**Implementation Phase**: Phase 1 - Foundation & Overlay System  
-**Next Phase**: Voice-Controlled Dashboard Integration
+## Voice Integration Architecture
+
+### Tool Mapping Strategy
+
+Each voice tool maps directly to service methods:
+
+```typescript
+tool({
+  name: "controlWidget",
+  execute: async (input) => {
+    const { action, widgetId } = input;
+    
+    // Direct service call
+    const result = dashboardService.controlWidget(widgetId, action);
+    
+    // Return voice-friendly response
+    return {
+      success: true,
+      message: `Widget ${widgetId} is now ${action}`
+    };
+  }
+})
+```
+
+### Voice Control Categories
+
+#### Navigation & Layout (6 tools)
+- `navigateToDashboard()` - Section navigation
+- `controlSidebar()` - Sidebar state control
+- `returnToVoiceMode()` - Mode switching
+- `getNavigationState()` - Current location query
+- `controlTheme()` - Theme switching
+- `getThemeState()` - Theme status query
+
+#### Data Management (4 tools)
+- `getDashboardStatus()` - State queries
+- `getDashboardSummary()` - Comprehensive overview
+- `searchDashboard()` - Data search
+- `manageDashboardData()` - Data operations
+
+#### Widget Control (3 tools)
+- `controlWidget()` - Individual widget control
+- `batchControlWidgets()` - Multiple widget operations
+- `getWidgetState()` - Widget status queries
+
+#### Form Interaction (3 tools)
+- `updateFormField()` - Field updates
+- `submitForm()` - Form submission
+- `getFormState()` - Form data queries
+
+#### Workflow Automation (5 tools)
+- `executeDashboardWorkflow()` - Run workflows
+- `createDashboardMacro()` - Save workflows
+- `executeMacro()` - Run saved macros
+- `getDashboardSummary()` - Overview with workflow status
+- `batchControlWidgets()` - Bulk operations
+
+#### Intelligence Features (6 tools)
+- `getSmartSuggestions()` - Context-aware suggestions
+- `acceptSmartSuggestion()` - Execute suggestions
+- `getPerformanceStatus()` - Performance metrics
+- `optimizePerformance()` - Performance tuning
+- `learnUserBehavior()` - Record patterns
+- `getWorkflowAnalytics()` - Usage analytics
+
+## Workflow Engine Architecture
+
+### Workflow Components
+
+```typescript
+interface WorkflowDefinition {
+  id: string
+  name: string
+  description: string
+  steps: WorkflowStep[]
+  variables?: Record<string, any>
+}
+
+interface WorkflowStep {
+  id: string
+  type: 'navigate' | 'widget' | 'form' | 'theme' | 'custom'
+  action: string
+  params?: any
+  condition?: WorkflowCondition
+  delay?: number
+}
+
+interface WorkflowExecution {
+  workflowId: string
+  status: 'running' | 'completed' | 'failed'
+  currentStep: number
+  totalSteps: number
+  startTime: Date
+  completionTime?: Date
+}
+```
+
+### Execution Flow
+
+1. **Workflow Request** → Voice command triggers workflow
+2. **Validation** → Check preconditions and requirements
+3. **Step Execution** → Execute each step sequentially
+4. **Progress Updates** → Emit events for UI updates
+5. **Completion** → Final state and notifications
+
+### Default Workflows
+
+```typescript
+const defaultWorkflows = {
+  'morning-briefing': {
+    steps: [
+      { type: 'navigate', action: 'dashboard' },
+      { type: 'widget', action: 'show', params: { id: 'metrics' }},
+      { type: 'widget', action: 'show', params: { id: 'calendar' }},
+      { type: 'widget', action: 'show', params: { id: 'weather' }},
+      { type: 'widget', action: 'show', params: { id: 'news' }}
+    ]
+  },
+  'end-of-day': {
+    steps: [
+      { type: 'widget', action: 'collapse-all' },
+      { type: 'navigate', action: 'home' },
+      { type: 'theme', action: 'dark' }
+    ]
+  },
+  'focus-mode': {
+    steps: [
+      { type: 'widget', action: 'hide-all' },
+      { type: 'widget', action: 'show', params: { id: 'tasks' }},
+      { type: 'widget', action: 'show', params: { id: 'calendar' }}
+    ]
+  }
+}
+```
+
+## Intelligence Layer Architecture
+
+### Context Awareness System
+
+```typescript
+interface UserContext {
+  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night'
+  dayOfWeek: string
+  isWeekend: boolean
+  isWorkingHours: boolean
+  currentActivity: string
+  recentActions: string[]
+  frequentWorkflows: string[]
+  preferredTheme: 'light' | 'dark' | 'auto'
+  lastActiveTime: Date
+}
+```
+
+### Learning System Components
+
+1. **Action Recording** 
+   - Track all user actions with timestamps
+   - Store in circular buffer (last 100 actions)
+   - Persist to localStorage for cross-session learning
+
+2. **Pattern Analysis**
+   - Identify frequently used workflows
+   - Detect time-based patterns
+   - Recognize widget usage preferences
+
+3. **Preference Updates**
+   - Adjust default workflows based on usage
+   - Update preferred widgets list
+   - Optimize performance mode selection
+
+4. **Suggestion Generation** (Voice-Only)
+   - Create context-aware suggestions
+   - Calculate confidence scores
+   - Available through voice commands only
+
+### Performance Optimization
+
+```typescript
+interface PerformanceMetrics {
+  workflowExecutionTime: number
+  averageResponseTime: number
+  widgetLoadTime: number
+  navigationSpeed: number
+  errorRate: number
+  successRate: number
+}
+
+type PerformanceMode = 'performance' | 'battery' | 'balanced'
+
+const optimizationStrategies = {
+  performance: {
+    refreshInterval: 5000,
+    preloading: true,
+    caching: 'aggressive',
+    animations: 'full'
+  },
+  battery: {
+    refreshInterval: 30000,
+    preloading: false,
+    caching: 'minimal',
+    animations: 'reduced'
+  },
+  balanced: {
+    refreshInterval: 15000,
+    preloading: true,
+    caching: 'moderate',
+    animations: 'normal'
+  }
+}
+```
+
+## State Management Philosophy
+
+### Single Source of Truth
+Each service owns its domain state:
+- NavigationService owns navigation state
+- DashboardDataService owns widget/form state
+- IntegrationService owns user preferences
+- Services never share state directly
+
+### Event-Driven Updates
+```typescript
+// State change flow
+Service State Change
+    ↓
+Event Emission
+    ↓
+Bridge Component Listener
+    ↓
+React State Update
+    ↓
+UI Re-render
+```
+
+### Optimistic Updates
+1. UI updates immediately for responsiveness
+2. Service validates asynchronously
+3. Rollback on failure with error notification
+4. User sees instant feedback
+
+## Error Handling Strategy
+
+### Error Recovery Levels
+
+```typescript
+interface ErrorRecovery {
+  errorType: string
+  errorCount: number
+  lastError: Date
+  recoveryStrategy: 'retry' | 'fallback' | 'skip' | 'alert'
+  recoveryAttempts: number
+  recovered: boolean
+}
+```
+
+1. **Retry Level** (errorCount < 3)
+   - Automatic retry with exponential backoff
+   - Transparent to user
+   - 1s, 2s, 4s delays
+
+2. **Fallback Level** (errorCount < 5)
+   - Use alternative approach
+   - Degraded functionality
+   - User notified of limitations
+
+3. **Alert Level** (errorCount >= 5)
+   - Notify user with error message
+   - Log for debugging
+   - Suggest manual intervention
+
+### Error Categories and Strategies
+
+- **Network Errors:** Retry with exponential backoff
+- **Validation Errors:** Request user correction
+- **State Errors:** Rollback and retry from clean state
+- **Permission Errors:** Request authorization
+- **Resource Errors:** Free resources and retry
+
+## Implementation Phases Summary
+
+### Phase 1: Navigation & Theme Control ✅
+**Goal:** Basic dashboard control
+- Navigation between sections
+- Theme switching (light/dark/auto)
+- Sidebar expand/collapse
+- Voice mode switching
+
+### Phase 2: Form Control Services ✅
+**Goal:** Form interaction via voice
+- Field updates with validation
+- Form submission handling
+- Multi-form management
+- Error handling
+
+### Phase 3: Widget Control Services ✅
+**Goal:** Complete widget management
+- Show/hide widgets
+- Expand/collapse states
+- Refresh data
+- Reorder widgets
+
+### Phase 4: Advanced Workflows ✅
+**Goal:** Complex automation
+- Multi-step workflow engine
+- Macro creation and execution
+- Batch operations
+- Dashboard search
+
+### Phase 5: Complete Integration ✅
+**Goal:** Intelligent adaptation
+- Context awareness
+- Performance optimization
+- Error recovery
+- User behavior learning
+- Smart suggestions (voice-only)
+
+## Best Practices
+
+### Service Design
+```typescript
+// Good Service Design
+class MyService extends EventEmitter {
+  private static instance: MyService;
+  private state: ServiceState;
+  
+  // Singleton pattern
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new MyService();
+    }
+    return this.instance;
+  }
+  
+  // Public API
+  publicMethod() {
+    this.updateState();
+    this.emit('state:changed', this.state);
+  }
+  
+  // Clean shutdown
+  shutdown() {
+    this.removeAllListeners();
+    this.state = null;
+  }
+}
+```
+
+### Bridge Component Pattern
+```typescript
+// Good Bridge Pattern
+export function MyStateBridge() {
+  useEffect(() => {
+    const service = MyService.getInstance();
+    
+    // Initial state
+    const initialState = service.getState();
+    // Update React state...
+    
+    // Listen for changes
+    const handleChange = (newState) => {
+      // Update React state...
+    };
+    
+    service.on('state:changed', handleChange);
+    
+    // Cleanup
+    return () => {
+      service.off('state:changed', handleChange);
+    };
+  }, []);
+  
+  return null; // Bridges don't render
+}
+```
+
+### Voice Tool Pattern
+```typescript
+// Good Voice Tool
+tool({
+  name: "myVoiceTool",
+  description: "Clear description for the VA",
+  parameters: {
+    // Well-defined schema
+  },
+  execute: async (input, context) => {
+    try {
+      // Add breadcrumb for debugging
+      context.addTranscriptBreadcrumb('Tool Execution', input);
+      
+      // Service call
+      const result = await service.doSomething(input);
+      
+      // Voice-friendly response
+      return {
+        success: true,
+        message: `Action completed: ${result.description}`
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Sorry, I couldn't do that: ${error.message}`
+      };
+    }
+  }
+})
+```
+
+## Technology Stack
+
+- **Frontend Framework:** Next.js 15.5.2
+- **UI Library:** React 19
+- **Language:** TypeScript
+- **Voice Integration:** OpenAI Realtime API + Agents SDK
+- **State Management:** Service layer + Event-driven architecture
+- **Styling:** Tailwind CSS
+- **3D Graphics:** WebGL (Galaxy background, Audio orbs)
+- **Real-time Communication:** WebRTC data channels
+- **Build Tool:** Webpack (via Next.js)
+- **Package Manager:** npm
+
+## Key Design Decisions
+
+### Why Service Layer Architecture?
+**Problem:** React re-renders destroy WebRTC/WebGL resources
+**Solution:** Services exist outside React lifecycle
+**Benefits:**
+- Resources persist across UI changes
+- Centralized business logic
+- Easier testing and debugging
+- Framework-agnostic core
+
+### Why Bridge Components?
+**Problem:** Services need to update React components
+**Solution:** Bridge components sync service state to React
+**Benefits:**
+- Clean separation of concerns
+- Declarative state synchronization
+- Performance optimization
+- Reusable pattern
+
+### Why Event-Driven Communication?
+**Problem:** Tight coupling between components
+**Solution:** Event-based loose coupling
+**Benefits:**
+- Components can be added/removed easily
+- Multiple listeners for same event
+- Async operations simplified
+- Better scalability
+
+### Why 5-Phase Implementation?
+**Problem:** Complex system hard to build all at once
+**Solution:** Incremental feature development
+**Benefits:**
+- Stable foundation at each phase
+- Easy to debug and test
+- Clear progress milestones
+- Risk mitigation
+
+## Performance Considerations
+
+### Optimization Strategies
+1. **Service Layer Caching:** Reduce redundant calculations
+2. **Event Debouncing:** Prevent event flooding
+3. **React.memo:** Prevent unnecessary re-renders
+4. **Lazy Loading:** Load components on demand
+5. **Web Workers:** Offload heavy computations
+
+### Performance Metrics
+- Initial Load: < 3 seconds
+- Voice Response: < 500ms
+- UI Update: < 100ms
+- Workflow Execution: < 2 seconds
+- Memory Usage: < 200MB
+
+## Security Considerations
+
+### Data Protection
+- No sensitive data in localStorage
+- Sanitize all user inputs
+- Validate all voice commands
+- Secure WebRTC connections
+
+### Access Control
+- Service methods validate permissions
+- Voice tools check authorization
+- Rate limiting on operations
+- Audit logging for actions
+
+## Future Enhancements
+
+### Immediate Roadmap
+1. Cloud synchronization for preferences
+2. Advanced machine learning for suggestions
+3. Voice feedback for all actions
+4. Comprehensive onboarding workflow
+5. Mobile responsive improvements
+
+### Long-term Vision
+1. Multi-user collaboration support
+2. Custom widget development SDK
+3. Plugin architecture for extensions
+4. Native mobile applications
+5. Offline mode with sync
+6. AI-powered automation creation
+7. Real-time collaboration features
+8. Advanced analytics dashboard
+
+## Conclusion
+
+The Bayaan VA Dashboard architecture successfully achieves its primary goal: creating a voice assistant that "knows all the elements and can control all the elements." 
+
+Through the combination of:
+- **Service-oriented architecture** for business logic isolation
+- **Bridge pattern** for clean React integration
+- **Event-driven communication** for scalability
+- **Progressive enhancement** for stable development
+- **Intelligent adaptation** for improved user experience
+
+The system provides a robust, scalable, and maintainable foundation for voice-controlled dashboard interactions. The architecture ensures that complex resources like WebRTC connections and WebGL contexts remain stable while the UI remains responsive and reactive to user interactions.
+
+This architecture can serve as a blueprint for building sophisticated voice-controlled applications that require persistent connections, real-time updates, and intelligent behavior adaptation.
