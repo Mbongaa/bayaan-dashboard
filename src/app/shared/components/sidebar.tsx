@@ -54,16 +54,16 @@ export const DesktopSidebar = ({
         // Core layout - floating positioning
         "fixed left-4 top-[12.5vh] h-[75vh] z-20",
         "hidden md:flex md:flex-col",
-        // Match main app background with transparency (30% like theme toggle & chatbox)  
-        "bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm",
-        "border border-gray-200/50 dark:border-gray-700/50",
+        // Ultra-transparent background with visible borders  
+        "bg-white/10 dark:bg-black/10 backdrop-blur-sm",
+        "border border-gray-400/60 dark:border-gray-700/50",
         // CSS-only width animation (NO JavaScript state)
         "w-[60px] hover:w-[300px]",
         "transition-all duration-300 ease-in-out",
         // Padding - removed overflow-hidden to show content
         "px-4 py-4",
-        // Floating card appearance
-        "rounded-3xl shadow-lg",
+        // Floating card appearance without shadow
+        "rounded-3xl",
         className
       )}
       {...props}
@@ -84,8 +84,8 @@ export const MobileSidebar = ({
       <div
         className={cn(
           "h-16 px-4 flex flex-row md:hidden items-center justify-between",
-          "bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm w-full fixed top-0 left-0 z-20",
-          "border-b border-gray-200/50 dark:border-gray-700/50"
+          "bg-white/10 dark:bg-black/10 backdrop-blur-sm w-full fixed top-0 left-0 z-20",
+          "border-b border-gray-400/60 dark:border-gray-700/50"
         )}
         {...props}
       >
@@ -104,7 +104,7 @@ export const MobileSidebar = ({
       <div
         className={cn(
           "mobile-sidebar-overlay fixed inset-0 z-[100]",
-          "bg-gray-100/30 dark:bg-black/30 backdrop-blur-md p-10",
+          "bg-gray-100/10 dark:bg-black/10 backdrop-blur-md p-10",
           "hidden md:hidden flex-col justify-between"
         )}
         style={{ display: 'none' }}

@@ -50,7 +50,7 @@ export default function ModeToggle({
         <button
           type="button"
           className={cn(
-            "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm p-2 border border-gray-200/50 dark:border-gray-700/50",
+            "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm p-2 border border-gray-400/60 dark:border-gray-700/50",
             "hover:scale-110 transform-gpu transition duration-150",
           )}
           aria-label="Toggle mode"
@@ -78,7 +78,7 @@ export default function ModeToggle({
         type="button"
         onClick={handleSwitchMode}
         className={cn(
-          "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm p-2 border border-gray-200/50 dark:border-gray-700/50",
+          "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm p-2 border border-gray-400/60 dark:border-gray-700/50",
           "hover:scale-110 transform-gpu transition duration-150",
         )}
         aria-label={`Switch to ${currentMode === 'voice' ? 'dashboard' : 'voice'} mode`}

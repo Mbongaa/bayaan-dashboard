@@ -33,7 +33,7 @@ export default function ThemeToggle({
         <button
           type="button"
           className={cn(
-            "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm p-2 border border-gray-200/50 dark:border-gray-700/50",
+            "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm p-2 border border-gray-400/60 dark:border-gray-700/50",
             "hover:scale-110 transform-gpu transition duration-150",
           )}
           aria-label="Toggle theme"
@@ -56,7 +56,7 @@ export default function ThemeToggle({
         type="button"
         onClick={handleSwitchTheme}
         className={cn(
-          "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm p-2 border border-gray-200/50 dark:border-gray-700/50",
+          "group peer relative h-14 w-10 overflow-hidden transition rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm p-2 border border-gray-400/60 dark:border-gray-700/50",
           "hover:scale-110 transform-gpu transition duration-150",
         )}
         aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
@@ -85,7 +85,7 @@ export default function ThemeToggle({
           setTheme("system");
         }}
         className={cn(
-          "peer group absolute left-12 size-10 overflow-hidden transition rounded-full bg-gray-100/30 dark:bg-black/30 backdrop-blur-sm top-1/2 -translate-y-1/2 p-2 border border-gray-200/50 dark:border-gray-700/50",
+          "peer group absolute left-12 size-10 overflow-hidden transition rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm top-1/2 -translate-y-1/2 p-2 border border-gray-400/60 dark:border-gray-700/50",
           "peer-hover:scale-110 transform-gpu transition duration-300 inline-flex items-center justify-center",
           "opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 scale-0 group-hover:scale-100",
         )}

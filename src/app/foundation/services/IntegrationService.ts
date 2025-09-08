@@ -554,7 +554,7 @@ class IntegrationServiceClass extends EventEmitter {
         break;
       case 'widget:load-failed':
         // Show placeholder widget
-        this.dashboardService.controlWidget(error.widgetId, 'hide');
+        this.dashboardService.toggleWidget(error.widgetId);
         break;
       default:
         // Generic fallback

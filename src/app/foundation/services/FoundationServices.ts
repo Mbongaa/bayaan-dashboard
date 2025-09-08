@@ -4,6 +4,7 @@ import { WebRTCService } from './WebRTCService';
 import { navigationService } from './NavigationService';
 import { dashboardDataService } from './DashboardDataService';
 import { integrationService } from './IntegrationService';
+import { WorkspaceLayoutService } from './WorkspaceLayoutService';
 
 /**
  * Foundation Services Container
@@ -16,6 +17,7 @@ export class FoundationServices {
   public readonly eventBus: EventBus;
   public readonly webgl: WebGLContextService;
   public readonly webrtc: WebRTCService;
+  public readonly workspace: WorkspaceLayoutService;
   public readonly navigation = navigationService;
   public readonly dashboardData = dashboardDataService;
   public readonly integration = integrationService;
@@ -27,6 +29,7 @@ export class FoundationServices {
     this.eventBus = globalEventBus;
     this.webgl = new WebGLContextService(this.eventBus);
     this.webrtc = new WebRTCService(this.eventBus);
+    this.workspace = WorkspaceLayoutService.getInstance(this.eventBus);
   }
 
   /**
@@ -54,6 +57,9 @@ export class FoundationServices {
       // WebGL service is automatically initialized in constructor
       // Initialize navigation service
       this.navigation.initialize();
+      
+      // Initialize workspace layout service
+      this.workspace.initialize();
 
       this.isInitialized = true;
       
@@ -73,6 +79,7 @@ export class FoundationServices {
     console.log('[FoundationServices] Shutting down foundation services...');
     
     this.integration.shutdown();
+    this.workspace.shutdown();
     this.webrtc.shutdown();
     this.webgl.shutdown();
     this.eventBus.clear();
@@ -109,11 +116,17 @@ export class FoundationServices {
       performanceMode: string;
       errorRecoveryActive: boolean;
     };
+    workspace: {
+      activeLayout: string;
+      activeModules: number;
+      totalModules: number;
+    };
     eventBus: {
       totalListeners: number;
     };
   } {
     const dashboardState = this.dashboardData.getState();
+    const workspaceState = this.workspace.getState();
     
     return {
       isInitialized: this.isInitialized,
@@ -137,6 +150,11 @@ export class FoundationServices {
         smartSuggestionsCount: this.integration.getSmartSuggestions().length,
         performanceMode: this.integration.getUserPreferences().performanceMode,
         errorRecoveryActive: this.integration.getErrorRecoveryStatus().length > 0
+      },
+      workspace: {
+        activeLayout: workspaceState.activeLayout,
+        activeModules: this.workspace.getActiveModules().length,
+        totalModules: workspaceState.modules.size
       },
       eventBus: {
         totalListeners: this.eventBus.getListenerCount()

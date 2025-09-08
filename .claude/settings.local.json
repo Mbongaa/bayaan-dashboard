@@ -48,7 +48,8 @@
       "Bash(./update-imports.sh)",
       "Bash(timeout 10s npm run dev)",
       "Bash(find:*)",
-      "Bash(timeout 5s npm run dev)"
+      "Bash(timeout 5s npm run dev)",
+      "WebFetch(domain:module-federation.io)"
     ],
     "deny": [],
     "ask": []

@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { DashboardHome } from './pages/DashboardHome';
+import { WorkspaceGrid } from './workspace/WorkspaceGrid';
+import type { WorkspaceItem } from './workspace/WorkspaceGrid';
 
 /**
  * Dashboard Content Renderer
  * 
  * Central component that renders the appropriate dashboard content based on 
  * the selected menu item. This component handles:
- * - Dynamic component loading based on selection
+ * - Dynamic workspace grid for voice-controlled modules
+ * - Profile and settings pages
  * - Loading states and transitions
- * - Error boundaries for individual dashboard components
  */
 
 interface DashboardContentRendererProps {
@@ -22,11 +23,12 @@ interface DashboardContentRendererProps {
 export function DashboardContentRenderer({ 
   selectedItem, 
   onBackToVoice,
-  className 
+  className
 }: DashboardContentRendererProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentPage, setCurrentPage] = useState(selectedItem);
   const [showContent, setShowContent] = useState(false);
+  const [activeModules, setActiveModules] = useState<WorkspaceItem[]>([]);
 
   // Handle page transitions with fade effect
   useEffect(() => {
@@ -64,10 +66,46 @@ export function DashboardContentRenderer({
     return null;
   }
 
+  // Handle workspace module activation events
+  useEffect(() => {
+    const handleModuleActivation = (event: CustomEvent) => {
+      const { moduleId, type } = event.detail;
+      setActiveModules(prev => {
+        const updated = [...prev];
+        const moduleIndex = updated.findIndex(m => m.id === moduleId);
+        if (moduleIndex >= 0) {
+          updated[moduleIndex] = { ...updated[moduleIndex], type, status: 'active' };
+        }
+        return updated;
+      });
+    };
+
+    window.addEventListener('workspace-module-activated' as any, handleModuleActivation);
+    return () => {
+      window.removeEventListener('workspace-module-activated' as any, handleModuleActivation);
+    };
+  }, []);
+
+  const handleLayoutChange = (layout: any[]) => {
+    // Handle layout changes from the grid
+    console.log('Layout changed:', layout);
+  };
+
+  const handleItemActivate = (itemId: string) => {
+    // Handle item activation
+    console.log('Item activated:', itemId);
+  };
+
   const renderContent = () => {
     switch (currentPage) {
+      case 'workspace':
       case 'dashboard':
-        return <DashboardHome />;
+        return (
+          <WorkspaceGrid 
+            onLayoutChange={handleLayoutChange}
+            onItemActivate={handleItemActivate}
+          />
+        );
       
       case 'profile':
         return <ProfilePage />;

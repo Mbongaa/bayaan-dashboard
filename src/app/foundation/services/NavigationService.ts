@@ -10,7 +10,7 @@
 
 import { EventEmitter } from 'events';
 
-export type NavigationSection = 'dashboard' | 'profile' | 'settings' | 'voice' | null;
+export type NavigationSection = 'dashboard' | 'workspace' | 'profile' | 'settings' | 'voice' | null;
 export type SidebarState = 'expanded' | 'collapsed';
 
 interface NavigationState {
@@ -130,13 +130,16 @@ class NavigationService extends EventEmitter {
 
   // Navigation methods
   navigateToSection(section: NavigationSection): void {
-    if (this.state.currentSection === section) return;
+    // Treat 'workspace' and 'dashboard' as equivalent
+    const normalizedSection = section === 'workspace' ? 'dashboard' : section;
     
-    console.log('[NavigationService] Navigating to section:', section);
-    this.state.currentSection = section;
+    if (this.state.currentSection === normalizedSection) return;
+    
+    console.log('[NavigationService] Navigating to section:', normalizedSection);
+    this.state.currentSection = normalizedSection;
     
     // Set content mode based on section
-    if (section === 'voice' || section === null) {
+    if (normalizedSection === 'voice' || normalizedSection === null) {
       this.state.contentMode = 'voice';
     } else {
       this.state.contentMode = 'dashboard';
@@ -145,7 +148,7 @@ class NavigationService extends EventEmitter {
     this.saveState();
     
     this.emit('navigation:section-change', {
-      section,
+      section: normalizedSection,
       contentMode: this.state.contentMode,
       source: 'service'
     });

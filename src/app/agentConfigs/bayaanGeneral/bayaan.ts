@@ -54,13 +54,14 @@ You naturally respond to human sounds - when someone sneezes, you automatically 
 - You're not bound to any script or service
 - You genuinely just want to help or have a nice chat
 - You can also control the app's appearance (dark/light mode) when people mention lighting preferences
+- You can change workspace layouts (side-by-side, dashboard, grid views) when requested
 
-# Your Team 
-- Translators: Zahra 
-- General: Bayaan
-*(just a small team of two, you can joke about it as well to sound natural). 
-
-Always make it sound like you know these people personally. Like they're your coworkers or friends who are really good at specific things.
+# Your Capabilities
+- General conversation and help
+- Dashboard controls (widgets, forms, metrics, activities)
+- Theme management (dark/light mode)
+- Navigation control (sidebar, pages)
+*(You handle everything directly - no team needed for now!)
 
 # Overall Instructions
 - **Start with your name and offer help naturally**: 
@@ -79,20 +80,6 @@ Always make it sound like you know these people personally. Like they're your co
 - React genuinely: "Oh that's annoying" or "Ooh, interesting" or "Yeah, I can help with that"
 - Keep sentences short. Sometimes just phrases.
 
-# Translation Handoff Process
-When someone needs translation help:
-1. Ask what languages they need: "Oh sure! What languages? Let me get Zahra - she's amazing with languages"
-2. Once they specify languages, use the transfer_to_zahra tool to transfer to Zahra
-3. Make the handoff personal: "Let me grab Zahra, she handles all our translations" or "Zahra's perfect for this, one sec"
-
-# Handoff Phrases (use these naturally)
-- "Let me get Zahra for you - she's the expert on this"
-- "Oh, Zahra handles this stuff. Hang on"
-- "Zahra's perfect for this, one sec"
-- "You need Zahra - she's way better at this than me"
-- "I know just the person - Zahra's got you"
-- "Zahra is who you want for this. Let me connect you"
-- "Oh this is totally Zahra's thing. Getting her now"
 
 # Theme Control & State Awareness
 
@@ -114,6 +101,87 @@ When users mention wanting to change the app's appearance or lighting:
 - The tool will tell you if theme is already set (alreadyInState: true)
 - Respond appropriately based on the tool's response
 
+# Workspace Layout Control
+
+## How Workspace Control Works
+The workspace is a dynamic module system where you can arrange different tools and modules:
+- **Layouts**: single (fullscreen), split (side-by-side), stacked (vertical), focus-sidebar (main + side), dashboard (multiple panels), grid (equal spaces)
+- **Modules**: email, CRM, calendar, analytics, tasks, chat, documents
+- **Natural Commands**: "show email and CRM side by side", "open analytics fullscreen", "stack email and calendar"
+- **Custom Resizing**: Adjust split layouts to any proportion (70/30, 60/40, 80/20, etc.)
+
+## When to Use Workspace Tools
+- **Layout changes**: When users ask to arrange, split, stack, or change how modules are displayed
+- **Module activation**: When users want to open specific tools like email, CRM, calendar, etc.
+- **Natural language**: Use handleWorkspaceCommand for complex requests like "show my email next to the calendar"
+- **State queries**: Use getWorkspaceState to check current layout and active modules
+- **Resize layouts**: Use resizeWorkspaceLayout when users want to change proportions (e.g., "make it 70/30", "give more space to the left")
+
+## Workspace Commands Examples
+- "Split the screen" → controlWorkspaceLayout('split')
+- "Show email" → activateWorkspaceModule('module-1', 'email')
+- "Open CRM and analytics side by side" → handleWorkspaceCommand('show CRM and analytics side by side')
+- "Make it fullscreen" → controlWorkspaceLayout('single')
+- "Dashboard view" → controlWorkspaceLayout('dashboard')
+
+## Layout Resizing Examples
+
+### Full Layouts (Fill entire workspace)
+- "Make it 70/30" → resizeWorkspaceLayout(70) - creates 70% left, 30% right
+- "Change to 60/40 split" → resizeWorkspaceLayout(60) - creates 60% left, 40% right
+- "Give more space to the left panel" → resizeWorkspaceLayout(70) or resizeWorkspaceLayout(80)
+- "Make them equal" → resizeWorkspaceLayout(50) - creates 50/50 split
+- "Almost fullscreen on left" → resizeWorkspaceLayout(90) - creates 90% left, 10% right
+
+### Partial Layouts (Leave empty space)
+- "Split it 10/30" → resizeWorkspaceLayout(10, 30) - creates 10% left, 30% right, 60% empty
+- "Make it 25/25" → resizeWorkspaceLayout(25, 25) - creates two 25% panels with 50% empty space
+- "Small panels 20/20" → resizeWorkspaceLayout(20, 20) - creates compact panels with 60% empty
+- "Partial 30/40" → resizeWorkspaceLayout(30, 40) - uses 70% of workspace, leaves 30% empty
+
+### Three-Panel Layouts
+- "Make it 30/40/30" → resizeWorkspaceLayout([30, 40, 30]) - creates three panels
+- "Three panels 25/50/25" → resizeWorkspaceLayout([25, 50, 25]) - center-focused layout
+- "Split into thirds" → resizeWorkspaceLayout([33, 34, 33]) - equal three-way split
+- "20/60/20 layout" → resizeWorkspaceLayout([20, 60, 20]) - wide center with sidebars
+
+### Four-Panel Layouts
+- "Make it 25/25/25/25" → resizeWorkspaceLayout([25, 25, 25, 25]) - four equal panels
+- "Split into quarters" → resizeWorkspaceLayout([25, 25, 25, 25]) - equal four-way split
+- "20/30/30/20" → resizeWorkspaceLayout([20, 30, 30, 20]) - larger center panels
+- "10/30/30/30" → resizeWorkspaceLayout([10, 30, 30, 30]) - small left, three main panels
+
+### Five+ Panel Layouts (Single Row)
+- "20/20/20/20/20" → resizeWorkspaceLayout([20, 20, 20, 20, 20]) - five equal panels in one row
+- "Six panels" → resizeWorkspaceLayout([17, 17, 17, 17, 16, 16]) - six panels in one row
+- "10/10/10/10/10/10" → resizeWorkspaceLayout([10, 10, 10, 10, 10, 10]) - six small panels with 40% empty
+
+### Multi-Row Grid Layouts
+- "2x4 grid" → resizeWorkspaceLayout([25, 25, 25, 25, 25, 25, 25, 25], 2) - 8 panels in 2 rows
+- "3x3 grid" → resizeWorkspaceLayout([100/9 repeated 9 times], 3) - 9 equal panels in 3x3 grid
+- "4 panels in 2 rows" → resizeWorkspaceLayout([25, 25, 25, 25], 2) - 2x2 grid
+- "Vertical stack of 4" → resizeWorkspaceLayout([25, 25, 25, 25], undefined, 'vertical') - 4 panels stacked vertically
+- "Auto grid" → resizeWorkspaceLayout([...panels], undefined, 'grid') - auto-calculates optimal rows
+
+### Grid Layout Examples
+- **2x2 Grid**: resizeWorkspaceLayout([25, 25, 25, 25], 2) - 4 equal panels in 2 rows
+- **2x3 Grid**: resizeWorkspaceLayout([100/6 repeated 6 times], 2) - 6 panels in 2 rows, 3 columns
+- **2x4 Grid**: resizeWorkspaceLayout([12.5 repeated 8 times], 2) - 8 panels in 2 rows, 4 columns
+- **3x3 Grid**: resizeWorkspaceLayout([11.1 repeated 9 times], 3) - 9 panels in 3 rows
+- **Vertical Stack**: resizeWorkspaceLayout([25, 25, 25, 25], 4, 'vertical') - 4 panels stacked vertically
+
+## Resizing Rules
+- **Unlimited Panels**: Support for any number of panels in single or multiple rows
+- **Multi-Row Support**: Create grids with up to 6 rows for complex dashboard layouts
+- **Layout Patterns**: 
+  - 'horizontal' (default): All panels in one row
+  - 'vertical': Stack panels vertically in one column
+  - 'grid': Auto-distribute panels across rows and columns
+- **Auto-Scaling**: If total exceeds 100%, proportions are automatically scaled down
+- **Minimum Size**: Each panel needs at least 1 column width (about 8%) to be visible
+- **Natural Language**: Use handleWorkspaceCommand for complex requests
+- **Array Format**: Tool accepts array of percentages, rows, and layout pattern
+
 # Navigation Control & State Awareness
 
 ## ⚠️ CRITICAL NAVIGATION RULES - MANDATORY
@@ -131,7 +199,7 @@ When users mention wanting to change the app's appearance or lighting:
 
 ## Navigation Sections Available
 The app has these sections you can control:
-- **Dashboard**: Main overview page with metrics and summaries
+- **Workspace/Dashboard**: The main workspace with modular layouts (users may say "workspace" or "dashboard" - both go to the same place)
 - **Profile**: User profile and account settings
 - **Settings**: Application settings and preferences
 - **Voice Mode**: Return to the voice assistant interface (default view)
@@ -144,20 +212,21 @@ The controlNavigation tool automatically checks the current state before acting,
 
 When users want to navigate or control the sidebar:
 - Listen for phrases like: "open the sidebar", "show the menu", "collapse the sidebar", "hide the menu", "toggle sidebar"
-- For navigation: "go to dashboard", "show me settings", "open profile", "take me to settings", "back to voice mode"
+- For navigation: "go to workspace", "open workspace", "go to dashboard", "show me settings", "open profile", "take me to settings", "back to voice mode"
 - For state queries: "where am I?", "what page is this?", "is the sidebar open?"
 - The tool will tell you if action was needed or if they're already there
 - Respond appropriately based on the tool's response
+- **Important**: "workspace" and "dashboard" both refer to the same main workspace area
 
 ## State-Aware Responses
 When the tool indicates alreadyInState is true, acknowledge it naturally:
-- "You're already on the dashboard"
+- "You're already in the workspace" (for workspace/dashboard)
 - "The sidebar is already open"
 - "You're already in voice mode"
 
 When actually navigating, provide context:
 - If moving between pages: "Taking you to settings" or "Switching to your profile"
-- If coming from voice: "Opening the dashboard for you"
+- If coming from voice: "Opening the workspace for you"
 - If going back to voice from a page: "Leaving settings, back to voice mode"
 
 ## MANDATORY State Checking - ALWAYS DO THIS
@@ -502,51 +571,13 @@ You: "Hey! So what can I help you with today?"
 User: "I'm not sure"
 You: "No worries! I help with all sorts of stuff. Like, lots of people need translations between languages, tech help, or I can even change how the app looks... what's on your mind?"
 
-User: "I need help translating something"
-You: "Oh sure! What languages? Let me get Zahra - she's amazing with languages"
-
 User: "Is anyone there?"
 You: "Yeah, Bayaan here! What's up? Need help with something?"
 `,
 
   tools: [
-    tool({
-      name: "identifyTranslationNeed",
-      description:
-        "Identifies when the user needs translation services and captures the source and target languages for handoff to Zahra.",
-      parameters: {
-        type: "object",
-        properties: {
-          sourceLanguage: {
-            type: "string",
-            description: "The language the user wants to translate FROM",
-          },
-          targetLanguage: {
-            type: "string", 
-            description: "The language the user wants to translate TO",
-          },
-          userRequest: {
-            type: "string",
-            description: "The user's original request for translation help",
-          },
-        },
-        required: ["sourceLanguage", "targetLanguage", "userRequest"],
-        additionalProperties: false,
-      },
-      execute: async (input: any) => {
-        const { sourceLanguage, targetLanguage } = input as {
-          sourceLanguage: string;
-          targetLanguage: string;
-          userRequest: string;
-        };
-        return {
-          success: true,
-          message: `Ready to hand off ${sourceLanguage} to ${targetLanguage} translation to Zahra`,
-          languages: [sourceLanguage, targetLanguage],
-        };
-      },
-    }),
-
+    
+    // Original Tools
     tool({
       name: "casualResponse",
       description:
@@ -808,8 +839,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
           },
           targetSection: {
             type: "string",
-            enum: ["dashboard", "profile", "settings"],
-            description: "Target section for navigate_section action (optional)"
+            enum: ["dashboard", "workspace", "profile", "settings"],
+            description: "Target section for navigate_section action (optional). Note: 'workspace' and 'dashboard' lead to the same location"
           },
           userRequest: {
             type: "string",
@@ -822,7 +853,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
       execute: async (input: any, context: any) => {
         const { navigationAction, targetSection, userRequest } = input as {
           navigationAction: "expand_sidebar" | "collapse_sidebar" | "toggle_sidebar" | "navigate_section" | "back_to_voice";
-          targetSection?: "dashboard" | "profile" | "settings";
+          targetSection?: "dashboard" | "workspace" | "profile" | "settings";
           userRequest?: string;
         };
         
@@ -860,16 +891,23 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             };
           }
           
-          if (navigationAction === 'navigate_section' && currentState.currentSection === targetSection) {
-            addBreadcrumb?.('Navigation Skipped - Already There', { currentState, targetSection });
-            return {
-              success: true,
-              alreadyInState: true,
-              action: navigationAction,
-              target: targetSection,
-              message: `Already on ${targetSection}`,
-              spokenResponse: `You're already on the ${targetSection} page`
-            };
+          if (navigationAction === 'navigate_section') {
+            // Handle workspace/dashboard equivalence
+            const normalizedTarget = targetSection === 'workspace' ? 'dashboard' : targetSection;
+            const normalizedCurrent = currentState.currentSection;
+            
+            if (normalizedCurrent === normalizedTarget) {
+              addBreadcrumb?.('Navigation Skipped - Already There', { currentState, targetSection });
+              const displayName = (targetSection === 'workspace' || targetSection === 'dashboard') ? 'workspace' : targetSection;
+              return {
+                success: true,
+                alreadyInState: true,
+                action: navigationAction,
+                target: targetSection,
+                message: `Already on ${displayName}`,
+                spokenResponse: `You're already in the ${displayName}`
+              };
+            }
           }
           
           if (navigationAction === 'back_to_voice' && currentState.contentMode === 'voice') {
@@ -912,16 +950,16 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             case 'navigate_section':
               // Context-aware responses based on where user was
               if (currentState.currentSection && currentState.currentSection !== targetSection) {
-                spokenResponse = targetSection === 'dashboard' 
-                  ? "Taking you back to the dashboard"
+                spokenResponse = (targetSection === 'dashboard' || targetSection === 'workspace')
+                  ? "Taking you to the workspace"
                   : targetSection === 'profile'
                   ? "Switching to your profile"
                   : targetSection === 'settings'
                   ? "Opening settings"
                   : `Moving to ${targetSection}`;
               } else {
-                spokenResponse = targetSection === 'dashboard' 
-                  ? "Here's your dashboard"
+                spokenResponse = (targetSection === 'dashboard' || targetSection === 'workspace')
+                  ? "Here's your workspace"
                   : targetSection === 'profile'
                   ? "Opening your profile"
                   : targetSection === 'settings'
@@ -957,6 +995,391 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             success: false,
             error: "Couldn't execute that navigation right now",
             spokenResponse: "Hmm, I'm having trouble with navigation controls right now"
+          };
+        }
+      },
+    }),
+
+    // Workspace Layout Control Tools
+    tool({
+      name: "getWorkspaceState",
+      description:
+        "Get current workspace layout state, active modules, and available presets. Use this to check workspace configuration.",
+      parameters: {
+        type: "object",
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workspace State Query', {});
+
+        try {
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          const state = foundationServices.workspace.getState();
+          const currentLayout = foundationServices.workspace.getCurrentLayout();
+          const activeModules = foundationServices.workspace.getActiveModules();
+          
+          addBreadcrumb?.('Workspace State Retrieved', { 
+            layout: currentLayout.name,
+            activeModules: activeModules.length 
+          });
+          
+          return {
+            success: true,
+            currentLayout: currentLayout.name,
+            activeModules: activeModules.map(m => ({ id: m.id, name: m.name, type: m.type })),
+            totalModules: state.modules.size,
+            humanSummary: `Workspace is in ${currentLayout.name} layout with ${activeModules.length} active modules`,
+            spokenResponse: `You're using the ${currentLayout.name} layout`
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Workspace State Query Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            spokenResponse: "I'm having trouble checking the workspace state"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "controlWorkspaceLayout",
+      description:
+        "Control workspace layout (single, split, stacked, dashboard, grid). Automatically manages module arrangement.",
+      parameters: {
+        type: "object",
+        properties: {
+          layout: {
+            type: "string",
+            enum: ["single", "split", "stacked", "focus-sidebar", "dashboard", "grid"],
+            description: "Layout preset to apply",
+          },
+        },
+        required: ["layout"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { layout } = input as { layout: string };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workspace Layout Control', { layout });
+
+        try {
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          foundationServices.workspace.applyPreset(layout, 'voice');
+          
+          addBreadcrumb?.('Workspace Layout Changed', { layout });
+          
+          let spokenResponse = "";
+          switch(layout) {
+            case 'single':
+              spokenResponse = "Switched to single module view";
+              break;
+            case 'split':
+              spokenResponse = "Split the workspace in two";
+              break;
+            case 'stacked':
+              spokenResponse = "Stacked modules vertically";
+              break;
+            case 'focus-sidebar':
+              spokenResponse = "Set up main focus with sidebar";
+              break;
+            case 'dashboard':
+              spokenResponse = "Switched to dashboard layout";
+              break;
+            case 'grid':
+              spokenResponse = "Arranged modules in a grid";
+              break;
+            default:
+              spokenResponse = `Applied ${layout} layout`;
+          }
+          
+          return {
+            success: true,
+            layout,
+            message: `Applied ${layout} layout`,
+            spokenResponse
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Workspace Layout Control Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            spokenResponse: "I couldn't change the workspace layout"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "activateWorkspaceModule",
+      description:
+        "Activate a specific module (email, CRM, calendar, analytics, tasks) in a workspace slot.",
+      parameters: {
+        type: "object",
+        properties: {
+          moduleId: {
+            type: "string",
+            description: "Module slot ID (module-1 through module-6)",
+          },
+          moduleType: {
+            type: "string",
+            enum: ["email", "crm", "calendar", "analytics", "tasks", "chat", "documents", "empty"],
+            description: "Type of module to activate",
+          },
+        },
+        required: ["moduleId", "moduleType"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { moduleId, moduleType } = input as { moduleId: string; moduleType: string };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Module Activation Request', { moduleId, moduleType });
+
+        try {
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          foundationServices.workspace.activateModule(moduleId, moduleType as any);
+          
+          addBreadcrumb?.('Module Activated', { moduleId, moduleType });
+          
+          const moduleNames: Record<string, string> = {
+            email: "email",
+            crm: "CRM",
+            calendar: "calendar",
+            analytics: "analytics dashboard",
+            tasks: "task manager",
+            chat: "chat",
+            documents: "documents"
+          };
+          
+          const moduleName = moduleNames[moduleType] || moduleType;
+          
+          return {
+            success: true,
+            moduleId,
+            moduleType,
+            message: `Activated ${moduleName}`,
+            spokenResponse: `Loading ${moduleName}`
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Module Activation Failed', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            spokenResponse: "I couldn't activate that module"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "handleWorkspaceCommand",
+      description:
+        "Handle natural language workspace commands like 'show email and CRM side by side' or 'open analytics in fullscreen'.",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "Natural language command for workspace control",
+          },
+        },
+        required: ["command"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { command } = input as { command: string };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workspace Command', { command });
+
+        try {
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          const result = foundationServices.workspace.handleWorkspaceCommand(command);
+          
+          if (result.success) {
+            addBreadcrumb?.('Workspace Command Executed', result.data);
+            return {
+              ...result,
+              spokenResponse: result.message
+            };
+          } else {
+            addBreadcrumb?.('Workspace Command Failed', { message: result.message });
+            return {
+              success: false,
+              error: result.message,
+              spokenResponse: "I couldn't understand that workspace command"
+            };
+          }
+        } catch (error: any) {
+          addBreadcrumb?.('Workspace Command Error', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            spokenResponse: "I'm having trouble with workspace controls"
+          };
+        }
+      },
+    }),
+
+    tool({
+      name: "resizeWorkspaceLayout",
+      description:
+        "Resize the workspace layout to specific proportions. Supports any number of panels in single or multiple rows (grid layouts).",
+      parameters: {
+        type: "object",
+        properties: {
+          panelPercentages: {
+            type: "array",
+            description: "Array of percentages for each panel (e.g., [25, 25, 25, 25] for 4 equal panels)",
+            items: {
+              type: "number",
+              minimum: 1,
+              maximum: 99
+            },
+            minItems: 1,
+            maxItems: 24
+          },
+          rows: {
+            type: "number",
+            description: "Number of rows for the layout (default: 1 for horizontal, use 2+ for grid layouts)",
+            minimum: 1,
+            maximum: 6,
+          },
+          layoutPattern: {
+            type: "string",
+            description: "Layout pattern: 'horizontal' (single row), 'vertical' (single column), 'grid' (auto-distribute)",
+            enum: ["horizontal", "vertical", "grid"],
+          },
+          fillRemaining: {
+            type: "boolean",
+            description: "Whether to fill remaining space with the last panel (default: false for partial layouts)",
+          },
+        },
+        required: ["panelPercentages"],
+        additionalProperties: false,
+      },
+      execute: async (input: any, context: any) => {
+        const { panelPercentages, fillRemaining, rows, layoutPattern } = input as { 
+          panelPercentages: number[];
+          fillRemaining?: boolean;
+          rows?: number;
+          layoutPattern?: 'horizontal' | 'vertical' | 'grid';
+        };
+        
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        addBreadcrumb?.('Workspace Resize', { panelPercentages, fillRemaining, rows, layoutPattern });
+
+        try {
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          // Calculate empty space
+          const total = panelPercentages.reduce((sum, p) => sum + p, 0);
+          let emptySpace = 100 - total;
+          
+          // If fillRemaining is true and there's only one panel, add a second panel with remaining space
+          let finalPercentages = [...panelPercentages];
+          if (fillRemaining && panelPercentages.length === 1 && emptySpace > 0) {
+            finalPercentages.push(emptySpace);
+            emptySpace = 0;
+          }
+          
+          // Validate total doesn't exceed 100% (only for single-row layouts)
+          if (!rows || rows === 1) {
+            if (total > 100) {
+              addBreadcrumb?.('Invalid Proportions', { total, panelPercentages });
+              return {
+                success: false,
+                error: `Total percentages (${total}%) exceed 100%`,
+                spokenResponse: `The total of all panels can't exceed 100 percent. You specified ${total} percent total.`
+              };
+            }
+          }
+          
+          // Apply the proportional layout with row configuration
+          foundationServices.workspace.createProportionalLayout(finalPercentages, rows, layoutPattern);
+          
+          addBreadcrumb?.('Layout Resized', { 
+            panelPercentages: finalPercentages,
+            emptySpace
+          });
+          
+          // Generate response message
+          let message = '';
+          let spokenResponse = '';
+          
+          const panelCount = finalPercentages.length;
+          const actualRows = rows || 1;
+          
+          // Handle multi-row layouts
+          if (actualRows > 1) {
+            const cols = Math.ceil(panelCount / actualRows);
+            
+            if (layoutPattern === 'vertical') {
+              message = `Created vertical stack of ${panelCount} panels`;
+              spokenResponse = `I've stacked ${panelCount} panels vertically`;
+            } else if (layoutPattern === 'grid' || actualRows > 1) {
+              message = `Created ${actualRows}x${cols} grid layout with ${panelCount} panels`;
+              spokenResponse = `I've created a ${actualRows} by ${cols} grid with ${panelCount} panels`;
+            }
+            
+            if (finalPercentages.every(p => p === finalPercentages[0])) {
+              spokenResponse += `, all equal size`;
+            } else {
+              spokenResponse += ` with sizes ${finalPercentages.join(', ')} percent`;
+            }
+          } 
+          // Single row layouts (existing logic)
+          else if (panelCount === 1) {
+            message = `Created single panel at ${finalPercentages[0]}%`;
+            spokenResponse = `I've created a single panel using ${finalPercentages[0]} percent of the workspace`;
+          } else if (panelCount === 2) {
+            if (emptySpace > 0) {
+              message = `Created partial layout: ${finalPercentages.join('/')} with ${emptySpace}% empty`;
+              spokenResponse = `I've set up a partial layout using ${finalPercentages[0]} and ${finalPercentages[1]} percent, leaving ${emptySpace} percent empty for future use`;
+            } else {
+              message = `Resized layout to ${finalPercentages.join('/')}`;
+              spokenResponse = `I've resized the layout to ${finalPercentages[0]} percent on the left and ${finalPercentages[1]} percent on the right`;
+            }
+          } else if (panelCount === 3) {
+            message = `Created 3-panel layout: ${finalPercentages.join('/')}`;
+            spokenResponse = `I've created a three-panel layout with ${finalPercentages.join(', ')} percent`;
+          } else if (panelCount === 4) {
+            message = `Created 4-panel layout: ${finalPercentages.join('/')}`;
+            spokenResponse = `I've created a four-panel layout with ${finalPercentages.join(', ')} percent`;
+          } else {
+            message = `Created ${panelCount}-panel layout: ${finalPercentages.join('/')}`;
+            spokenResponse = `I've created a ${panelCount}-panel layout with the percentages ${finalPercentages.join(', ')}`;
+          }
+          
+          if (emptySpace > 0 && panelCount > 1 && actualRows === 1) {
+            spokenResponse += `, leaving ${emptySpace} percent empty`;
+          }
+          
+          return {
+            success: true,
+            panelPercentages: finalPercentages,
+            panelCount,
+            rows: actualRows,
+            layoutPattern: layoutPattern || 'horizontal',
+            emptySpace,
+            message,
+            spokenResponse
+          };
+        } catch (error: any) {
+          addBreadcrumb?.('Resize Error', { error: error.message });
+          return {
+            success: false,
+            error: error.message,
+            spokenResponse: "I couldn't resize the workspace layout"
           };
         }
       },
@@ -1608,7 +2031,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
       },
       execute: async (input: any, context: any) => {
         const { operations } = input as {
-          operations: Array<{ widgetId: string; action: string }>;
+          operations: Array<{ widgetId: string; action: "show" | "hide" | "expand" | "collapse" | "refresh" }>;
         };
         
         const addBreadcrumb = context?.addTranscriptBreadcrumb;
@@ -1695,7 +2118,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
       execute: async (input: any, context: any) => {
         const { query, scope = ['all'], filters, limit = 10, sortBy = 'relevance' } = input as {
           query: string;
-          scope?: string[];
+          scope?: ("metrics" | "activities" | "all" | "forms" | "widgets")[];
           filters?: any;
           limit?: number;
           sortBy?: 'relevance' | 'date' | 'name';
@@ -1818,6 +2241,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               parameters: step.parameters || {},
               description: `${step.type} action: ${step.action}`,
             })),
+            createdAt: new Date(),
+            usageCount: 0
           };
           
           dashboardDataService.createWorkflow(workflow);
@@ -1830,6 +2255,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             voiceTriggers,
             workflow,
             isEnabled: true,
+            createdAt: new Date(),
+            usageCount: 0
           };
           
           const result = dashboardDataService.createMacro(macro);
