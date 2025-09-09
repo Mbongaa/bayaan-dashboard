@@ -1,4 +1,10 @@
-import { EventBus, globalEventBus } from './EventBus';
+import { EventBus, globalEventBus, eventMigrationHelper } from './EventBus';
+import { ServiceContainer } from './ServiceContainer';
+import { createServiceMonitor, ServiceMonitorImpl } from './ServiceMonitor';
+import { createPerformanceMonitor, PerformanceMonitor } from './PerformanceMonitor';
+import { createUsageAnalytics, UsageAnalytics } from './UsageAnalytics';
+import { createCacheManager, CacheManager } from './CacheManager';
+import { createBottleneckDetector, BottleneckDetector } from './BottleneckDetector';
 import { WebGLContextService } from './WebGLContextService';
 import { WebRTCService } from './WebRTCService';
 import { navigationService } from './NavigationService';
@@ -7,14 +13,34 @@ import { integrationService } from './IntegrationService';
 import { WorkspaceLayoutService } from './WorkspaceLayoutService';
 
 /**
- * Foundation Services Container
+ * Foundation Services Container - Enhanced with Phase 2 Service Communication
  * 
  * Centralizes all persistent services that must survive React re-renders.
  * This is the core of the service layer architecture that isolates
  * foundation resources from UI components.
+ * 
+ * PHASE 2 ENHANCEMENTS:
+ * - Service dependency injection and management
+ * - Direct service-to-service communication
+ * - Health monitoring and auto-recovery
+ * - Performance tracking and optimization
+ * 
+ * BACKWARD COMPATIBILITY: All existing code continues to work unchanged
  */
 export class FoundationServices {
   public readonly eventBus: EventBus;
+  public readonly serviceContainer: ServiceContainer;
+  
+  // Phase 2: Service monitoring and health
+  public readonly serviceMonitor: ServiceMonitorImpl;
+  
+  // Phase 3: Efficiency experts (silent background optimization)
+  public readonly performanceMonitor: PerformanceMonitor;
+  public readonly usageAnalytics: UsageAnalytics;
+  public readonly cacheManager: CacheManager;
+  public readonly bottleneckDetector: BottleneckDetector;
+  
+  // Existing service references (maintained for backward compatibility)
   public readonly webgl: WebGLContextService;
   public readonly webrtc: WebRTCService;
   public readonly workspace: WorkspaceLayoutService;
@@ -27,9 +53,44 @@ export class FoundationServices {
 
   constructor() {
     this.eventBus = globalEventBus;
+    this.serviceContainer = new ServiceContainer(this.eventBus);
+    this.serviceMonitor = createServiceMonitor(this.serviceContainer, this.eventBus);
+    
+    // Phase 3: Deploy all efficiency experts (silent background operation)
+    this.performanceMonitor = createPerformanceMonitor(this.eventBus);
+    this.usageAnalytics = createUsageAnalytics(this.eventBus);
+    this.cacheManager = createCacheManager(this.eventBus);
+    this.bottleneckDetector = createBottleneckDetector(this.eventBus, this.performanceMonitor);
+    
+    // Create existing services (maintained for backward compatibility)
     this.webgl = new WebGLContextService(this.eventBus);
     this.webrtc = new WebRTCService(this.eventBus);
     this.workspace = WorkspaceLayoutService.getInstance(this.eventBus);
+    
+    // Phase 2: Connect navigation service to the communication system
+    this.navigation.setServiceContainer(this.serviceContainer);
+    
+    // Phase 3: Connect services to efficiency experts
+    this.workspace.setCacheManager(this.cacheManager);
+    
+    // Register services with the container for Phase 2 capabilities
+    this.registerServicesWithContainer();
+    
+    console.log('[FoundationServices] 🎯 All efficiency experts deployed and monitoring silently');
+  }
+  
+  /**
+   * Register existing services with the new ServiceContainer
+   * This creates the "phone directory" without breaking existing functionality
+   */
+  private registerServicesWithContainer(): void {
+    // Note: We're registering existing service instances rather than creating new ones
+    // This maintains backward compatibility while adding Phase 2 capabilities
+    
+    console.log('[FoundationServices] Registering services with container...');
+    
+    // The existing services will be enhanced to implement IService in future iterations
+    // For now, we're just adding the communication infrastructure
   }
 
   /**
@@ -61,9 +122,18 @@ export class FoundationServices {
       // Initialize workspace layout service
       this.workspace.initialize();
 
+      // Phase 2: Start service monitoring (Deploy the security guards)
+      this.serviceMonitor.startMonitoring();
+      console.log('[FoundationServices] 🛡️ Service health monitoring started');
+
       this.isInitialized = true;
       
-      this.eventBus.emit('foundation:initialized');
+      // Emit to both legacy and new event names during transition
+      eventMigrationHelper.emitBoth(
+        'foundation:initialized',
+        'foundation:system:initialized',
+        undefined
+      );
       console.log('[FoundationServices] Foundation services initialized successfully');
       
     } catch (error) {
@@ -78,6 +148,10 @@ export class FoundationServices {
   shutdown(): void {
     console.log('[FoundationServices] Shutting down foundation services...');
     
+    // Phase 2: Stop service monitoring first
+    this.serviceMonitor.stopMonitoring();
+    console.log('[FoundationServices] 🛡️ Service monitoring stopped');
+    
     this.integration.shutdown();
     this.workspace.shutdown();
     this.webrtc.shutdown();
@@ -91,7 +165,69 @@ export class FoundationServices {
   }
 
   /**
-   * Get service health status
+   * Phase 2: Direct service communication (The new "phone system")
+   * Allows services to talk directly to each other
+   */
+  async callService<T>(serviceName: string, method: string, params?: any): Promise<T> {
+    return this.serviceContainer.call<T>(serviceName, method, params);
+  }
+
+  /**
+   * Phase 2: Check if a service is available for communication
+   */
+  isServiceAvailable(serviceName: string): boolean {
+    return this.serviceContainer.isServiceAvailable(serviceName);
+  }
+
+  /**
+   * Phase 2: Get enhanced system health with service communication status
+   */
+  getEnhancedSystemHealth(): ReturnType<ServiceContainer['getSystemHealth']> {
+    return this.serviceContainer.getSystemHealth();
+  }
+
+  /**
+   * Phase 3: Get comprehensive performance report from all efficiency experts
+   */
+  getPerformanceReport(): {
+    performance: ReturnType<PerformanceMonitor['getPerformanceReport']>;
+    usagePatterns: ReturnType<UsageAnalytics['getLearnedPatterns']>;
+    cacheStats: ReturnType<CacheManager['getCacheStats']>;
+    bottlenecks: ReturnType<BottleneckDetector['getBottleneckReport']>;
+    systemOverview: {
+      overallHealthScore: number;
+      totalOptimizations: number;
+      averageResponseTime: number;
+      cacheEfficiency: number;
+    };
+  } {
+    const performanceReport = this.performanceMonitor.getPerformanceReport();
+    const usagePatterns = this.usageAnalytics.getLearnedPatterns();
+    const cacheStats = this.cacheManager.getCacheStats();
+    const bottleneckReport = this.bottleneckDetector.getBottleneckReport();
+
+    // Calculate system overview
+    const overallHealthScore = Math.max(0, 100 - (bottleneckReport.activeBottlenecks.critical.length * 25));
+    const totalOptimizations = performanceReport.summary.recentOptimizations.length;
+    const averageResponseTime = performanceReport.summary.averageResponseTime;
+    const cacheEfficiency = cacheStats.hitRate;
+
+    return {
+      performance: performanceReport,
+      usagePatterns,
+      cacheStats,
+      bottlenecks: bottleneckReport,
+      systemOverview: {
+        overallHealthScore,
+        totalOptimizations,
+        averageResponseTime,
+        cacheEfficiency
+      }
+    };
+  }
+
+  /**
+   * Get service health status (existing method - maintained for compatibility)
    */
   getHealthStatus(): {
     isInitialized: boolean;

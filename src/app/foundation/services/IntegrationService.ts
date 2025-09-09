@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { DashboardDataService } from './DashboardDataService';
 import { navigationService } from './NavigationService';
+import { globalEventBus } from './EventBus';
 
 /**
  * Integration Service - Phase 5
@@ -281,9 +282,9 @@ class IntegrationServiceClass extends EventEmitter {
       this.updateUserContext();
     });
     
-    // Listen to navigation events
-    this.navigationService.on('navigation:changed', (section: string) => {
-      this.userContext.recentActions.push(`navigate:${section}`);
+    // Listen to navigation section changes via EventBus
+    globalEventBus.on('navigation:section:changed', (data: any) => {
+      this.userContext.recentActions.push(`navigate:${data.section}`);
       if (this.userContext.recentActions.length > 20) {
         this.userContext.recentActions.shift();
       }

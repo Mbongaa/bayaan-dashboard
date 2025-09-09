@@ -8,10 +8,11 @@
  * - Supports both voice control and manual interaction
  */
 
-import { EventEmitter } from 'events';
+import { eventMigrationHelper, NavigationSection, SidebarState } from './EventBus';
+import { ServiceContainer } from './ServiceContainer';
 
-export type NavigationSection = 'dashboard' | 'workspace' | 'profile' | 'settings' | 'voice' | null;
-export type SidebarState = 'expanded' | 'collapsed';
+// Re-export types for backward compatibility
+export type { NavigationSection, SidebarState } from './EventBus';
 
 interface NavigationState {
   sidebarState: SidebarState;
@@ -24,13 +25,13 @@ interface NavigationEvent {
   payload: any;
 }
 
-class NavigationService extends EventEmitter {
+class NavigationService {
   private static instance: NavigationService;
   private state: NavigationState;
   private isInitialized: boolean = false;
+  private serviceContainer?: ServiceContainer;
 
   private constructor() {
-    super();
     this.state = {
       sidebarState: 'collapsed',
       currentSection: null,
@@ -53,6 +54,14 @@ class NavigationService extends EventEmitter {
     
     // Restore state from localStorage if available
     this.restoreState();
+  }
+
+  /**
+   * Phase 2: Set service container for direct communication (Connect to phone system)
+   */
+  setServiceContainer(container: ServiceContainer): void {
+    this.serviceContainer = container;
+    console.log('[NavigationService] Connected to service communication system');
   }
 
   private restoreState(): void {
@@ -88,10 +97,15 @@ class NavigationService extends EventEmitter {
     this.state.sidebarState = 'expanded';
     this.saveState();
     
-    this.emit('navigation:sidebar-state', {
-      state: 'expanded',
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:sidebar-state',
+      'navigation:sidebar:changed',
+      {
+        state: 'expanded',
+        source: 'service'
+      }
+    );
   }
 
   collapseSidebar(): void {
@@ -101,10 +115,15 @@ class NavigationService extends EventEmitter {
     this.state.sidebarState = 'collapsed';
     this.saveState();
     
-    this.emit('navigation:sidebar-state', {
-      state: 'collapsed',
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:sidebar-state',
+      'navigation:sidebar:changed',
+      {
+        state: 'collapsed',
+        source: 'service'
+      }
+    );
   }
 
   toggleSidebar(): void {
@@ -122,10 +141,15 @@ class NavigationService extends EventEmitter {
     this.state.sidebarState = state;
     this.saveState();
     
-    this.emit('navigation:sidebar-state', {
-      state,
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:sidebar-state',
+      'navigation:sidebar:changed',
+      {
+        state,
+        source: 'service'
+      }
+    );
   }
 
   // Navigation methods
@@ -147,11 +171,16 @@ class NavigationService extends EventEmitter {
     
     this.saveState();
     
-    this.emit('navigation:section-change', {
-      section: normalizedSection,
-      contentMode: this.state.contentMode,
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:section-change',
+      'navigation:section:changed',
+      {
+        section: normalizedSection,
+        contentMode: this.state.contentMode,
+        source: 'service'
+      }
+    );
   }
 
   backToVoice(): void {
@@ -160,11 +189,16 @@ class NavigationService extends EventEmitter {
     this.state.contentMode = 'voice';
     this.saveState();
     
-    this.emit('navigation:section-change', {
-      section: null,
-      contentMode: 'voice',
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:section-change',
+      'navigation:section:changed',
+      {
+        section: null,
+        contentMode: 'voice',
+        source: 'service'
+      }
+    );
   }
 
   // Content mode control methods
@@ -183,11 +217,16 @@ class NavigationService extends EventEmitter {
     
     this.saveState();
     
-    this.emit('navigation:content-mode', {
-      mode,
-      section: this.state.currentSection,
-      source: 'service'
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'navigation:content-mode',
+      'navigation:section:mode-changed',
+      {
+        mode,
+        section: this.state.currentSection,
+        source: 'service'
+      }
+    );
   }
 
   toggleContentMode(): void {
@@ -212,7 +251,7 @@ class NavigationService extends EventEmitter {
     return { ...this.state };
   }
 
-  // Voice control integration
+  // Voice control integration with Phase 2 service communication
   handleVoiceCommand(action: string, target?: string): { success: boolean; message: string } {
     console.log('[NavigationService] Handling voice command:', action, target);
     
@@ -237,6 +276,15 @@ class NavigationService extends EventEmitter {
           if (!target) {
             return { success: false, message: 'No section specified' };
           }
+          
+          // Phase 2: Enhanced navigation with workspace coordination
+          if (target === 'workspace' && this.serviceContainer) {
+            // Note: This is an async operation, but we maintain the sync interface for compatibility
+            this.handleWorkspaceNavigationWithCoordination(target).catch(console.error);
+            this.navigateToSection(target as NavigationSection);
+            return { success: true, message: `Navigated to ${target} (enhanced coordination active)` };
+          }
+          
           this.navigateToSection(target as NavigationSection);
           return { success: true, message: `Navigated to ${target}` };
           
@@ -256,9 +304,48 @@ class NavigationService extends EventEmitter {
     }
   }
 
+  /**
+   * Phase 2: Enhanced workspace navigation with direct service communication
+   * This demonstrates the "direct phone call" between Navigation and Workspace departments
+   */
+  private async handleWorkspaceNavigationWithCoordination(target: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // First, navigate to the workspace section (existing functionality)
+      this.navigateToSection(target as NavigationSection);
+      
+      // Phase 2: Direct communication with WorkspaceLayoutService
+      if (this.serviceContainer?.isServiceAvailable('workspace')) {
+        console.log('[NavigationService] 📞 Calling WorkspaceLayoutService directly...');
+        
+        // Get current layout status from workspace service directly (no intercom needed!)
+        const workspaceStatus = await this.serviceContainer.call<{
+          name: string;
+          layouts: any[];
+          modules: string[];
+        }>('workspace', 'getCurrentLayout', {});
+        
+        console.log('[NavigationService] 📞 ✅ Got workspace status:', workspaceStatus);
+        
+        return { 
+          success: true, 
+          message: `Navigated to workspace (${workspaceStatus.name} layout active with ${workspaceStatus.modules.length} modules)` 
+        };
+      } else {
+        // Fallback to original behavior if service communication not available
+        return { success: true, message: `Navigated to ${target}` };
+      }
+    } catch (error) {
+      console.error('[NavigationService] Error in enhanced navigation:', error);
+      // Fallback to basic navigation
+      this.navigateToSection(target as NavigationSection);
+      return { success: true, message: `Navigated to ${target} (basic mode)` };
+    }
+  }
+
   // Cleanup
   destroy(): void {
-    this.removeAllListeners();
+    // Note: Event listeners are now managed by components through EventBus
+    // No need to manually remove listeners here
     this.isInitialized = false;
     console.log('[NavigationService] Service destroyed');
   }

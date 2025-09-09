@@ -5,9 +5,10 @@ import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import './workspace.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { foundationServices } from '../../../foundation/services/FoundationServices';
+import { eventMigrationHelper } from '../../../foundation/services/EventBus';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -95,7 +96,10 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
   }, []);
 
   // Theme-aware colors - matching sidebar aesthetic
-  const isDark = mounted ? (resolvedTheme === 'dark') : true;
+  // Check system preference as fallback instead of defaulting to dark
+  const isDark = mounted 
+    ? (resolvedTheme === 'dark') 
+    : (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
   const colors = {
     text: {
       primary: isDark ? '#f3f4f6' : '#1f2937', // gray-100 : gray-800
@@ -203,13 +207,15 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
       }
     };
 
-    // Subscribe to events
-    const unsubscribeLayout = foundationServices.eventBus.on(
+    // Subscribe to events using migration helper to listen to both old and new event names
+    const unsubscribeLayout = eventMigrationHelper.onBoth(
       'workspace-layout-changed',
+      'workspace:layout:changed', 
       handleLayoutChange
     );
-    const unsubscribeModule = foundationServices.eventBus.on(
+    const unsubscribeModule = eventMigrationHelper.onBoth(
       'workspace-module-activated',
+      'workspace:module:activated',
       handleModuleActivation
     );
 
@@ -344,7 +350,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
             ? colors.border.active
             : colors.border.default}`,
           borderRadius: '24px',
-          padding: '16px',
+          padding: '10px',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
@@ -360,22 +366,29 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '12px',
+          marginBottom: '4px',
           borderBottom: `1px solid ${colors.border.default}`,
-          paddingBottom: '8px'
+          paddingBottom: '2px',
+          height: '16px'
         }}>
           <h3 style={{ 
-            fontSize: '14px', 
+            fontSize: '10px', 
             fontWeight: 600,
-            color: colors.text.primary
+            color: colors.text.primary,
+            margin: 0,
+            lineHeight: 1,
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            opacity: 0.8
           }}>
             {item.title}
           </h3>
           <div style={{
-            width: '8px',
-            height: '8px',
+            width: '5px',
+            height: '5px',
             borderRadius: '50%',
-            backgroundColor: isActive ? '#10b981' : isLoading ? '#f59e0b' : '#6b7280'
+            backgroundColor: isActive ? '#10b981' : isLoading ? '#f59e0b' : '#6b7280',
+            flexShrink: 0
           }} />
         </div>
 

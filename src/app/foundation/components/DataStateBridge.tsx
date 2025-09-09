@@ -14,6 +14,7 @@
 
 import { useEffect, useRef } from 'react';
 import { dashboardDataService, MetricData, ActivityItem, SystemStatus } from '../services/DashboardDataService';
+import { eventMigrationHelper } from '../services/EventBus';
 
 interface DataStateBridgeProps {
   onMetricsUpdate?: (metrics: MetricData[]) => void;
@@ -86,12 +87,32 @@ export function DataStateBridge({
       }
     };
 
-    // Add event listeners
-    dashboardDataService.on('dashboard:metric-updated', handleMetricUpdate);
-    dashboardDataService.on('dashboard:all-metrics-refreshed', handleAllMetricsRefresh);
-    dashboardDataService.on('dashboard:activity-added', handleActivityAdded);
-    dashboardDataService.on('dashboard:activities-cleared', handleActivitiesCleared);
-    dashboardDataService.on('dashboard:status-updated', handleStatusUpdate);
+    // Add event listeners using migration helper to listen to both old and new event names
+    const unsubscribeMetricUpdate = eventMigrationHelper.onBoth(
+      'dashboard:metric-updated',
+      'dashboard:data:metric-updated',
+      handleMetricUpdate
+    );
+    const unsubscribeAllRefresh = eventMigrationHelper.onBoth(
+      'dashboard:all-metrics-refreshed', 
+      'dashboard:data:refreshed',
+      handleAllMetricsRefresh
+    );
+    const unsubscribeActivityAdded = eventMigrationHelper.onBoth(
+      'dashboard:activity-added',
+      'dashboard:data:activity-added',
+      handleActivityAdded  
+    );
+    const unsubscribeActivitiesCleared = eventMigrationHelper.onBoth(
+      'dashboard:activities-cleared',
+      'dashboard:data:activities-cleared', 
+      handleActivitiesCleared
+    );
+    const unsubscribeStatusUpdate = eventMigrationHelper.onBoth(
+      'dashboard:status-updated',
+      'dashboard:data:status-updated',
+      handleStatusUpdate
+    );
 
     // Set up auto-refresh if interval provided
     if (autoRefreshInterval && autoRefreshInterval > 0) {
@@ -115,11 +136,11 @@ export function DataStateBridge({
 
     // Cleanup
     return () => {
-      dashboardDataService.off('dashboard:metric-updated', handleMetricUpdate);
-      dashboardDataService.off('dashboard:all-metrics-refreshed', handleAllMetricsRefresh);
-      dashboardDataService.off('dashboard:activity-added', handleActivityAdded);
-      dashboardDataService.off('dashboard:activities-cleared', handleActivitiesCleared);
-      dashboardDataService.off('dashboard:status-updated', handleStatusUpdate);
+      unsubscribeMetricUpdate();
+      unsubscribeAllRefresh();
+      unsubscribeActivityAdded();
+      unsubscribeActivitiesCleared();
+      unsubscribeStatusUpdate();
       
       // Clear auto-refresh timer
       if (autoRefreshTimer.current) {

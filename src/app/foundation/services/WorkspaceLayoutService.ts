@@ -1,5 +1,6 @@
 import { Layout } from 'react-grid-layout';
-import { EventBus } from './EventBus';
+import { EventBus, eventMigrationHelper } from './EventBus';
+import { CacheManager } from './CacheManager';
 
 export interface WorkspaceModule {
   id: string;
@@ -46,6 +47,7 @@ class WorkspaceLayoutService {
   private static instance: WorkspaceLayoutService | null = null;
   private state: WorkspaceState;
   private eventBus: EventBus;
+  private cacheManager?: CacheManager;
   private readonly MAX_HISTORY = 50;
   private isInitialized: boolean = false;
 
@@ -169,6 +171,59 @@ class WorkspaceLayoutService {
     this.applyPreset('dashboard', 'system');
     
     console.log('[WorkspaceLayoutService] Workspace layout service initialized');
+  }
+
+  /**
+   * Phase 3: Connect to cache manager for faster layout calculations
+   */
+  setCacheManager(cacheManager: CacheManager): void {
+    this.cacheManager = cacheManager;
+    console.log('[WorkspaceLayoutService] 🚀 Connected to cache manager for faster layouts');
+  }
+
+  /**
+   * Apply a cached layout quickly (Skip expensive calculations)
+   */
+  private applyCachedLayout(cachedLayout: any, percentages: number[]): void {
+    // Set custom preset as active
+    this.state.activeLayout = 'custom';
+    
+    // Update the custom preset with the cached layout
+    const customPreset = this.PRESETS.get('custom');
+    if (customPreset) {
+      customPreset.layouts = cachedLayout.layouts;
+      customPreset.modules = cachedLayout.layouts.map((l: any) => l.i);
+    }
+    
+    // Store the custom layout in state
+    this.state.layouts.set('custom', cachedLayout.layouts);
+    
+    // Track in preferences
+    const currentCount = this.state.userPreferences.preferredLayouts.get('custom') || 0;
+    this.state.userPreferences.preferredLayouts.set('custom', currentCount + 1);
+    
+    // Add to history
+    const moduleIds = cachedLayout.layouts.map((l: any) => l.i);
+    this.addToHistory('custom', 'voice', moduleIds);
+    
+    // Emit event for UI update (using existing enhanced event structure)
+    eventMigrationHelper.emitBoth(
+      'workspace-layout-changed',
+      'workspace:layout:changed',
+      {
+        layout: 'custom',
+        preset: 'custom',
+        layouts: cachedLayout.layouts,
+        modules: moduleIds,
+        proportions: percentages,
+        emptySpace: 100 - percentages.reduce((a, b) => a + b, 0),
+        panelCount: percentages.length,
+        rows: cachedLayout.rows,
+        layoutPattern: cachedLayout.layoutPattern
+      }
+    );
+    
+    console.log(`[WorkspaceLayoutService] ⚡ Applied cached ${percentages.join('/')} layout instantly`);
   }
 
   private initializeDefaultModules() {
@@ -329,17 +384,22 @@ class WorkspaceLayoutService {
     // Add to history
     this.addToHistory(presetName, trigger, preset.modules);
 
-    // Emit layout change event
-    this.eventBus.emit('workspace-layout-changed', {
-      layout: presetName,
-      layouts: preset.layouts,
-      modules: preset.modules
-    });
+    // Emit layout change event using migration helper for both old and new event names
+    eventMigrationHelper.emitBoth(
+      'workspace-layout-changed',
+      'workspace:layout:changed',
+      {
+        layout: presetName,
+        layouts: preset.layouts,
+        modules: preset.modules
+      }
+    );
   }
 
   /**
    * Create a custom proportional layout with specified percentages
    * Supports any number of panels, partial layouts, and multi-row grids
+   * Phase 3: Enhanced with intelligent caching for faster performance
    */
   public createProportionalLayout(
     percentages: number[] | number, 
@@ -359,18 +419,38 @@ class WorkspaceLayoutService {
       console.warn('[WorkspaceLayoutService] Invalid percentages provided');
       return;
     }
+
+    // Phase 3: Check cache first for faster custom layouts (like "70/30", "25/25/25/25")
+    const finalRows = rows || 1;
+    const finalPattern = layoutPattern || 'horizontal';
+    
+    if (this.cacheManager) {
+      const cachedLayout = this.cacheManager.getCachedLayout(percentages, finalPattern, finalRows);
+      if (cachedLayout) {
+        console.log(`[WorkspaceLayoutService] ⚡ Using cached layout for ${percentages.join('/')} (${cachedLayout.calculationTime}ms saved)`);
+        this.applyCachedLayout(cachedLayout, percentages);
+        return;
+      }
+    }
     
     // Default values
     rows = rows || 1;
     layoutPattern = layoutPattern || 'horizontal';
+    
+    // IMPORTANT: If rows > 1 is explicitly set, ignore 'vertical' pattern
+    // This prevents the confusing behavior where 'vertical' overrides rows
+    if (rows > 1 && layoutPattern === 'vertical') {
+      console.warn('[WorkspaceLayoutService] Ignoring vertical pattern because rows > 1. Using horizontal grid instead.');
+      layoutPattern = 'horizontal';
+    }
     
     // Auto-calculate rows for 'grid' pattern if not specified
     if (layoutPattern === 'grid' && rows === 1) {
       rows = this.calculateOptimalRows(percentages.length);
     }
     
-    // For vertical pattern, rows = number of panels
-    if (layoutPattern === 'vertical') {
+    // For vertical pattern, rows = number of panels (only if rows wasn't explicitly set > 1)
+    if (layoutPattern === 'vertical' && rows === 1) {
       rows = percentages.length;
     }
     
@@ -397,14 +477,15 @@ class WorkspaceLayoutService {
     
     // For multi-row layouts, we need to handle column width differently
     let columnWidth = totalColumns;
-    if (rows === 1 || layoutPattern === 'horizontal') {
+    if (rows === 1) {
       // Single row - use full width calculation
       columnWidth = Math.round((totalPercent / 100) * totalColumns);
     } else if (layoutPattern === 'vertical') {
       // Vertical stack - each panel uses full width
       columnWidth = totalColumns;
     } else {
-      // Grid layout - divide columns by panels per row
+      // Grid layout (for rows > 1) - divide columns by panels per row
+      // This applies to both 'horizontal' and 'grid' patterns
       columnWidth = Math.floor(totalColumns / panelsPerRow);
     }
     
@@ -490,18 +571,22 @@ class WorkspaceLayoutService {
     const moduleIds = layouts.map(l => l.i);
     this.addToHistory('custom', 'voice', moduleIds);
     
-    // Emit event for UI update with custom preset active
-    this.eventBus.emit('workspace-layout-changed', {
-      layout: 'custom',
-      preset: 'custom',
-      layouts: layouts,
-      modules: moduleIds,
-      proportions: percentages,
-      emptySpace: emptySpace,
-      panelCount: percentages.length,
-      rows: rows,
-      layoutPattern: layoutPattern
-    });
+    // Emit event for UI update with custom preset active using migration helper
+    eventMigrationHelper.emitBoth(
+      'workspace-layout-changed',
+      'workspace:layout:changed',
+      {
+        layout: 'custom',
+        preset: 'custom',
+        layouts: layouts,
+        modules: moduleIds,
+        proportions: percentages,
+        emptySpace: emptySpace,
+        panelCount: percentages.length,
+        rows: rows,
+        layoutPattern: layoutPattern
+      }
+    );
     
     const layoutDescription = rows > 1 
       ? `${rows}x${Math.ceil(percentages.length / rows)} grid`
@@ -525,19 +610,27 @@ class WorkspaceLayoutService {
       lastAccessed: new Date()
     };
 
-    // Emit module activation event
-    this.eventBus.emit('workspace-module-activating', {
-      moduleId,
-      type
-    });
+    // Emit module activation event using migration helper
+    eventMigrationHelper.emitBoth(
+      'workspace-module-activating',
+      'workspace:module:activating',
+      {
+        moduleId,
+        type
+      }
+    );
 
     // Simulate loading (in real app, this would be Module Federation loading)
     setTimeout(() => {
       workspaceModule.status = 'active';
-      this.eventBus.emit('workspace-module-activated', {
-        moduleId,
-        type
-      });
+      eventMigrationHelper.emitBoth(
+        'workspace-module-activated',
+        'workspace:module:activated',
+        {
+          moduleId,
+          type
+        }
+      );
     }, 1000);
   }
 
@@ -558,11 +651,15 @@ class WorkspaceLayoutService {
       this.state.userPreferences.modulePositions.set(item.i, { x: item.x, y: item.y });
     });
 
-    this.eventBus.emit('workspace-layout-updated', {
-      layout: 'custom',
-      preset: 'custom',
-      layouts: layoutData
-    });
+    eventMigrationHelper.emitBoth(
+      'workspace-layout-updated',
+      'workspace:layout:updated',
+      {
+        layout: 'custom',
+        preset: 'custom',
+        layouts: layoutData
+      }
+    );
   }
 
   private addToHistory(layoutName: string, trigger: 'voice' | 'manual' | 'system', modules: string[]) {

@@ -42,10 +42,13 @@ import { translationDirectScenario } from "@/app/agentConfigs/translationDirect"
 import { translationDirectCompanyName } from "@/app/agentConfigs/translationDirect";
 import { bayaanGeneralScenario } from "@/app/agentConfigs/bayaanGeneral";
 import { bayaanGeneralCompanyName } from "@/app/agentConfigs/bayaanGeneral";
+import { jarvisCoreScenario } from "@/app/agentConfigs/jarvisCore";
+import { jarvisCoreCompanyName } from "@/app/agentConfigs/jarvisCore";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
   bayaanGeneral: bayaanGeneralScenario,
+  jarvisCore: jarvisCoreScenario,
   simpleHandoff: simpleHandoffScenario,
   customerServiceRetail: customerServiceRetailScenario,
   chatSupervisor: chatSupervisorScenario,
@@ -391,6 +394,8 @@ function App() {
           ? translationDirectCompanyName
           : agentSetKey === 'bayaanGeneral'
           ? bayaanGeneralCompanyName
+          : agentSetKey === 'jarvisCore'
+          ? jarvisCoreCompanyName
           : chatSupervisorCompanyName;
         // Configure guardrails based on scenario type
         const shouldUseGuardrails = !['translationDirect'].includes(agentSetKey);

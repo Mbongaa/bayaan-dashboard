@@ -13,6 +13,7 @@
 
 import { useEffect, useRef } from 'react';
 import { navigationService, NavigationSection, SidebarState } from '../services/NavigationService';
+import { eventMigrationHelper } from '../services/EventBus';
 
 interface NavigationStateBridgeProps {
   onSidebarStateChange?: (state: SidebarState, isHovered: boolean) => void;
@@ -56,9 +57,18 @@ export function NavigationStateBridge({
       }
     };
 
-    // Add event listeners
-    navigationService.on('navigation:sidebar-state', handleSidebarState);
-    navigationService.on('navigation:section-change', handleSectionChange);
+    // Add event listeners using the migration helper to listen to both old and new events
+    const unsubscribeSidebar = eventMigrationHelper.onBoth(
+      'navigation:sidebar-state',
+      'navigation:sidebar:changed',
+      handleSidebarState
+    );
+
+    const unsubscribeSection = eventMigrationHelper.onBoth(
+      'navigation:section-change', 
+      'navigation:section:changed',
+      handleSectionChange
+    );
 
     // Sync initial state
     const initialState = navigationService.getState();
@@ -77,8 +87,8 @@ export function NavigationStateBridge({
 
     // Cleanup
     return () => {
-      navigationService.off('navigation:sidebar-state', handleSidebarState);
-      navigationService.off('navigation:section-change', handleSectionChange);
+      unsubscribeSidebar();
+      unsubscribeSection();
       console.log('[NavigationStateBridge] Event listeners removed');
     };
   }, [onSidebarStateChange, onSectionChange, onContentModeChange]);

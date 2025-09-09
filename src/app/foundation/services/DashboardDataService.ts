@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { eventMigrationHelper } from './EventBus';
 
 /**
  * Dashboard Data Service
@@ -557,8 +558,18 @@ export class DashboardDataService extends EventEmitter {
     form.isDirty = true;
     form.isValid = Array.from(form.fields.values()).every(f => f.isValid);
     
-    // Emit event
-    this.emit('form:field-changed', { formId, fieldId, value, isValid: field.isValid });
+    // Emit event to both EventBus and this service's EventEmitter
+    const eventData = { formId, fieldId, value, isValid: field.isValid };
+    
+    // Emit to this service's EventEmitter (for FormStateBridge)
+    this.emit('form:field-changed', eventData);
+    
+    // Also emit to global EventBus for backward compatibility
+    eventMigrationHelper.emitBoth(
+      'form:field-changed',
+      'dashboard:form:field-changed',
+      eventData
+    );
     
     return { 
       success: true, 
@@ -651,13 +662,37 @@ export class DashboardDataService extends EventEmitter {
     
     if (!allValid) {
       form.isValid = false;
-      this.emit('form:validation-failed', { formId });
+      
+      // Emit event to both systems
+      const validationFailedData = { formId };
+      
+      // Emit to this service's EventEmitter
+      this.emit('form:validation-failed', validationFailedData);
+      
+      // Also emit to global EventBus
+      eventMigrationHelper.emitBoth(
+        'form:validation-failed',
+        'dashboard:form:validation-failed',
+        validationFailedData
+      );
       return { success: false, message: 'Please fix validation errors' };
     }
     
     // Mark as submitting
     form.isSubmitting = true;
-    this.emit('form:submitting', { formId });
+    
+    // Emit event to both systems
+    const submittingData = { formId };
+    
+    // Emit to this service's EventEmitter
+    this.emit('form:submitting', submittingData);
+    
+    // Also emit to global EventBus
+    eventMigrationHelper.emitBoth(
+      'form:submitting',
+      'dashboard:form:submitting',
+      submittingData
+    );
     
     // Simulate form submission (in real app, this would make API call)
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -671,7 +706,19 @@ export class DashboardDataService extends EventEmitter {
     // Mark as submitted
     form.isSubmitting = false;
     form.isDirty = false;
-    this.emit('form:submitted', { formId, data: formData });
+    
+    // Emit event to both systems
+    const submittedEventData = { formId, data: formData };
+    
+    // Emit to this service's EventEmitter (for FormStateBridge)
+    this.emit('form:submitted', submittedEventData);
+    
+    // Also emit to global EventBus for backward compatibility
+    eventMigrationHelper.emitBoth(
+      'form:submitted',
+      'dashboard:form:submitted',
+      submittedEventData
+    );
     
     // Add activity
     this.addActivity({
@@ -715,7 +762,18 @@ export class DashboardDataService extends EventEmitter {
     form.isDirty = false;
     form.isSubmitting = false;
     
-    this.emit('form:reset', { formId });
+    // Emit event to both systems
+    const resetEventData = { formId };
+    
+    // Emit to this service's EventEmitter (for FormStateBridge)
+    this.emit('form:reset', resetEventData);
+    
+    // Also emit to global EventBus for backward compatibility
+    eventMigrationHelper.emitBoth(
+      'form:reset',
+      'dashboard:form:reset',
+      resetEventData
+    );
     
     return { 
       success: true, 
@@ -739,11 +797,16 @@ export class DashboardDataService extends EventEmitter {
             this.syncThemeState();
             
             if (oldTheme !== this.state.theme.resolvedTheme) {
-              this.emit('dashboard:theme-changed', {
-                previousTheme: oldTheme,
-                currentTheme: this.state.theme.resolvedTheme,
-                theme: this.state.theme.theme
-              });
+              // Emit to both legacy and new event names during transition
+              eventMigrationHelper.emitBoth(
+                'dashboard:theme-changed',
+                'dashboard:data:theme-changed',
+                {
+                  previousTheme: oldTheme,
+                  currentTheme: this.state.theme.resolvedTheme,
+                  theme: this.state.theme.theme
+                }
+              );
             }
           }
         });
@@ -869,7 +932,12 @@ export class DashboardDataService extends EventEmitter {
     updatedMetric.lastUpdated = new Date();
     this.state.metrics.set(id, updatedMetric);
 
-    this.emit('dashboard:metric-updated', { metric: updatedMetric });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:metric-updated',
+      'dashboard:data:metric-updated', 
+      { metric: updatedMetric }
+    );
     
     // Log activity
     this.addActivity({
@@ -888,7 +956,12 @@ export class DashboardDataService extends EventEmitter {
     );
     await Promise.all(promises);
     this.state.lastRefresh = new Date();
-    this.emit('dashboard:all-metrics-refreshed');
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:all-metrics-refreshed',
+      'dashboard:data:refreshed',
+      undefined
+    );
   }
 
   /**
@@ -908,7 +981,12 @@ export class DashboardDataService extends EventEmitter {
       this.state.activities = this.state.activities.slice(0, 100);
     }
 
-    this.emit('dashboard:activity-added', { activity: newActivity });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:activity-added',
+      'dashboard:data:activity-added',
+      { activity: newActivity }
+    );
   }
 
   /**
@@ -923,7 +1001,12 @@ export class DashboardDataService extends EventEmitter {
       this.state.activities = this.state.activities.filter(a => !toKeepIds.has(a.id));
     }
 
-    this.emit('dashboard:activities-cleared', { criteria });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:activities-cleared',
+      'dashboard:data:activities-cleared',
+      { criteria }
+    );
   }
 
   /**
@@ -941,7 +1024,12 @@ export class DashboardDataService extends EventEmitter {
       lastChecked: new Date()
     };
 
-    this.emit('dashboard:status-updated', { status: this.state.systemStatus[index] });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:status-updated',
+      'dashboard:data:status-updated',
+      { status: this.state.systemStatus[index] }
+    );
   }
 
   /**
@@ -958,7 +1046,12 @@ export class DashboardDataService extends EventEmitter {
     }, intervalMs);
 
     this.refreshIntervals.set(metricId, interval);
-    this.emit('dashboard:auto-refresh-set', { metricId, intervalMs });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'dashboard:auto-refresh-set',
+      'dashboard:data:auto-refresh-set',
+      { metricId, intervalMs }
+    );
   }
 
   /**
@@ -968,7 +1061,12 @@ export class DashboardDataService extends EventEmitter {
     if (this.refreshIntervals.has(metricId)) {
       clearInterval(this.refreshIntervals.get(metricId)!);
       this.refreshIntervals.delete(metricId);
-      this.emit('dashboard:auto-refresh-cleared', { metricId });
+      // Emit to both legacy and new event names during transition
+      eventMigrationHelper.emitBoth(
+        'dashboard:auto-refresh-cleared',
+        'dashboard:data:auto-refresh-cleared',
+        { metricId }
+      );
     }
   }
 
@@ -1059,12 +1157,16 @@ export class DashboardDataService extends EventEmitter {
       // Update state
       this.syncThemeState();
 
-      // Emit change event
-      this.emit('dashboard:theme-changed', {
-        previousTheme: previousResolvedTheme,
-        currentTheme: this.state.theme.resolvedTheme,
-        theme: this.state.theme.theme
-      });
+      // Emit to both legacy and new event names during transition
+      eventMigrationHelper.emitBoth(
+        'dashboard:theme-changed',
+        'dashboard:data:theme-changed',
+        {
+          previousTheme: previousResolvedTheme,
+          currentTheme: this.state.theme.resolvedTheme,
+          theme: this.state.theme.theme
+        }
+      );
 
       // Log activity
       this.addActivity({
@@ -1255,10 +1357,15 @@ export class DashboardDataService extends EventEmitter {
     widget.isVisible = !widget.isVisible;
     
     // Emit event
-    this.emit('widget:visibility-changed', { 
-      widgetId, 
-      isVisible: widget.isVisible 
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widget:visibility-changed',
+      'dashboard:widget:visibility-changed',
+      { 
+        widgetId, 
+        isVisible: widget.isVisible 
+      }
+    );
 
     return { 
       success: true, 
@@ -1281,8 +1388,12 @@ export class DashboardDataService extends EventEmitter {
 
     widget.isExpanded = true;
     
-    // Emit event
-    this.emit('widget:expanded', { widgetId });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widget:expanded',
+      'dashboard:widget:expanded',
+      { widgetId }
+    );
 
     return { 
       success: true, 
@@ -1306,7 +1417,12 @@ export class DashboardDataService extends EventEmitter {
     widget.isExpanded = false;
     
     // Emit event
-    this.emit('widget:collapsed', { widgetId });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widget:collapsed',
+      'dashboard:widget:collapsed',
+      { widgetId }
+    );
 
     return { 
       success: true, 
@@ -1326,10 +1442,15 @@ export class DashboardDataService extends EventEmitter {
     widget.isExpanded = !widget.isExpanded;
     
     // Emit event
-    this.emit('widget:expansion-changed', { 
-      widgetId, 
-      isExpanded: widget.isExpanded 
-    });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widget:expansion-changed',
+      'dashboard:widget:expansion-changed',
+      { 
+        widgetId, 
+        isExpanded: widget.isExpanded 
+      }
+    );
 
     return { 
       success: true, 
@@ -1349,7 +1470,12 @@ export class DashboardDataService extends EventEmitter {
     widget.isLoading = true;
     
     // Emit refresh start event
-    this.emit('widget:refresh-start', { widgetId });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widget:refresh-start',
+      'dashboard:widget:refresh-start',
+      { widgetId }
+    );
 
     // Simulate refresh completion after delay
     setTimeout(() => {
@@ -1357,7 +1483,12 @@ export class DashboardDataService extends EventEmitter {
       widget.lastRefresh = new Date();
       
       // Emit refresh complete event
-      this.emit('widget:refresh-complete', { widgetId });
+      // Emit to both legacy and new event names during transition
+      eventMigrationHelper.emitBoth(
+        'widget:refresh-complete',
+        'dashboard:widget:refresh-complete',
+        { widgetId }
+      );
     }, 1000);
 
     return { 
@@ -1386,7 +1517,12 @@ export class DashboardDataService extends EventEmitter {
     });
 
     // Emit event
-    this.emit('widgets:reordered', { order: widgetOrder });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widgets:reordered',
+      'dashboard:widgets:reordered',
+      { order: widgetOrder }
+    );
 
     return { 
       success: true, 
@@ -1426,7 +1562,12 @@ export class DashboardDataService extends EventEmitter {
     });
 
     // Emit event
-    this.emit('widgets:filtered', { filter });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widgets:filtered',
+      'dashboard:widgets:filtered',
+      { filter }
+    );
 
     return { 
       success: true, 
@@ -1447,7 +1588,12 @@ export class DashboardDataService extends EventEmitter {
     this.state.widgetFilters.delete('current');
 
     // Emit event
-    this.emit('widgets:filter-cleared', {});
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widgets:filter-cleared',
+      'dashboard:widgets:filter-cleared',
+      {}
+    );
 
     return { 
       success: true, 
@@ -1570,7 +1716,12 @@ export class DashboardDataService extends EventEmitter {
     };
 
     this.state.currentWorkflow = execution;
-    this.emit('workflow:started', { workflowId, workflow: workflow.name });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'workflow:started',
+      'dashboard:workflow:started',
+      { workflowId, workflow: workflow.name }
+    );
 
     // Execute steps
     for (let i = 0; i < workflow.steps.length; i++) {
@@ -1607,12 +1758,17 @@ export class DashboardDataService extends EventEmitter {
         execution.results[step.id] = stepResult.result;
       }
 
-      this.emit('workflow:step-completed', { 
-        workflowId, 
-        stepId: step.id, 
-        stepIndex: i, 
-        totalSteps: workflow.steps.length 
-      });
+      // Emit to both legacy and new event names during transition
+      eventMigrationHelper.emitBoth(
+        'workflow:step-completed',
+        'dashboard:workflow:step-completed',
+        { 
+          workflowId, 
+          stepId: step.id, 
+          stepIndex: i, 
+          totalSteps: workflow.steps.length 
+        }
+      );
     }
 
     // Complete workflow
@@ -1632,7 +1788,12 @@ export class DashboardDataService extends EventEmitter {
     }
 
     this.state.currentWorkflow = null;
-    this.emit('workflow:completed', { workflowId, status: execution.status });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'workflow:completed',
+      'dashboard:workflow:completed',
+      { workflowId, status: execution.status }
+    );
 
     return {
       success: execution.status === 'completed',
@@ -1706,13 +1867,23 @@ export class DashboardDataService extends EventEmitter {
         this.state.widgets.forEach(widget => {
           widget.isVisible = false;
         });
-        this.emit('widgets:all-hidden', {});
+        // Emit to both legacy and new event names during transition
+        eventMigrationHelper.emitBoth(
+          'widgets:all-hidden',
+          'dashboard:widgets:all-hidden',
+          {}
+        );
         return { success: true, message: 'All widgets hidden' };
       case 'show_all_widgets':
         this.state.widgets.forEach(widget => {
           widget.isVisible = true;
         });
-        this.emit('widgets:all-shown', {});
+        // Emit to both legacy and new event names during transition
+        eventMigrationHelper.emitBoth(
+          'widgets:all-shown',
+          'dashboard:widgets:all-shown',
+          {}
+        );
         return { success: true, message: 'All widgets shown' };
       case 'clear_filters':
         return this.clearWidgetFilters();
@@ -1845,7 +2016,12 @@ export class DashboardDataService extends EventEmitter {
     };
 
     this.state.workflows.set(workflow.id, newWorkflow);
-    this.emit('workflow:created', { workflowId: workflow.id, name: workflow.name });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'workflow:created',
+      'dashboard:workflow:created',
+      { workflowId: workflow.id, name: workflow.name }
+    );
 
     return { 
       success: true, 
@@ -1883,7 +2059,12 @@ export class DashboardDataService extends EventEmitter {
     };
 
     this.state.macros.set(macro.id, newMacro);
-    this.emit('macro:created', { macroId: macro.id, name: macro.name });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'macro:created',
+      'dashboard:macro:created',
+      { macroId: macro.id, name: macro.name }
+    );
 
     return { 
       success: true, 
@@ -2050,7 +2231,12 @@ export class DashboardDataService extends EventEmitter {
       results.push({ widgetId: op.widgetId, action: op.action, result });
     }
     
-    this.emit('widgets:batch-controlled', { operations, results });
+    // Emit to both legacy and new event names during transition
+    eventMigrationHelper.emitBoth(
+      'widgets:batch-controlled',
+      'dashboard:widgets:batch-controlled',
+      { operations, results }
+    );
     
     return {
       success: true,
