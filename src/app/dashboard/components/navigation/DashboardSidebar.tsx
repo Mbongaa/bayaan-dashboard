@@ -12,10 +12,15 @@ import {
   Calendar,
   BarChart3,
   CheckSquare,
-  Layers
+  Layers,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import MiniOrb from "../../../foundation/components/MiniOrb";
+import { signOut } from "@/app/(auth)/login/actions";
+import { createClient } from "@/app/utils/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import type { Profile } from "@/app/types/database.types";
 
 interface WorkspaceModule {
   id: string;
@@ -39,6 +44,50 @@ export function DashboardSidebar({
   activeModules = [],
   currentLayout = 'dashboard'
 }: DashboardSidebarProps) {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadUserData = async () => {
+      try {
+        const supabase = createClient();
+        
+        // Get the current user (works reliably in protected routes)
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        if (mounted) {
+          setUser(currentUser);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    // Load user data immediately
+    loadUserData();
+
+    // Timeout safety net - never load forever
+    const timeoutId = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('User loading timeout - displaying fallback');
+        setUser(null);
+        setLoading(false);
+      }
+    }, 3000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [loading]);
+
   const links = [
     {
       id: "workspace",
@@ -67,6 +116,7 @@ export function DashboardSidebar({
       icon: (
         <LogOut className="text-gray-700 dark:text-gray-200 h-5 w-5 flex-shrink-0" />
       ),
+      isAction: true,
     },
   ];
   
@@ -151,17 +201,37 @@ export function DashboardSidebar({
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <SidebarLink
-            link={{
-              label: "Bayaan AI",
-              href: "#",
-              icon: (
+          <div className="flex items-center py-1 group relative w-full min-w-[28px] hover:min-w-[260px] transition-all duration-300">
+            {/* User Avatar - matches menu item structure exactly */}
+            <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
+              {loading ? (
+                <div className="h-7 w-7 rounded-full bg-gray-700 animate-pulse" />
+              ) : (
                 <div className="h-7 w-7 flex-shrink-0 rounded-full flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-                  <span className="text-white text-xs font-bold">B</span>
+                  <User className="text-white h-4 w-4" />
                 </div>
-              ),
-            }}
-          />
+              )}
+            </div>
+            
+            {/* User Info - matches menu item label structure */}
+            <div className="sidebar-label ml-2 flex-1 min-w-0 group-hover:translate-x-1 transition-transform duration-300">
+              {loading ? (
+                <div className="space-y-1">
+                  <div className="h-3 bg-gray-700 rounded animate-pulse w-24" />
+                  <div className="h-2 bg-gray-700 rounded animate-pulse w-32" />
+                </div>
+              ) : (
+                <>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {user?.email?.split('@')[0] || 'User'}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    {user?.email || 'No email available'}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </SidebarBody>
     </Sidebar>
@@ -204,12 +274,44 @@ interface MenuLinkProps {
     id: string;
     label: string;
     icon: React.ReactNode;
+    isAction?: boolean;
   };
   isSelected: boolean;
   onClick: () => void;
 }
 
 const MenuLink = ({ link, isSelected, onClick }: MenuLinkProps) => {
+  // Handle logout action
+  if (link.id === 'logout' && link.isAction) {
+    return (
+      <form action={signOut}>
+        <button
+          type="submit"
+          className={`
+            flex items-center py-1 group relative w-full text-left
+            min-w-[28px] hover:min-w-[260px]
+            transition-all duration-300
+            hover:bg-red-500/20 hover:text-red-600 dark:hover:text-red-400
+            rounded-lg
+          `}
+        >
+          {/* Icon container - always visible, centered in collapsed state */}
+          <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
+            {link.icon}
+          </div>
+          {/* Label - hidden by default, shown on parent sidebar hover */}
+          <span className={`
+            sidebar-label text-sm whitespace-nowrap ml-2 
+            group-hover:translate-x-1 transition-transform duration-300
+            text-gray-700 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400
+          `}>
+            {link.label}
+          </span>
+        </button>
+      </form>
+    );
+  }
+
   return (
     <button
       onClick={onClick}
