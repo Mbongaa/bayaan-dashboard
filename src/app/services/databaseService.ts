@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseAdmin, isServer } from '../lib/supabaseClient';
 import type { 
   Profile, 
   ProfileInsert, 
@@ -7,6 +7,30 @@ import type {
   SignInData,
   ApiResponse 
 } from '../types/database.types';
+
+// Gmail Token Types
+export interface GmailToken {
+  id: string;
+  user_id: string;
+  encrypted_tokens: string;
+  gmail_email: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GmailTokenInsert {
+  user_id: string;
+  encrypted_tokens: string;
+  gmail_email: string;
+  is_active?: boolean;
+}
+
+export interface GmailTokenUpdate {
+  encrypted_tokens?: string;
+  gmail_email?: string;
+  is_active?: boolean;
+}
 
 // Profile Service
 export const profileService = {
@@ -340,5 +364,159 @@ export const realtimeService = {
   // Unsubscribe from a channel
   async unsubscribe(channel: any) {
     await supabase.removeChannel(channel);
+  }
+};
+
+// Gmail Token Service
+export const gmailTokenService = {
+  // Get Gmail token for user
+  async getGmailToken(userId: string): Promise<ApiResponse<GmailToken>> {
+    try {
+      // Use admin client for server-side operations to bypass RLS
+      const client = isServer && supabaseAdmin ? supabaseAdmin : supabase;
+      console.log('📧 Gmail token fetch - Using client:', isServer ? 'admin (server)' : 'regular (client)');
+      
+      const { data, error } = await client
+        .from('gmail_tokens')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        throw error;
+      }
+
+      return { data: data || null, error: null };
+    } catch (error) {
+      console.error('Error fetching Gmail token:', error);
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Store Gmail tokens for user
+  async storeGmailToken(tokenData: GmailTokenInsert): Promise<ApiResponse<GmailToken>> {
+    try {
+      // Use admin client for server-side operations to bypass RLS
+      const client = isServer && supabaseAdmin ? supabaseAdmin : supabase;
+      console.log('📧 Gmail token store - Using client:', isServer ? 'admin (server)' : 'regular (client)');
+      
+      // First, deactivate any existing tokens for this user
+      await client
+        .from('gmail_tokens')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('user_id', tokenData.user_id);
+
+      // Insert new token
+      const { data, error } = await client
+        .from('gmail_tokens')
+        .insert([{
+          ...tokenData,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error storing Gmail token:', error);
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Update Gmail tokens for user
+  async updateGmailToken(userId: string, updates: GmailTokenUpdate): Promise<ApiResponse<GmailToken>> {
+    try {
+      // Use admin client for server-side operations to bypass RLS
+      const client = isServer && supabaseAdmin ? supabaseAdmin : supabase;
+      
+      const { data, error } = await client
+        .from('gmail_tokens')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error updating Gmail token:', error);
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Delete Gmail token for user (revoke access)
+  async deleteGmailToken(userId: string): Promise<ApiResponse<boolean>> {
+    try {
+      // Use admin client for server-side operations to bypass RLS
+      const client = isServer && supabaseAdmin ? supabaseAdmin : supabase;
+      
+      const { error } = await client
+        .from('gmail_tokens')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return { data: true, error: null };
+    } catch (error) {
+      console.error('Error deleting Gmail token:', error);
+      return { data: false, error: error as Error };
+    }
+  },
+
+  // Check if user has active Gmail connection
+  async hasActiveGmailConnection(userId: string): Promise<ApiResponse<boolean>> {
+    try {
+      // Use admin client for server-side operations to bypass RLS
+      const client = isServer && supabaseAdmin ? supabaseAdmin : supabase;
+      console.log('📧 Gmail connection check - Using client:', isServer ? 'admin (server)' : 'regular (client)');
+      
+      const { data, error } = await client
+        .from('gmail_tokens')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return { data: !!data, error: null };
+    } catch (error) {
+      console.error('Error checking Gmail connection:', error);
+      return { data: false, error: error as Error };
+    }
+  },
+
+  // Get all Gmail connections for admin/debugging
+  async getAllGmailTokens(page = 1, limit = 10): Promise<ApiResponse<GmailToken[]>> {
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+
+      const { data, error } = await supabase
+        .from('gmail_tokens')
+        .select('*')
+        .eq('is_active', true)
+        .range(start, end)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { data: data || [], error: null };
+    } catch (error) {
+      console.error('Error fetching Gmail tokens:', error);
+      return { data: null, error: error as Error };
+    }
   }
 };

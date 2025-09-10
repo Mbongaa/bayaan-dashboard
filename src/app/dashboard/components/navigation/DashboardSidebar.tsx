@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "@/app/shared/components/sidebar";
+import { Sidebar, SidebarBody } from "@/app/shared/components/sidebar";
 import { 
-  LayoutDashboard, 
   UserCog, 
   Settings, 
   LogOut,
@@ -20,7 +19,7 @@ import MiniOrb from "../../../foundation/components/MiniOrb";
 import { signOut } from "@/app/(auth)/login/actions";
 import { createClient } from "@/app/utils/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import type { Profile } from "@/app/types/database.types";
+import { MODULE_TYPES } from "../workspace/WorkspaceGrid";
 
 interface WorkspaceModule {
   id: string;
@@ -149,18 +148,18 @@ export function DashboardSidebar({
           <Logo onBackToVoice={onBackToVoice} />
           
           {/* Workspace Status Section */}
-          <div className="mt-6 mb-4 px-2">
-            <div className="sidebar-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+          <div className="mt-6 mb-4 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="sidebar-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 whitespace-nowrap">
               Workspace
             </div>
-            <div className="sidebar-label text-xs text-gray-600 dark:text-gray-300 mb-3">
+            <div className="sidebar-label text-xs text-gray-600 dark:text-gray-300 mb-3 whitespace-nowrap">
               Layout: <span className="font-medium capitalize">{currentLayout}</span>
             </div>
             
             {/* Active Modules */}
             {activeModules.length > 0 && (
               <div className="space-y-1">
-                <div className="sidebar-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                <div className="sidebar-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 whitespace-nowrap">
                   Active Modules
                 </div>
                 {activeModules.map(module => (
@@ -172,7 +171,7 @@ export function DashboardSidebar({
                     <div className="flex-shrink-0 text-gray-600 dark:text-gray-400">
                       {getModuleIcon(module.type)}
                     </div>
-                    <span className="sidebar-label text-xs text-gray-700 dark:text-gray-300 capitalize">
+                    <span className="sidebar-label text-xs text-gray-700 dark:text-gray-300 capitalize whitespace-nowrap">
                       {module.name}
                     </span>
                   </div>
@@ -185,6 +184,43 @@ export function DashboardSidebar({
                 No active modules
               </div>
             )}
+          </div>
+
+          {/* Module Palette - Only visible in expanded state */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4 mb-4 px-2">
+            <div className="sidebar-label text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 whitespace-nowrap">
+              Module Palette
+            </div>
+            <div className="sidebar-label text-xs text-gray-600 dark:text-gray-300 mb-3 whitespace-nowrap">
+              Drag modules to workspace
+            </div>
+            
+            <div className="space-y-2">
+              {MODULE_TYPES.map((module) => (
+                <div
+                  key={module.type}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', module.type);
+                    e.dataTransfer.effectAllowed = 'copy';
+                  }}
+                  className="flex items-center gap-3 py-2 px-3 rounded-lg bg-white/60 dark:bg-gray-800/50 border border-gray-300/50 dark:border-gray-700/50 cursor-grab hover:bg-white/80 dark:hover:bg-gray-800/70 transition-all duration-200 hover:scale-105 active:cursor-grabbing"
+                  style={{ userSelect: 'none' }}
+                >
+                  <div className="text-lg flex-shrink-0">
+                    {module.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="sidebar-label text-sm font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                      {module.title}
+                    </div>
+                    <div className="sidebar-label text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {module.description}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-700 my-2" />

@@ -9,8 +9,18 @@ import { motion } from 'framer-motion';
 import { useTheme } from 'next-themes';
 import { foundationServices } from '../../../foundation/services/FoundationServices';
 import { eventMigrationHelper } from '../../../foundation/services/EventBus';
+import { GmailModule } from '../../../components/modules/GmailModule';
+import { useAuth } from '../../../hooks/useSupabase';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+
+// Available module types for dragging
+export const MODULE_TYPES = [
+  { type: 'email', icon: '✉️', title: 'Gmail', description: 'Email management' },
+  { type: 'crm', icon: '🤝', title: 'CRM', description: 'Customer relations' },
+  { type: 'calendar', icon: '📅', title: 'Calendar', description: 'Schedule management' },
+  { type: 'analytics', icon: '📊', title: 'Analytics', description: 'Data insights' }
+] as const;
 
 export interface WorkspaceItem {
   id: string;
@@ -23,6 +33,7 @@ export interface WorkspaceItem {
 interface WorkspaceGridProps {
   onLayoutChange?: (layout: Layout[]) => void;
   onItemActivate?: (itemId: string) => void;
+  onModuleDrop?: (itemId: string, moduleType: string) => void;
 }
 
 // Predefined layout templates for voice commands
@@ -64,9 +75,23 @@ const LAYOUT_TEMPLATES: { [key: string]: Layout[] } = {
   custom: [] as Layout[] // Will be populated dynamically when user resizes
 };
 
-export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridProps) {
-  const { theme, resolvedTheme } = useTheme();
+export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: WorkspaceGridProps) {
+  const { resolvedTheme } = useTheme();
+  const { user, loading: authLoading, session } = useAuth();
   const [mounted, setMounted] = useState(false);
+  
+  // Enhanced debug logging
+  useEffect(() => {
+    console.log('🔍 WorkspaceGrid Auth Debug:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      hasSession: !!session,
+      sessionUser: session?.user?.id,
+      authLoading: authLoading,
+      timestamp: new Date().toISOString()
+    });
+  }, [user, session, authLoading]);
   
   const [layouts, setLayouts] = useState<{ [key: string]: Layout[] }>({
     lg: LAYOUT_TEMPLATES.dashboard,
@@ -86,6 +111,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
 
   const [activeLayout, setActiveLayout] = useState<string>('dashboard');
   const [isDragging, setIsDragging] = useState(false);
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null);
   
   // Track when we're applying a preset to avoid triggering custom layout
   const isApplyingPreset = useRef(false);
@@ -307,6 +333,65 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
     onItemActivate?.(itemId);
   }, [onItemActivate]);
 
+  // Handle dropping a module onto a grid item
+  const handleModuleDrop = useCallback((itemId: string, moduleType: string) => {
+    const moduleInfo = MODULE_TYPES.find(m => m.type === moduleType);
+    if (!moduleInfo) return;
+
+    setItems(prev => prev.map(item => 
+      item.id === itemId 
+        ? { 
+            ...item, 
+            type: moduleType as WorkspaceItem['type'], 
+            status: 'loading' as const,
+            title: moduleInfo.title
+          }
+        : item
+    ));
+
+    // Simulate loading and then activate
+    setTimeout(() => {
+      setItems(prev => prev.map(item => 
+        item.id === itemId 
+          ? { ...item, status: 'active' as const }
+          : item
+      ));
+    }, 1000);
+
+    // Call external handler if provided
+    onModuleDrop?.(itemId, moduleType);
+    onItemActivate?.(itemId);
+  }, [onModuleDrop, onItemActivate]);
+
+  // Handle drag over grid item
+  const handleDragOver = useCallback((e: React.DragEvent, itemId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOverItem(itemId);
+  }, []);
+
+  // Handle drag leave
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only clear drag over if we're actually leaving the element
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      setDragOverItem(null);
+    }
+  }, []);
+
+  // Handle drop on grid item
+  const handleDrop = useCallback((e: React.DragEvent, itemId: string) => {
+    e.preventDefault();
+    const moduleType = e.dataTransfer.getData('text/plain');
+    if (moduleType) {
+      handleModuleDrop(itemId, moduleType);
+    }
+    setDragOverItem(null);
+  }, [handleModuleDrop]);
+
   const handleLayoutChange = useCallback((layout: Layout[], layouts: { [key: string]: Layout[] }) => {
     setLayouts(layouts);
     onLayoutChange?.(layout);
@@ -330,6 +415,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
   const renderItem = (item: WorkspaceItem) => {
     const isActive = item.status === 'active';
     const isLoading = item.status === 'loading';
+    const isDraggedOver = dragOverItem === item.id;
 
     return (
       <motion.div
@@ -339,16 +425,23 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3 }}
+        onDragOver={(e) => handleDragOver(e, item.id)}
+        onDragLeave={(e) => handleDragLeave(e, item.id)}
+        onDrop={(e) => handleDrop(e, item.id)}
         style={{
           height: '100%',
           width: '100%',
-          backgroundColor: isActive 
-            ? colors.background.active
-            : colors.background.card,
+          backgroundColor: isDraggedOver
+            ? colors.background.selected
+            : isActive 
+              ? colors.background.active
+              : colors.background.card,
           backdropFilter: 'blur(10px)',
-          border: `1px solid ${isActive 
+          border: `1px solid ${isDraggedOver
             ? colors.border.active
-            : colors.border.default}`,
+            : isActive 
+              ? colors.border.active
+              : colors.border.default}`,
           borderRadius: '24px',
           padding: '10px',
           display: 'flex',
@@ -416,16 +509,62 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate }: WorkspaceGridP
             </div>
           ) : item.type === 'empty' ? (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '8px', opacity: 0.3 }}>⬚</div>
-              <p style={{ fontSize: '12px', opacity: 0.7 }}>Empty Slot</p>
-              <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '4px' }}>
-                Voice: "Load {item.title.toLowerCase()}"
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '8px', 
+                opacity: isDraggedOver ? 0.8 : 0.3,
+                transform: isDraggedOver ? 'scale(1.1)' : 'scale(1)',
+                transition: 'all 0.2s ease'
+              }}>
+                {isDraggedOver ? '📥' : '⬚'}
+              </div>
+              <p style={{ fontSize: '12px', opacity: 0.7 }}>
+                {isDraggedOver ? 'Drop module here' : 'Empty Slot'}
               </p>
+              {!isDraggedOver && (
+                <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '4px' }}>
+                  Voice: &quot;Load {item.title.toLowerCase()}&quot; or drag from sidebar
+                </p>
+              )}
             </div>
+          ) : item.type === 'email' ? (
+            // Render Gmail Module
+            authLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+                <p style={{ fontSize: '12px', opacity: 0.7 }}>
+                  Loading authentication...
+                </p>
+              </div>
+            ) : user?.id ? (
+              <GmailModule
+                userId={user.id}
+                onConnectionChange={(connected) => {
+                  console.log('Gmail connection status:', connected);
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: '0',
+                  padding: '0',
+                  backgroundColor: 'transparent'
+                }}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</div>
+                <p style={{ fontSize: '12px', opacity: 0.7 }}>
+                  Please log in to access Gmail
+                </p>
+                <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '8px' }}>
+                  Go to /login to authenticate
+                </p>
+              </div>
+            )
           ) : (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '48px', marginBottom: '8px' }}>
-                {item.type === 'email' && '✉️'}
                 {item.type === 'crm' && '🤝'}
                 {item.type === 'calendar' && '📅'}
                 {item.type === 'analytics' && '📊'}

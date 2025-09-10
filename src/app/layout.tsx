@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./shared/lib/envSetup";
-import { Toaster } from "sonner";
-import { ThemeProvider } from "next-themes";
 import { Poppins } from "next/font/google";
+import { Providers } from "./providers/Providers";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -98,15 +97,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${poppins.className} antialiased bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem={true}
-          disableTransitionOnChange={false}
-        >
+        <Providers>
           {children}
-        </ThemeProvider>
-        <Toaster />
+        </Providers>
       </body>
     </html>
   );

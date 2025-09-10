@@ -60,10 +60,14 @@ export const DesktopSidebar = ({
         // CSS-only width animation (NO JavaScript state)
         "w-[60px] hover:w-[300px]",
         "transition-all duration-300 ease-in-out",
-        // Padding - removed overflow-hidden to show content
+        // Hide overflow in collapsed state
+        "overflow-hidden hover:overflow-visible",
+        // Padding
         "px-4 py-4",
         // Floating card appearance without shadow
         "rounded-3xl",
+        // Group for hover states
+        "group",
         className
       )}
       {...props}

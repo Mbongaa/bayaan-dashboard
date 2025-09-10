@@ -50,7 +50,13 @@
       "Bash(find:*)",
       "Bash(timeout 5s npm run dev)",
       "WebFetch(domain:module-federation.io)",
-      "Bash(timeout 20s npm run build)"
+      "Bash(timeout 20s npm run build)",
+      "Bash(netstat:*)",
+      "Bash(awk:*)",
+      "Bash(xargs:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx supabase:*)",
+      "Bash(source .env)"
     ],
     "deny": [],
     "ask": []
