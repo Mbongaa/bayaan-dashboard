@@ -4,6 +4,7 @@ import { cn } from "@/app/shared/lib/utils";
 import Link, { LinkProps } from "next/link";
 import React from "react";
 import { Menu, X } from "lucide-react";
+import { Z_CLASSES } from "@/app/styles/z-index";
 
 interface Links {
   label: string;
@@ -52,7 +53,7 @@ export const DesktopSidebar = ({
     <div
       className={cn(
         // Core layout - floating positioning
-        "fixed left-4 top-[12.5vh] h-[75vh] z-20",
+        `fixed left-4 top-[12.5vh] h-[75vh] ${Z_CLASSES.sidebar}`,
         "hidden md:flex md:flex-col",
         // Ultra-transparent background with visible borders  
         "bg-white/10 dark:bg-black/10 backdrop-blur-sm",
@@ -88,7 +89,7 @@ export const MobileSidebar = ({
       <div
         className={cn(
           "h-16 px-4 flex flex-row md:hidden items-center justify-between",
-          "bg-white/10 dark:bg-black/10 backdrop-blur-sm w-full fixed top-0 left-0 z-20",
+          `bg-white/10 dark:bg-black/10 backdrop-blur-sm w-full fixed top-0 left-0 ${Z_CLASSES.sidebar}`,
           "border-b border-gray-400/60 dark:border-gray-700/50"
         )}
         {...props}
@@ -107,14 +108,14 @@ export const MobileSidebar = ({
       {/* Mobile overlay */}
       <div
         className={cn(
-          "mobile-sidebar-overlay fixed inset-0 z-[100]",
+          `mobile-sidebar-overlay fixed inset-0 ${Z_CLASSES.dragActive}`,
           "bg-gray-100/10 dark:bg-black/10 backdrop-blur-md p-10",
           "hidden md:hidden flex-col justify-between"
         )}
         style={{ display: 'none' }}
       >
         <div
-          className="absolute right-10 top-10 z-50 text-gray-800 dark:text-gray-100 cursor-pointer"
+          className={`absolute right-10 top-10 ${Z_CLASSES.dropdown} text-gray-800 dark:text-gray-100 cursor-pointer`}
           onClick={() => {
             const sidebar = document.querySelector('.mobile-sidebar-overlay') as HTMLElement;
             if (sidebar) sidebar.style.display = 'none';

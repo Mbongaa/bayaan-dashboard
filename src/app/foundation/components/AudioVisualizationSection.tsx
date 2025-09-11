@@ -21,7 +21,7 @@ const AudioVisualizationSection: React.FC<AudioVisualizationSectionProps> = ({
     <div className={`
       relative w-full h-full transition-all duration-700 ease-out
       ${isCompactMode 
-        ? 'scale-[0.3] translate-x-[43vw] translate-y-[-19vh]' 
+        ? 'scale-[0.5] translate-x-[3vw] translate-y-[-6vh]' 
         : 'scale-100 translate-x-0 translate-y-0'
       }
     `} style={{ willChange: 'transform' }}>

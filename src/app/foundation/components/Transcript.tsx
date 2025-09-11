@@ -266,9 +266,9 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
 
     </div>
     
-    {/* Compact Mode Notification Area - Bottom Left for Breadcrumbs */}
+    {/* Compact Mode Notification Area - Next to Mode Toggle for Breadcrumbs */}
     {isCompactMode && (
-      <div className={`fixed bottom-[2.5rem] left-[0.5rem] max-w-[300px] h-[3rem] z-30 
+      <div className={`fixed bottom-[4vh] left-[10rem] max-w-[300px] h-[3rem] z-[120] 
         bg-gray-100/5 dark:bg-black/5 backdrop-blur-sm 
         border border-gray-200/10 dark:border-gray-700/10 rounded-xl 
         transition-all duration-500 ease-out pointer-events-auto

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Sidebar, SidebarBody } from "@/app/shared/components/sidebar";
 import { 
   UserCog, 
   Settings, 
@@ -142,10 +141,9 @@ export function DashboardSidebar({
   };
 
   return (
-    <Sidebar>
-      <SidebarBody>
-        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-          <Logo onBackToVoice={onBackToVoice} />
+    <>
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        <Logo onBackToVoice={onBackToVoice} />
           
           {/* Workspace Status Section */}
           <div className="mt-6 mb-4 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -269,8 +267,7 @@ export function DashboardSidebar({
             </div>
           </div>
         </div>
-      </SidebarBody>
-    </Sidebar>
+    </>
   );
 }
 

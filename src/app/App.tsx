@@ -4,11 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 import DockExample from "./dashboard/components/navigation/DockExample";
-import { DashboardSidebar } from "./dashboard/components/navigation/DashboardSidebar";
-import DashboardContentRenderer from "./dashboard/components/DashboardContentRenderer";
+import { DashboardLayout } from "./dashboard/components/DashboardLayout";
 
 // UI components
-import Transcript from "./foundation/components/Transcript";
 import Events from "./foundation/components/Events";
 import { PromptBox } from "./shared/components/chatgpt-prompt-input";
 import AudioVisualizationSection from "./foundation/components/AudioVisualizationSection";
@@ -18,6 +16,8 @@ import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGala
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
 import ModeToggle from "./shared/components/ModeToggle";
+import { Z_CLASSES } from "./styles/z-index";
+import FloatingChatWidget from "./foundation/components/FloatingChatWidget";
 // import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
 // import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
@@ -686,7 +686,7 @@ function App() {
   return (
     <div className="text-base h-screen bg-gray-100 text-gray-800 dark:bg-black dark:text-gray-100 relative">
       {/* Galaxy Background - Covers entire screen */}
-      <div className="fixed inset-0 z-0" style={{ pointerEvents: 'auto' }}>
+      <div className={`fixed inset-0 ${Z_CLASSES.galaxy}`} style={{ pointerEvents: 'auto' }}>
         {useImprovedGalaxy ? (
           <ImprovedServicedGalaxy {...currentGalaxySettings} sessionStatus={sessionStatus} />
         ) : (
@@ -719,12 +719,12 @@ function App() {
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="dashboard-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
-        <div className="fixed left-4 top-[4vh] z-40 pointer-events-auto px-2.5">
+        <div className={`fixed left-4 top-[4vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <ThemeToggle />
         </div>
         
         {/* Mode Toggle - Positioned below the sidebar */}
-        <div className="fixed left-4 bottom-[4vh] z-40 pointer-events-auto px-2.5">
+        <div className={`fixed left-4 bottom-[4vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <ModeToggle 
             contentMode={dashboardContentMode}
             onModeChange={(mode) => {
@@ -737,87 +737,30 @@ function App() {
           />
         </div>
         
-        {/* Sidebar - Fixed positioning, no layout impact */}
-        <div 
-          onMouseEnter={() => {
-            setIsSidebarHovered(true);
-            foundationServices.navigation.setSidebarState('expanded');
-          }}
-          onMouseLeave={() => {
-            setIsSidebarHovered(false);
-            foundationServices.navigation.setSidebarState('collapsed');
-          }}
-        >
-          <DashboardSidebar 
-            selectedItem={selectedDashboardItem}
-            onMenuSelect={handleDashboardMenuSelect}
-            onBackToVoice={handleBackToVoice}
-          />
+        {/* Unified Dashboard Layout - Integrated sidebar and content */}
+        <DashboardLayout
+          selectedItem={selectedDashboardItem}
+          onMenuSelect={handleDashboardMenuSelect}
+          onBackToVoice={handleBackToVoice}
+          contentMode={dashboardContentMode}
+        />
+        
+        {/* Voice Interface Overlays - Always visible, high z-index */}
+        {/* 3D Audio Visualization - Floating overlay */}
+        <div className={`fixed ${dashboardContentMode === 'dashboard' ? 'top-4 right-4 w-64 h-64' : 'top-0 left-0 right-0 bottom-1/2'} overflow-visible pointer-events-auto ${Z_CLASSES.orb}`}>
+          <RealtimeProvider 
+            value={realtimeContextValue}
+          >
+            <AudioVisualizationSection
+              intensity={3.5}
+              className="w-full h-full"
+              uiMode={foundationUIMode}
+            />
+          </RealtimeProvider>
         </div>
         
-        {/* Dashboard Component Overlay - JavaScript-controlled responsive positioning */}
-        {dashboardContentMode === 'dashboard' && (
-          <DashboardContentRenderer 
-            selectedItem={selectedDashboardItem}
-            onBackToVoice={handleBackToVoice}
-            className={`dashboard-overlay fixed right-4 top-[12.5vh] h-[75vh] z-30 pointer-events-auto ${isSidebarHovered ? 'dashboard-overlay-expanded' : 'dashboard-overlay-collapsed'}`}
-          />
-        )}
-        
-        {/* Main Content Area - Fixed positioning with CSS-controlled offset */}
-        <div className="main-content-area fixed top-0 right-0 bottom-0 flex flex-col z-10">
-        <div className="p-5 text-2xl font-semibold flex justify-end items-center bg-transparent border-b border-transparent relative z-10 pointer-events-none">
-          {/* Theme toggle moved to sidebar */}
-        </div>
-
-        <div className="flex flex-1 flex-col gap-2 px-2 overflow-visible relative z-10 pointer-events-none">
-          {/* Desktop: Layered Layout (above 1200px) */}
-          <div className="hidden xl:contents">
-            {/* Transcript and Events - Background layer for desktop */}
-            <div className="absolute right-0 flex gap-2 overflow-visible pointer-events-auto z-10 pl-6" style={{ left: '0px', top: '80px', bottom: '120px' }}>
-              <Transcript uiMode={foundationUIMode} />
-              <Events isExpanded={isEventsPaneExpanded} />
-            </div>
-
-            {/* 3D Audio Visualization - Spans from top to current bottom boundary */}
-            <div className="absolute top-0 left-0 right-0 bottom-1/2 overflow-visible pointer-events-auto z-20">
-              <RealtimeProvider 
-                value={realtimeContextValue}
-              >
-                <AudioVisualizationSection
-                  intensity={3.5}
-                  className="w-full h-full"
-                  uiMode={foundationUIMode}
-                />
-              </RealtimeProvider>
-            </div>
-          </div>
-
-          {/* Mobile/Tablet/Small Desktop: Stacked Layout (1200px and below) */}
-          <div className="xl:hidden flex flex-1 flex-col gap-2 overflow-hidden">
-            {/* Top half: 3D Audio Visualization */}
-            <div className="flex-1 min-h-0 max-h-full overflow-hidden pointer-events-auto">
-              <RealtimeProvider 
-                value={realtimeContextValue}
-              >
-                <AudioVisualizationSection
-                  intensity={3.5}
-                  className="w-full h-full"
-                  uiMode={foundationUIMode}
-                />
-              </RealtimeProvider>
-            </div>
-
-            {/* Bottom half: Transcript and Events */}
-            <div className="flex flex-1 gap-2 overflow-hidden pointer-events-auto">
-              <Transcript uiMode={foundationUIMode} />
-              <Events isExpanded={isEventsPaneExpanded} />
-            </div>
-          </div>
-        </div>
-        
-        {/* Fixed positioned chatbox - isolated from layout flow */}
-        <div className="fixed bottom-5 left-0 right-0 z-10 px-4">
+        {/* Fixed positioned chatbox - Always visible at bottom */}
+        <div className={`fixed bottom-5 left-0 right-0 ${Z_CLASSES.chatbox} px-4 pointer-events-auto`}>
           <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
             <PromptBox 
               value={userText}
@@ -826,10 +769,34 @@ function App() {
             />
           </form>
         </div>
+        
+        {/* Events Panel - Only in voice mode */}
+        {dashboardContentMode !== 'dashboard' && (
+          <>
+            {/* Desktop Layout */}
+            <div className={`hidden xl:block fixed top-20 right-4 w-80 bottom-24 overflow-visible pointer-events-auto ${Z_CLASSES.transcript}`}>
+              <Events isExpanded={isEventsPaneExpanded} />
+            </div>
+            {/* Mobile Layout */}
+            <div className="xl:hidden fixed top-1/2 right-0 w-64 bottom-24 overflow-hidden pointer-events-auto">
+              <Events isExpanded={isEventsPaneExpanded} />
+            </div>
+          </>
+        )}
+
+        {/* Empty main content area - just for maintaining structure */}
+        <div className={`main-content-area fixed top-0 right-0 bottom-0 flex flex-col ${Z_CLASSES.base}`}>
+        <div className={`p-5 text-2xl font-semibold flex justify-end items-center bg-transparent border-b border-transparent relative ${Z_CLASSES.base} pointer-events-none`}>
+          {/* Theme toggle moved to sidebar */}
+        </div>
+
+        <div className={`flex flex-1 flex-col gap-2 px-2 overflow-visible relative ${Z_CLASSES.base} pointer-events-none`}>
+          {/* Content area - now empty as elements are positioned absolutely */}
+        </div>
 
         {/* Vertical Dock on Right Side */}
         {isDockVisible && (
-          <div className="fixed right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-auto">
+          <div className={`fixed right-4 top-1/2 -translate-y-1/2 ${Z_CLASSES.base} pointer-events-auto`}>
             <RealtimeProvider 
               value={realtimeContextValue}
             >
@@ -898,6 +865,11 @@ function App() {
           isRecordingActive={isRecordingActive}
           onToggleRecording={handleToggleRecording}
           isDarkMode={isDarkMode}
+        />
+
+        {/* Floating Transcript Widget - Rendered last to ensure it's on top */}
+        <FloatingChatWidget
+          uiMode={foundationUIMode}
         />
       </RealtimeProvider>
     </div>

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SessionStatus } from '@/app/shared/types/types';
 import { useMobileAudio } from '@/app/foundation/hooks/useMobileAudio';
 import { preventMobileScroll } from '@/app/shared/lib/mobileUtils';
+import { Z_PTT } from '@/app/styles/z-index';
 
 interface SiriStylePTTProps {
   sessionStatus: SessionStatus;
@@ -118,7 +119,7 @@ const SiriStylePTT: React.FC<SiriStylePTTProps> = ({
           animate={{ x: isRecordingActive ? -20 : 0 }}
           transition={{ duration: 0.3 }}
           style={{ 
-            zIndex: 10, 
+            zIndex: Z_PTT, 
             position: 'relative',
             WebkitTapHighlightColor: 'transparent',
             WebkitTouchCallout: 'none',

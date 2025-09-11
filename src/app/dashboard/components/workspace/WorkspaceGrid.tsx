@@ -11,6 +11,7 @@ import { foundationServices } from '../../../foundation/services/FoundationServi
 import { eventMigrationHelper } from '../../../foundation/services/EventBus';
 import { GmailModule } from '../../../components/modules/GmailModule';
 import { useAuth } from '../../../hooks/useSupabase';
+import { AgentOutputDisplay } from '../AgentOutputDisplay';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -39,38 +40,38 @@ interface WorkspaceGridProps {
 // Predefined layout templates for voice commands
 const LAYOUT_TEMPLATES: { [key: string]: Layout[] } = {
   single: [
-    { i: 'item-1', x: 0, y: 0, w: 12, h: 12, minW: 4, minH: 4 }
+    { i: 'item-1', x: 0, y: 0, w: 12, h: 10, minW: 4, minH: 4 }
   ],
   split: [
-    { i: 'item-1', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'item-2', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 }
+    { i: 'item-1', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 4 },
+    { i: 'item-2', x: 6, y: 0, w: 6, h: 10, minW: 3, minH: 4 }
   ],
   'side-by-side': [
-    { i: 'item-1', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'item-2', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 }
+    { i: 'item-1', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 4 },
+    { i: 'item-2', x: 6, y: 0, w: 6, h: 10, minW: 3, minH: 4 }
   ],
   stacked: [
-    { i: 'item-1', x: 0, y: 0, w: 12, h: 6, minW: 4, minH: 3 },
-    { i: 'item-2', x: 0, y: 6, w: 12, h: 6, minW: 4, minH: 3 }
+    { i: 'item-1', x: 0, y: 0, w: 12, h: 5, minW: 4, minH: 3 },
+    { i: 'item-2', x: 0, y: 5, w: 12, h: 5, minW: 4, minH: 3 }
   ],
   'focus-sidebar': [
-    { i: 'item-1', x: 0, y: 0, w: 8, h: 12, minW: 4, minH: 4 },
-    { i: 'item-2', x: 8, y: 0, w: 4, h: 12, minW: 2, minH: 4 }
+    { i: 'item-1', x: 0, y: 0, w: 8, h: 10, minW: 4, minH: 4 },
+    { i: 'item-2', x: 8, y: 0, w: 4, h: 10, minW: 2, minH: 4 }
   ],
   dashboard: [
-    { i: 'item-1', x: 0, y: 0, w: 6, h: 6, minW: 3, minH: 3 },
-    { i: 'item-2', x: 6, y: 0, w: 6, h: 6, minW: 3, minH: 3 },
-    { i: 'item-3', x: 0, y: 6, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-4', x: 4, y: 6, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-5', x: 8, y: 6, w: 4, h: 6, minW: 2, minH: 3 }
+    { i: 'item-1', x: 0, y: 0, w: 6, h: 5, minW: 3, minH: 3 },
+    { i: 'item-2', x: 6, y: 0, w: 6, h: 5, minW: 3, minH: 3 },
+    { i: 'item-3', x: 0, y: 5, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-4', x: 4, y: 5, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-5', x: 8, y: 5, w: 4, h: 5, minW: 2, minH: 3 }
   ],
   grid: [
-    { i: 'item-1', x: 0, y: 0, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-2', x: 4, y: 0, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-3', x: 8, y: 0, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-4', x: 0, y: 6, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-5', x: 4, y: 6, w: 4, h: 6, minW: 2, minH: 3 },
-    { i: 'item-6', x: 8, y: 6, w: 4, h: 6, minW: 2, minH: 3 }
+    { i: 'item-1', x: 0, y: 0, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-2', x: 4, y: 0, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-3', x: 8, y: 0, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-4', x: 0, y: 5, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-5', x: 4, y: 5, w: 4, h: 5, minW: 2, minH: 3 },
+    { i: 'item-6', x: 8, y: 5, w: 4, h: 5, minW: 2, minH: 3 }
   ],
   custom: [] as Layout[] // Will be populated dynamically when user resizes
 };
@@ -79,6 +80,9 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
   const { resolvedTheme } = useTheme();
   const { user, loading: authLoading, session } = useAuth();
   const [mounted, setMounted] = useState(false);
+  
+  // Derive dark mode from resolved theme
+  const isDarkMode = resolvedTheme === 'dark';
   
   // Enhanced debug logging
   useEffect(() => {
@@ -133,15 +137,13 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
       muted: isDark ? '#9ca3af' : '#6b7280', // gray-400 : gray-500
     },
     border: {
-      default: isDark 
-        ? 'rgba(55, 65, 81, 0.5)' // gray-700/50 - same as sidebar
-        : 'rgba(156, 163, 175, 0.6)', // gray-400/60 - same as sidebar
+      default: 'transparent', // No visible border for clean look
       hover: isDark 
-        ? 'rgba(55, 65, 81, 0.5)' // same as default - no change
-        : 'rgba(156, 163, 175, 0.6)', // same as default - no change
+        ? 'rgba(55, 65, 81, 0.2)' // Subtle on hover/drag
+        : 'rgba(156, 163, 175, 0.2)', // Subtle on hover/drag
       active: isDark
-        ? 'rgba(55, 65, 81, 0.5)' // same as sidebar border
-        : 'rgba(156, 163, 175, 0.6)', // same as sidebar border
+        ? 'rgba(59, 130, 246, 0.3)' // Blue for active/selected
+        : 'rgba(59, 130, 246, 0.2)', // Blue for active/selected
     },
     background: {
       card: isDark 
@@ -437,18 +439,18 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
               ? colors.background.active
               : colors.background.card,
           backdropFilter: 'blur(10px)',
-          border: `1px solid ${isDraggedOver
-            ? colors.border.active
+          border: isDraggedOver
+            ? `1px solid ${colors.border.active}` // Visible when dragging
             : isActive 
-              ? colors.border.active
-              : colors.border.default}`,
+              ? `1px solid ${colors.border.active}` // Visible when active
+              : 'none', // No border for normal state
           borderRadius: '24px',
           padding: '10px',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'hidden',
-          cursor: isDragging ? 'grabbing' : 'grab',
+          overflow: 'hidden', // Contain content within grid bounds
+          cursor: isDragging ? 'grabbing' : 'default', // Default cursor for content area
           boxShadow: isActive 
             ? colors.shadow.activeButton
             : colors.shadow.card
@@ -462,7 +464,8 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
           marginBottom: '4px',
           borderBottom: `1px solid ${colors.border.default}`,
           paddingBottom: '2px',
-          height: '16px'
+          height: '16px',
+          cursor: isDragging ? 'grabbing' : 'grab' // Grab cursor only on header
         }}>
           <h3 style={{ 
             fontSize: '10px', 
@@ -599,15 +602,18 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
       height: '100%', 
       width: '100%',
       backgroundColor: 'transparent',
-      padding: '16px'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      {/* Layout Control Bar */}
+      {/* Layout Control Bar - Fixed at top */}
       <div style={{
-        marginBottom: '20px',
+        padding: '16px',
         display: 'flex',
         gap: '6px',
         alignItems: 'center',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        borderBottom: `1px solid ${colors.border.default}`,
+        backgroundColor: 'transparent'
       }}>
         <span style={{ 
           fontSize: '13px', 
@@ -661,10 +667,19 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
             {template.charAt(0).toUpperCase() + template.slice(1).replace('-', ' ')}
           </button>
         ))}
+        
+        {/* Agent Output Display - Minimal typewriter text */}
+        <AgentOutputDisplay />
       </div>
 
-      {/* Grid Layout */}
-      <ResponsiveGridLayout
+      {/* Scrollable Grid Container */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: '16px'
+      }}>
+        {/* Grid Layout - Full height with dynamic row height */}
+        <ResponsiveGridLayout
         className="workspace-grid"
         layouts={layouts}
         onLayoutChange={handleLayoutChange}
@@ -672,12 +687,13 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         onDragStop={() => setIsDragging(false)}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
         cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-        rowHeight={60}
+        rowHeight={80}
         isDraggable={true}
         isResizable={true}
         margin={[16, 16]}
         containerPadding={[0, 0]}
         useCSSTransforms={true}
+        style={{ flex: 1 }}
       >
         {items.map(item => (
           <div key={item.id}>
@@ -685,6 +701,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
           </div>
         ))}
       </ResponsiveGridLayout>
+      </div>
     </div>
   );
 }

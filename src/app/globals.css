@@ -57,6 +57,16 @@
   --orb-spot-light: #ffffff;
 }
 
+/* Hide all scrollbars globally while keeping scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -64,17 +74,17 @@ body {
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
-/* Dashboard responsive positioning - JavaScript controlled */
+/* Dashboard responsive positioning - Full screen with sidebar offset */
 .dashboard-overlay {
-  transition: left 300ms ease-in-out;
+  transition: padding-left 300ms ease-in-out;
 }
 
 .dashboard-overlay-collapsed {
-  left: 96px; /* 60px + 16px margin + 20px gap */
+  padding-left: 96px; /* 60px + 16px margin + 20px gap */
 }
 
 .dashboard-overlay-expanded {
-  left: 340px; /* 300px + 16px margin + 20px gap + 4px extra */
+  padding-left: 340px; /* 300px + 16px margin + 20px gap + 4px extra */
 }
 
 /* Animation keyframes for dropdown menu */
@@ -471,3 +481,42 @@ body {
   perspective: 1000px;
 }
 */
+
+/* Dashboard Unified Layout System */
+.dashboard-layout-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.dashboard-sidebar-wrapper {
+  position: relative;
+  height: 100%;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+.dashboard-content-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dashboard-header {
+  position: relative;
+  z-index: 10;
+}
+
+.dashboard-scrollable-content {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Smooth transitions for integrated components */
+.dashboard-sidebar-wrapper,
+.dashboard-content-wrapper {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

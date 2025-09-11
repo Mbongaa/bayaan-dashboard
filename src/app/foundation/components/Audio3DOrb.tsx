@@ -173,7 +173,7 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
     });
  
     const ball = new THREE.Mesh(icosahedronGeometry, lambertMaterial);
-    ball.position.set(0, 0, 0);
+    ball.position.set(0, 0, 0);  // Moved down by 15 units to be more visible
     ballRef.current = ball;
  
     // Store the original positions of the vertices

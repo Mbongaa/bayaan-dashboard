@@ -103,6 +103,17 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
 
     try {
       const response = await fetch(`/api/gmail/status?userId=${userId}`);
+      
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        // Silently handle API not available - this is expected if Gmail isn't configured
+        setStatus({ 
+          connected: false, 
+          error: 'Gmail service not available' 
+        });
+        return false;
+      }
+      
       const data = await response.json();
       
       setStatus({
@@ -118,10 +129,11 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
       // Return the connection status
       return data.connected && !data.requiresReauth;
     } catch (err) {
-      console.error('Error checking Gmail status:', err);
+      // Silently handle network errors - don't spam console
+      // This is expected if the API isn't running
       setStatus({ 
         connected: false, 
-        error: 'Failed to check connection status' 
+        error: 'Gmail service unavailable' 
       });
       return false;
     } finally {
@@ -146,11 +158,14 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
       if (query) params.set('query', query);
 
       const response = await fetch(`/api/gmail/inbox?${params}`);
-      const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch inbox');
+        // Silently handle API errors
+        setError('Gmail service unavailable');
+        return;
       }
+      
+      const data = await response.json();
 
       if (data.success && data.inbox) {
         if (pageToken) {
@@ -163,8 +178,8 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
         setNextPageToken(data.inbox.nextPageToken || '');
       }
     } catch (err) {
-      console.error('Error fetching inbox:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch inbox');
+      // Silently handle network errors
+      setError('Unable to connect to Gmail');
       
       if (err instanceof Error && err.message.includes('expired')) {
         setStatus(prev => ({ ...prev, requiresReauth: true }));
@@ -538,40 +553,43 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
       className={className}
       style={{
         ...style,
-        backgroundColor: colors.background.card,
-        border: `1px solid ${colors.border.default}`,
-        borderRadius: '24px',
-        padding: '16px',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        overflow: 'hidden'
+        width: '100%',
+        overflow: 'hidden', // Keep container hidden, but allow child scrolling
+        position: 'relative' // Ensure proper positioning context
+        // No background, border, or padding - let grid cell handle it
       }}
     >
-      {/* Header */}
+      {/* Minimal Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '16px',
-        borderBottom: `1px solid ${colors.border.default}`,
-        paddingBottom: '12px'
+        paddingBottom: '12px',
+        marginBottom: '12px'
+        // No border - just spacing for visual separation
       }}>
         <div>
           <h3 style={{
             margin: 0,
-            fontSize: '16px',
-            fontWeight: 600,
-            color: colors.text.primary
+            fontSize: '11px',
+            fontWeight: 500,
+            color: colors.text.muted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            opacity: 0.7
           }}>
             Gmail
           </h3>
           {status.gmailEmail && (
             <p style={{
               margin: 0,
-              fontSize: '12px',
+              fontSize: '11px',
               color: colors.text.muted,
-              marginTop: '2px'
+              marginTop: '2px',
+              opacity: 0.6
             }}>
               {status.gmailEmail}
             </p>
@@ -582,13 +600,21 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
           <button
             onClick={() => setCompose(prev => ({ ...prev, isOpen: !prev.isOpen }))}
             style={{
-              padding: '8px 16px',
-              fontSize: '12px',
-              borderRadius: '12px',
-              border: `1px solid ${colors.border.active}`,
-              backgroundColor: colors.background.button,
+              padding: '6px 12px',
+              fontSize: '11px',
+              borderRadius: '20px',
+              border: 'none',
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
               color: colors.text.primary,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              fontWeight: 500
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
             }}
           >
             Compose
@@ -598,37 +624,38 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
             onClick={handleAuthenticate}
             disabled={loading}
             style={{
-              padding: '8px 16px',
-              fontSize: '12px',
-              borderRadius: '12px',
-              border: `1px solid ${colors.border.active}`,
+              padding: '6px 12px',
+              fontSize: '11px',
+              borderRadius: '20px',
+              border: 'none',
               backgroundColor: '#3b82f6',
               color: 'white',
               cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1
+              opacity: loading ? 0.6 : 1,
+              transition: 'all 0.15s ease',
+              fontWeight: 500
             }}
           >
-            {loading ? 'Connecting...' : 'Connect Gmail'}
+            {loading ? 'Connecting...' : 'Connect'}
           </button>
         )}
       </div>
 
-      {/* Error Display */}
+      {/* Error Display - Minimal */}
       {error && (
         <div style={{
-          padding: '12px',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          fontSize: '14px',
+          padding: '8px',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)',
+          borderRadius: '4px',
+          marginBottom: '12px',
+          fontSize: '11px',
           color: '#ef4444'
         }}>
           {error}
         </div>
       )}
 
-      {/* Loading State - Show while checking initial connection */}
+      {/* Loading State - Minimal */}
       {isCheckingStatus && (
         <div style={{
           flex: 1,
@@ -639,14 +666,13 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
           textAlign: 'center',
           color: colors.text.muted
         }}>
-          <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
-          <p style={{ margin: 0, fontSize: '14px' }}>
-            Checking Gmail connection...
+          <p style={{ margin: 0, fontSize: '11px', opacity: 0.6 }}>
+            Connecting...
           </p>
         </div>
       )}
 
-      {/* Authentication Required - Only show after we've checked and confirmed no connection */}
+      {/* Authentication Required - Minimal */}
       {!isCheckingStatus && !status.connected && !loading && (
         <div style={{
           flex: 1,
@@ -657,40 +683,44 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
           textAlign: 'center',
           color: colors.text.muted
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>✉️</div>
-          <h4 style={{ margin: '0 0 8px 0', color: colors.text.primary }}>
-            Connect Your Gmail Account
-          </h4>
-          <p style={{ margin: 0, fontSize: '14px', maxWidth: '200px' }}>
-            Connect your Gmail account to read and send emails from your Bayaan dashboard.
+          <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.3 }}>✉️</div>
+          <p style={{ margin: 0, fontSize: '11px', opacity: 0.6 }}>
+            Connect Gmail to get started
           </p>
         </div>
       )}
 
       {/* Main Content - Only show after checking is complete and we're connected */}
       {!isCheckingStatus && status.connected && (
-        <>
-          {/* Search Bar */}
-          <div style={{ marginBottom: '16px' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+          overflow: 'auto', // Allow this container to scroll when needed
+          maxHeight: 'calc(100% - 50px)' // Account for header height
+        }}>
+          {/* Search Bar - Minimal */}
+          <div style={{ marginBottom: '12px' }}>
             <input
               type="text"
-              placeholder="Search emails..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px 12px',
-                fontSize: '14px',
-                border: `1px solid ${colors.border.default}`,
-                borderRadius: '8px',
-                backgroundColor: colors.background.card,
+                padding: '6px 8px',
+                fontSize: '12px',
+                border: 'none',
+                borderRadius: '4px',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                 color: colors.text.primary,
                 outline: 'none'
               }}
             />
           </div>
 
-          {/* Compose Form */}
+          {/* Compose Form - Minimal overlay */}
           <AnimatePresence>
             {compose.isOpen && (
               <motion.div
@@ -698,26 +728,26 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 style={{
-                  backgroundColor: colors.background.hover,
-                  border: `1px solid ${colors.border.default}`,
-                  borderRadius: '12px',
-                  padding: '16px',
-                  marginBottom: '16px',
+                  backgroundColor: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.3)',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: '12px',
                   overflow: 'hidden'
                 }}
               >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <input
                     type="email"
-                    placeholder="To:"
+                    placeholder="To"
                     value={compose.to}
                     onChange={(e) => setCompose(prev => ({ ...prev, to: e.target.value }))}
                     style={{
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      border: `1px solid ${colors.border.default}`,
-                      borderRadius: '6px',
-                      backgroundColor: colors.background.card,
+                      padding: '6px 8px',
+                      fontSize: '12px',
+                      border: 'none',
+                      borderRadius: '4px',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                       color: colors.text.primary,
                       outline: 'none'
                     }}
@@ -725,50 +755,52 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                   
                   <input
                     type="text"
-                    placeholder="Subject:"
+                    placeholder="Subject"
                     value={compose.subject}
                     onChange={(e) => setCompose(prev => ({ ...prev, subject: e.target.value }))}
                     style={{
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      border: `1px solid ${colors.border.default}`,
-                      borderRadius: '6px',
-                      backgroundColor: colors.background.card,
+                      padding: '6px 8px',
+                      fontSize: '12px',
+                      border: 'none',
+                      borderRadius: '4px',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                       color: colors.text.primary,
                       outline: 'none'
                     }}
                   />
                   
                   <textarea
-                    placeholder="Type your message..."
+                    placeholder="Message"
                     value={compose.body}
                     onChange={(e) => setCompose(prev => ({ ...prev, body: e.target.value }))}
-                    rows={4}
+                    rows={3}
                     style={{
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                      border: `1px solid ${colors.border.default}`,
-                      borderRadius: '6px',
-                      backgroundColor: colors.background.card,
+                      padding: '6px 8px',
+                      fontSize: '12px',
+                      border: 'none',
+                      borderRadius: '4px',
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                       color: colors.text.primary,
                       outline: 'none',
-                      resize: 'vertical'
+                      resize: 'vertical',
+                      minHeight: '60px'
                     }}
                   />
                   
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
                     <button
                       onClick={sendEmail}
                       disabled={loading || !compose.to || !compose.body}
                       style={{
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '11px',
+                        borderRadius: '20px',
                         border: 'none',
                         backgroundColor: '#3b82f6',
                         color: 'white',
                         cursor: loading || !compose.to || !compose.body ? 'not-allowed' : 'pointer',
-                        opacity: loading || !compose.to || !compose.body ? 0.6 : 1
+                        opacity: loading || !compose.to || !compose.body ? 0.6 : 1,
+                        fontWeight: 500
                       }}
                     >
                       {loading ? 'Sending...' : 'Send'}
@@ -777,13 +809,14 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                     <button
                       onClick={() => setCompose(prev => ({ ...prev, isOpen: false }))}
                       style={{
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        borderRadius: '6px',
-                        border: `1px solid ${colors.border.default}`,
-                        backgroundColor: colors.background.button,
+                        padding: '6px 12px',
+                        fontSize: '11px',
+                        borderRadius: '20px',
+                        border: 'none',
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                         color: colors.text.primary,
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        fontWeight: 500
                       }}
                     >
                       Cancel
@@ -797,133 +830,222 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
           {/* Messages List */}
           <div style={{ 
             flex: 1, 
-            overflow: 'auto',
+            minHeight: 0, // Critical: allows flex item to shrink below content
+            overflow: 'visible', // Changed to visible to allow proper scrolling
             display: 'flex',
             flexDirection: selectedMessage ? 'row' : 'column',
             gap: '16px'
           }}>
             {/* Message List */}
-            <div style={{ 
-              flex: selectedMessage ? '1' : 'none',
-              minWidth: selectedMessage ? '200px' : 'auto'
-            }}>
+            <div 
+              onMouseDown={(e) => {
+                // Only stop propagation if it's not a scroll action
+                const target = e.target as HTMLElement;
+                const scrollableElement = e.currentTarget as HTMLElement;
+                // Check if the element has scrollable content
+                if (scrollableElement.scrollHeight > scrollableElement.clientHeight) {
+                  // Allow scroll, but prevent drag on the scrollbar area
+                  const rect = scrollableElement.getBoundingClientRect();
+                  const scrollbarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
+                  // If clicking on scrollbar area, don't stop propagation
+                  if (e.clientX > rect.right - scrollbarWidth - 5) {
+                    return; // Allow scrollbar interaction
+                  }
+                }
+                e.stopPropagation(); // Prevent grid drag for content area
+              }}
+              onTouchStart={(e) => {
+                // Allow touch scrolling
+                const touch = e.touches[0];
+                const startY = touch.clientY;
+                let lastY = startY;
+                
+                const handleTouchMove = (moveEvent: TouchEvent) => {
+                  const currentTouch = moveEvent.touches[0];
+                  const deltaY = currentTouch.clientY - lastY;
+                  lastY = currentTouch.clientY;
+                  
+                  // If significant vertical movement, it's a scroll gesture
+                  if (Math.abs(currentTouch.clientY - startY) > 5) {
+                    // Allow scroll, don't stop propagation
+                    return;
+                  }
+                };
+                
+                const handleTouchEnd = () => {
+                  document.removeEventListener('touchmove', handleTouchMove);
+                  document.removeEventListener('touchend', handleTouchEnd);
+                };
+                
+                document.addEventListener('touchmove', handleTouchMove, { passive: true });
+                document.addEventListener('touchend', handleTouchEnd);
+                
+                // Only prevent grid drag if not scrolling
+                if (Math.abs(touch.clientY - startY) < 5) {
+                  e.stopPropagation();
+                }
+              }}
+              style={{ 
+                flex: 1, // Always use 1, not 'none'
+                minWidth: selectedMessage ? '200px' : 'auto',
+                overflow: 'auto', // Scrolling happens here
+                minHeight: 0, // Allow shrinking
+                pointerEvents: 'auto', // Ensure pointer events work
+                WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+                scrollBehavior: 'smooth' // Smooth scrolling
+              }}>
               {loading && messages.length === 0 ? (
                 <div style={{
                   padding: '20px',
                   textAlign: 'center',
-                  color: colors.text.muted
+                  color: colors.text.muted,
+                  fontSize: '11px',
+                  opacity: 0.6
                 }}>
-                  Loading emails...
+                  Loading...
                 </div>
               ) : messages.length === 0 ? (
                 <div style={{
                   padding: '20px',
                   textAlign: 'center',
-                  color: colors.text.muted
+                  color: colors.text.muted,
+                  fontSize: '11px',
+                  opacity: 0.6
                 }}>
-                  No emails found
+                  No emails
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   {messages.map((message) => (
-                    <motion.div
+                    <div
                       key={message.id}
-                      whileHover={{ scale: 1.02 }}
-                      onClick={() => {
+                      onClick={(e) => {
+                        // Don't stop propagation for clicks - just handle the click
                         setSelectedMessage(message);
                         if (!message.isRead) {
                           markAsRead(message.id);
                         }
                       }}
+                      onMouseDown={(e) => {
+                        // Only stop drag, not scroll
+                        if (e.button === 0) { // Left click only
+                          e.stopPropagation();
+                        }
+                      }}
                       style={{
-                        padding: '12px',
+                        padding: '8px 4px',
                         backgroundColor: selectedMessage?.id === message.id 
-                          ? colors.background.selected 
-                          : message.isRead 
-                            ? colors.background.card 
-                            : colors.background.hover,
-                        border: `1px solid ${colors.border.default}`,
-                        borderRadius: '8px',
+                          ? (isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)')
+                          : 'rgba(0, 0, 0, 0)',
+                        borderLeft: selectedMessage?.id === message.id 
+                          ? '2px solid #3b82f6'
+                          : '2px solid transparent',
                         cursor: 'pointer',
-                        fontSize: '14px'
+                        fontSize: '13px',
+                        transition: 'background-color 0.15s ease',
+                        marginLeft: '-2px' // Compensate for border
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = isDark 
+                          ? 'rgba(255, 255, 255, 0.02)' 
+                          : 'rgba(0, 0, 0, 0.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedMessage?.id !== message.id) {
+                          e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+                        }
                       }}
                     >
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'flex-start',
-                        marginBottom: '4px'
+                        marginBottom: '2px'
                       }}>
                         <span style={{
-                          fontWeight: message.isRead ? 400 : 600,
-                          color: colors.text.primary,
-                          fontSize: '13px'
+                          fontWeight: message.isRead ? 400 : 500,
+                          color: message.isRead ? colors.text.secondary : colors.text.primary,
+                          fontSize: '12px',
+                          opacity: message.isRead ? 0.8 : 1
                         }}>
                           {message.from.split('<')[0].trim() || message.from}
                         </span>
                         <span style={{
-                          fontSize: '11px',
+                          fontSize: '10px',
                           color: colors.text.muted,
                           flexShrink: 0,
-                          marginLeft: '8px'
+                          marginLeft: '8px',
+                          opacity: 0.6
                         }}>
                           {new Date(message.timestamp).toLocaleDateString()}
                         </span>
                       </div>
                       
                       <div style={{
-                        fontWeight: message.isRead ? 400 : 500,
-                        color: colors.text.primary,
-                        fontSize: '12px',
-                        marginBottom: '4px'
+                        fontWeight: message.isRead ? 400 : 450,
+                        color: message.isRead ? colors.text.secondary : colors.text.primary,
+                        fontSize: '11px',
+                        marginBottom: '2px',
+                        opacity: message.isRead ? 0.8 : 1
                       }}>
                         {message.subject}
                       </div>
                       
                       <div style={{
                         color: colors.text.muted,
-                        fontSize: '11px',
+                        fontSize: '10px',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        opacity: 0.6
                       }}>
                         {message.snippet}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                   
-                  {/* Load More Button */}
+                  {/* Load More Button - Minimal */}
                   {nextPageToken && (
                     <button
                       onClick={() => fetchInbox(nextPageToken, searchQuery || undefined)}
                       disabled={loading}
                       style={{
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        borderRadius: '8px',
-                        border: `1px solid ${colors.border.default}`,
-                        backgroundColor: colors.background.button,
-                        color: colors.text.primary,
+                        padding: '6px 12px',
+                        fontSize: '11px',
+                        borderRadius: '20px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        color: colors.text.muted,
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        opacity: loading ? 0.6 : 1
+                        opacity: loading ? 0.6 : 1,
+                        textAlign: 'center',
+                        width: '100%',
+                        marginTop: '8px',
+                        transition: 'opacity 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.6';
                       }}
                     >
-                      {loading ? 'Loading...' : 'Load More'}
+                      {loading ? '...' : '↓ More'}
                     </button>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Message Detail */}
+            {/* Message Detail - Minimal design */}
             {selectedMessage && (
               <div style={{
                 flex: '2',
                 minWidth: '300px',
-                backgroundColor: colors.background.card,
-                border: `1px solid ${colors.border.default}`,
-                borderRadius: '12px',
-                padding: '16px',
+                minHeight: 0, // Allow shrinking for proper scrolling
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '12px',
                 overflow: 'auto'
               }}>
                 <div style={{
@@ -1001,7 +1123,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
