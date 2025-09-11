@@ -16,6 +16,13 @@ import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGala
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
 import ModeToggle from "./shared/components/ModeToggle";
+import MiniOrb from "./foundation/components/MiniOrb";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Z_CLASSES } from "./styles/z-index";
 import FloatingChatWidget from "./foundation/components/FloatingChatWidget";
 // import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
@@ -706,10 +713,34 @@ function App() {
       <WorkflowStateBridge />
       <IntegrationStateBridge />
       
+      {/* MiniOrb - Floating at top, visible in both modes */}
+      <div className={`fixed left-[26px] top-[2vh] ${Z_CLASSES.controls} pointer-events-auto`}>
+        <TooltipProvider>
+          <Tooltip delayDuration={200}>
+            <TooltipTrigger asChild>
+              <div
+                className="w-9 h-9 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform duration-200 scale-150"
+                onClick={handleBackToVoice}
+              >
+                <MiniOrb />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              sideOffset={8}
+              align="center"
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-md"
+            >
+              Back to Voice
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="workspace-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
-        <div className={`fixed left-4 top-[4vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
+        <div className={`fixed left-4 top-[9vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <ThemeToggle />
         </div>
         

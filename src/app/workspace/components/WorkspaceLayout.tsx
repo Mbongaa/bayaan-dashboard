@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, SidebarBody } from '@/app/shared/components/sidebar';
 import { WorkspaceSidebar } from './navigation/WorkspaceSidebar';
+import { WorkspaceSidebarV2 } from './navigation/WorkspaceSidebarV2';
 import WorkspaceContentRenderer from './WorkspaceContentRenderer';
 import { WorkspaceNotification } from './WorkspaceNotification';
 import { Z_CLASSES } from '@/app/styles/z-index';
@@ -38,44 +39,12 @@ export function WorkspaceLayout({
 
   return (
     <div className={`workspace-layout-container fixed inset-0 ${Z_CLASSES.workspace}`}>
-      {/* Original Floating Sidebar - Positioned absolutely */}
-      <div
-        className={cn(
-          // Required for sidebar-label CSS to work
-          "sidebar-container",
-          // Original fixed positioning
-          "fixed left-4 top-[12.5vh] h-[75vh] z-40",
-          "flex flex-col",
-          // Original transparent background with visible borders  
-          "bg-white/10 dark:bg-black/10 backdrop-blur-sm",
-          "border border-gray-400/60 dark:border-gray-700/50",
-          // CSS-only width animation
-          "w-[60px] hover:w-[300px]",
-          "transition-all duration-300 ease-in-out",
-          // Hide overflow in collapsed state
-          "overflow-hidden hover:overflow-visible",
-          // Padding
-          "px-4 py-4",
-          // Floating card appearance
-          "rounded-3xl",
-          // Group for hover states
-          "group"
-        )}
-        onMouseEnter={() => {
-          setIsSidebarHovered(true);
-          foundationServices.navigation.setSidebarState('expanded');
-        }}
-        onMouseLeave={() => {
-          setIsSidebarHovered(false);
-          foundationServices.navigation.setSidebarState('collapsed');
-        }}
-      >
-        <WorkspaceSidebar 
-          selectedItem={selectedItem}
-          onMenuSelect={onMenuSelect}
-          onBackToVoice={onBackToVoice}
-        />
-      </div>
+      {/* New Icon-based Sidebar */}
+      <WorkspaceSidebarV2 
+        selectedItem={selectedItem}
+        onMenuSelect={onMenuSelect}
+        onBackToVoice={onBackToVoice}
+      />
 
       {/* Content Area - Full screen with padding to avoid sidebar overlap */}
       <div className="w-full h-full overflow-hidden pl-20 pr-4">
