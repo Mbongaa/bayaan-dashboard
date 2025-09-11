@@ -1,4 +1,4 @@
-import { dashboardDataService } from '../../foundation/services/DashboardDataService';
+import { dashboardDataService } from '../../foundation/services/WorkspaceDataService';
 import { navigationService } from '../../foundation/services/NavigationService';
 import { integrationService } from '../../foundation/services/IntegrationService';
 import { foundationServices } from '../../foundation/services/FoundationServices';

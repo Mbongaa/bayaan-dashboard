@@ -5,26 +5,26 @@ import { WorkspaceGrid } from './workspace/WorkspaceGrid';
 import type { WorkspaceItem } from './workspace/WorkspaceGrid';
 
 /**
- * Dashboard Content Renderer
+ * Workspace Content Renderer
  * 
- * Central component that renders the appropriate dashboard content based on 
+ * Central component that renders the appropriate workspace content based on 
  * the selected menu item. This component handles:
  * - Dynamic workspace grid for voice-controlled modules
  * - Profile and settings pages
  * - Loading states and transitions
  */
 
-interface DashboardContentRendererProps {
+interface WorkspaceContentRendererProps {
   selectedItem: string | null;
   onBackToVoice?: () => void;
   className?: string;
 }
 
-export function DashboardContentRenderer({ 
+export function WorkspaceContentRenderer({ 
   selectedItem, 
   onBackToVoice,
   className
-}: DashboardContentRendererProps) {
+}: WorkspaceContentRendererProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [currentPage, setCurrentPage] = useState(selectedItem);
   const [showContent, setShowContent] = useState(false);
@@ -99,7 +99,6 @@ export function DashboardContentRenderer({
   const renderContent = () => {
     switch (currentPage) {
       case 'workspace':
-      case 'dashboard':
         return (
           <WorkspaceGrid 
             onLayoutChange={handleLayoutChange}
@@ -121,7 +120,7 @@ export function DashboardContentRenderer({
                 Page Not Found
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                The requested dashboard page could not be found.
+                The requested workspace page could not be found.
               </p>
               <button
                 onClick={onBackToVoice}
@@ -336,4 +335,4 @@ const SettingsPage = () => {
   );
 };
 
-export default DashboardContentRenderer;
+export default WorkspaceContentRenderer;

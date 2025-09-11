@@ -1,9 +1,9 @@
 /**
- * NavigationService - Manages dashboard navigation state and sidebar control
+ * NavigationService - Manages workspace navigation state and sidebar control
  * 
  * This service provides a centralized navigation state management system that:
  * - Controls sidebar expand/collapse state
- * - Manages dashboard section navigation
+ * - Manages workspace section navigation
  * - Emits events for React component subscriptions
  * - Supports both voice control and manual interaction
  */
@@ -17,7 +17,7 @@ export type { NavigationSection, SidebarState } from './EventBus';
 interface NavigationState {
   sidebarState: SidebarState;
   currentSection: NavigationSection;
-  contentMode: 'voice' | 'dashboard';
+  contentMode: 'voice' | 'workspace';
 }
 
 interface NavigationEvent {
@@ -154,19 +154,16 @@ class NavigationService {
 
   // Navigation methods
   navigateToSection(section: NavigationSection): void {
-    // Treat 'workspace' and 'dashboard' as equivalent
-    const normalizedSection = section === 'workspace' ? 'dashboard' : section;
+    if (this.state.currentSection === section) return;
     
-    if (this.state.currentSection === normalizedSection) return;
-    
-    console.log('[NavigationService] Navigating to section:', normalizedSection);
-    this.state.currentSection = normalizedSection;
+    console.log('[NavigationService] Navigating to section:', section);
+    this.state.currentSection = section;
     
     // Set content mode based on section
-    if (normalizedSection === 'voice' || normalizedSection === null) {
+    if (section === 'voice' || section === null) {
       this.state.contentMode = 'voice';
     } else {
-      this.state.contentMode = 'dashboard';
+      this.state.contentMode = 'workspace';
     }
     
     this.saveState();
@@ -176,7 +173,7 @@ class NavigationService {
       'navigation:section-change',
       'navigation:section:changed',
       {
-        section: normalizedSection,
+        section: this.state.currentSection,
         contentMode: this.state.contentMode,
         source: 'service'
       }
@@ -202,7 +199,7 @@ class NavigationService {
   }
 
   // Content mode control methods
-  setContentMode(mode: 'voice' | 'dashboard'): void {
+  setContentMode(mode: 'voice' | 'workspace'): void {
     if (this.state.contentMode === mode) return;
     
     console.log('[NavigationService] Setting content mode:', mode);
@@ -211,8 +208,8 @@ class NavigationService {
     // Adjust section based on mode
     if (mode === 'voice') {
       this.state.currentSection = null;
-    } else if (mode === 'dashboard' && !this.state.currentSection) {
-      this.state.currentSection = 'dashboard';
+    } else if (mode === 'workspace' && !this.state.currentSection) {
+      this.state.currentSection = 'workspace';
     }
     
     this.saveState();
@@ -230,7 +227,7 @@ class NavigationService {
   }
 
   toggleContentMode(): void {
-    const newMode = this.state.contentMode === 'voice' ? 'dashboard' : 'voice';
+    const newMode = this.state.contentMode === 'voice' ? 'workspace' : 'voice';
     this.setContentMode(newMode);
   }
 
@@ -243,7 +240,7 @@ class NavigationService {
     return this.state.currentSection;
   }
 
-  getContentMode(): 'voice' | 'dashboard' {
+  getContentMode(): 'voice' | 'workspace' {
     return this.state.contentMode;
   }
 

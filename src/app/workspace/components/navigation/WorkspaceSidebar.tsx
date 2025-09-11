@@ -27,7 +27,7 @@ interface WorkspaceModule {
   status: 'loading' | 'active' | 'idle';
 }
 
-interface DashboardSidebarProps {
+interface WorkspaceSidebarProps {
   selectedItem: string | null;
   onMenuSelect: (menuItem: string) => void;
   onBackToVoice?: () => void;
@@ -35,13 +35,13 @@ interface DashboardSidebarProps {
   currentLayout?: string;
 }
 
-export function DashboardSidebar({ 
+export function WorkspaceSidebar({ 
   selectedItem, 
   onMenuSelect, 
   onBackToVoice,
   activeModules = [],
-  currentLayout = 'dashboard'
-}: DashboardSidebarProps) {
+  currentLayout = 'workspace'
+}: WorkspaceSidebarProps) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
 

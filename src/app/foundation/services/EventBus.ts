@@ -26,7 +26,7 @@ export type EventCallback<T = any> = (data: T) => void;
 export type EventUnsubscribe = () => void;
 
 // Navigation Types
-export type NavigationSection = 'dashboard' | 'workspace' | 'profile' | 'settings' | 'voice' | null;
+export type NavigationSection = 'workspace' | 'profile' | 'settings' | 'voice' | null;
 export type SidebarState = 'expanded' | 'collapsed';
 
 // Workspace Types
@@ -140,43 +140,43 @@ export interface ServiceEventMap {
   'workspace:module:activating': WorkspaceModuleEvent;
   'workspace:module:activated': WorkspaceModuleEvent;
   
-  // Dashboard Data Events (New Standard Names)
-  'dashboard:data:metric-updated': { metric: MetricData };
-  'dashboard:data:refreshed': undefined;
-  'dashboard:data:activity-added': { activity: ActivityItem };
-  'dashboard:data:activities-cleared': { criteria?: any };
-  'dashboard:data:status-updated': { status: SystemStatus };
-  'dashboard:data:theme-changed': { theme: string; context: any };
-  'dashboard:data:auto-refresh-set': { metricId: string; intervalMs: number };
-  'dashboard:data:auto-refresh-cleared': { metricId: string };
+  // Workspace Data Events (New Standard Names)
+  'workspace:data:metric-updated': { metric: MetricData };
+  'workspace:data:refreshed': undefined;
+  'workspace:data:activity-added': { activity: ActivityItem };
+  'workspace:data:activities-cleared': { criteria?: any };
+  'workspace:data:status-updated': { status: SystemStatus };
+  'workspace:data:theme-changed': { theme: string; context: any };
+  'workspace:data:auto-refresh-set': { metricId: string; intervalMs: number };
+  'workspace:data:auto-refresh-cleared': { metricId: string };
   
   // Widget Events (New Standard Names)
-  'dashboard:widget:visibility-changed': WidgetEvent;
-  'dashboard:widget:expanded': WidgetEvent;
-  'dashboard:widget:collapsed': WidgetEvent;
-  'dashboard:widget:expansion-changed': WidgetEvent;
-  'dashboard:widget:refresh-start': WidgetEvent;
-  'dashboard:widget:refresh-complete': WidgetEvent;
-  'dashboard:widgets:reordered': WidgetsEvent;
-  'dashboard:widgets:filtered': WidgetsEvent;
-  'dashboard:widgets:filter-cleared': Record<string, never>;
-  'dashboard:widgets:all-hidden': Record<string, never>;
-  'dashboard:widgets:all-shown': Record<string, never>;
-  'dashboard:widgets:batch-controlled': WidgetsEvent;
+  'workspace:widget:visibility-changed': WidgetEvent;
+  'workspace:widget:expanded': WidgetEvent;
+  'workspace:widget:collapsed': WidgetEvent;
+  'workspace:widget:expansion-changed': WidgetEvent;
+  'workspace:widget:refresh-start': WidgetEvent;
+  'workspace:widget:refresh-complete': WidgetEvent;
+  'workspace:widgets:reordered': WidgetsEvent;
+  'workspace:widgets:filtered': WidgetsEvent;
+  'workspace:widgets:filter-cleared': Record<string, never>;
+  'workspace:widgets:all-hidden': Record<string, never>;
+  'workspace:widgets:all-shown': Record<string, never>;
+  'workspace:widgets:batch-controlled': WidgetsEvent;
   
   // Form Events (New Standard Names)
-  'dashboard:form:field-changed': FormEvent;
-  'dashboard:form:validation-failed': FormEvent;
-  'dashboard:form:submitting': FormEvent;
-  'dashboard:form:submitted': FormEvent;
-  'dashboard:form:reset': FormEvent;
+  'workspace:form:field-changed': FormEvent;
+  'workspace:form:validation-failed': FormEvent;
+  'workspace:form:submitting': FormEvent;
+  'workspace:form:submitted': FormEvent;
+  'workspace:form:reset': FormEvent;
   
   // Workflow Events (New Standard Names)
-  'dashboard:workflow:started': WorkflowEvent;
-  'dashboard:workflow:step-completed': WorkflowEvent;
-  'dashboard:workflow:completed': WorkflowEvent;
-  'dashboard:workflow:created': WorkflowEvent;
-  'dashboard:macro:created': MacroEvent;
+  'workspace:workflow:started': WorkflowEvent;
+  'workspace:workflow:step-completed': WorkflowEvent;
+  'workspace:workflow:completed': WorkflowEvent;
+  'workspace:workflow:created': WorkflowEvent;
+  'workspace:macro:created': MacroEvent;
   
   // Integration Events (New Standard Names)
   'integration:performance:updated': IntegrationEvent;
@@ -207,12 +207,12 @@ export interface ServiceEventMap {
   'workspace-layout-updated': WorkspaceLayoutEvent;
   'workspace-module-activating': WorkspaceModuleEvent;
   'workspace-module-activated': WorkspaceModuleEvent;
-  'dashboard:metric-updated': { metric: MetricData };
-  'dashboard:all-metrics-refreshed': undefined;
-  'dashboard:activity-added': { activity: ActivityItem };
-  'dashboard:activities-cleared': { criteria?: any };
-  'dashboard:status-updated': { status: SystemStatus };
-  'dashboard:theme-changed': { theme: string; context: any };
+  'workspace:metric-updated': { metric: MetricData };
+  'workspace:all-metrics-refreshed': undefined;
+  'workspace:activity-added': { activity: ActivityItem };
+  'workspace:activities-cleared': { criteria?: any };
+  'workspace:status-updated': { status: SystemStatus };
+  'workspace:theme-changed': { theme: string; context: any };
   'voice-command': string;
   'module-activate': WorkspaceModuleEvent;
   'layout-change': Layout[];
@@ -237,12 +237,12 @@ export class EventBus {
     'workspace-layout-updated': 'workspace:layout:updated',
     'workspace-module-activating': 'workspace:module:activating',
     'workspace-module-activated': 'workspace:module:activated',
-    'dashboard:metric-updated': 'dashboard:data:metric-updated',
-    'dashboard:all-metrics-refreshed': 'dashboard:data:refreshed',
-    'dashboard:activity-added': 'dashboard:data:activity-added',
-    'dashboard:activities-cleared': 'dashboard:data:activities-cleared',
-    'dashboard:status-updated': 'dashboard:data:status-updated',
-    'dashboard:theme-changed': 'dashboard:data:theme-changed',
+    'workspace:metric-updated': 'dashboard:data:metric-updated',
+    'workspace:all-metrics-refreshed': 'dashboard:data:refreshed',
+    'workspace:activity-added': 'dashboard:data:activity-added',
+    'workspace:activities-cleared': 'dashboard:data:activities-cleared',
+    'workspace:status-updated': 'dashboard:data:status-updated',
+    'workspace:theme-changed': 'dashboard:data:theme-changed',
   };
 
   /**

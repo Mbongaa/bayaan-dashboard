@@ -6,25 +6,26 @@ import Audio3DOrb from "./Audio3DOrb";
 interface AudioVisualizationSectionProps {
   intensity?: number;
   className?: string;
-  uiMode?: 'default' | 'compact' | 'hidden';
-  // Removed PTT props - now handled at App level
+  appMode?: 'voice' | 'workspace';
 }
 
 const AudioVisualizationSection: React.FC<AudioVisualizationSectionProps> = ({
   intensity = 3.5,
   className = "w-full h-full",
-  uiMode = 'default',
+  appMode = 'voice',
 }) => {
-  const isCompactMode = uiMode === 'compact';
+  const isWorkspaceMode = appMode === 'workspace';
   
   return (
-    <div className={`
-      relative w-full h-full transition-all duration-700 ease-out
-      ${isCompactMode 
-        ? 'scale-[0.5] translate-x-[3vw] translate-y-[-6vh]' 
-        : 'scale-100 translate-x-0 translate-y-0'
-      }
-    `} style={{ willChange: 'transform' }}>
+    <div 
+      className={`
+        relative w-full h-full transition-all duration-1200 ease-in-out pointer-events-auto
+        ${isWorkspaceMode 
+          ? 'scale-[0.2] translate-x-[45vw] translate-y-[-25vh]' 
+          : 'scale-100 translate-x-0 translate-y-0'
+        }
+      `} 
+      style={{ willChange: 'transform' }}>
       {/* 3D Audio Orb - Animates smoothly between positions */}
       <Audio3DOrb
         intensity={intensity}

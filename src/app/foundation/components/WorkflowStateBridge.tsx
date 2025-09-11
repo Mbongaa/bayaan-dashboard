@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DashboardDataService, WorkflowExecution } from '../services/DashboardDataService';
+import { WorkspaceDataService, WorkflowExecution } from '../services/WorkspaceDataService';
 
 /**
  * Workflow State Bridge Component
@@ -48,7 +48,7 @@ export function WorkflowStateBridge() {
   });
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Listen for workflow start
     const handleWorkflowStarted = (event: WorkflowStartedEvent) => {
@@ -131,15 +131,15 @@ export function WorkflowStateBridge() {
     };
     
     // Subscribe to events
-    dashboardService.on('workflow:started', handleWorkflowStarted);
-    dashboardService.on('workflow:step-completed', handleStepCompleted);
-    dashboardService.on('workflow:completed', handleWorkflowCompleted);
+    workspaceService.on('workflow:started', handleWorkflowStarted);
+    workspaceService.on('workflow:step-completed', handleStepCompleted);
+    workspaceService.on('workflow:completed', handleWorkflowCompleted);
     
     // Cleanup
     return () => {
-      dashboardService.off('workflow:started', handleWorkflowStarted);
-      dashboardService.off('workflow:step-completed', handleStepCompleted);
-      dashboardService.off('workflow:completed', handleWorkflowCompleted);
+      workspaceService.off('workflow:started', handleWorkflowStarted);
+      workspaceService.off('workflow:step-completed', handleStepCompleted);
+      workspaceService.off('workflow:completed', handleWorkflowCompleted);
     };
   }, []);
   
@@ -236,10 +236,10 @@ export function WorkflowStateBridge() {
   const refreshAffectedWidgets = () => {
     // This could be more intelligent based on what the workflow did
     // For now, just emit a general refresh event
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Check if any widgets need refreshing based on workflow
-    const visibleWidgets = dashboardService.getVisibleWidgets();
+    const visibleWidgets = workspaceService.getVisibleWidgets();
     visibleWidgets.forEach(widget => {
       // Only refresh data widgets, not layout widgets
       if (widget.type === 'metrics' || widget.type === 'activities' || widget.type === 'status') {
@@ -261,7 +261,7 @@ export function useWorkflowState() {
   const [isRunning, setIsRunning] = useState(false);
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     const handleWorkflowStarted = () => {
       setIsRunning(true);
@@ -272,12 +272,12 @@ export function useWorkflowState() {
       // Could fetch the completed workflow from history if needed
     };
     
-    dashboardService.on('workflow:started', handleWorkflowStarted);
-    dashboardService.on('workflow:completed', handleWorkflowCompleted);
+    workspaceService.on('workflow:started', handleWorkflowStarted);
+    workspaceService.on('workflow:completed', handleWorkflowCompleted);
     
     return () => {
-      dashboardService.off('workflow:started', handleWorkflowStarted);
-      dashboardService.off('workflow:completed', handleWorkflowCompleted);
+      workspaceService.off('workflow:started', handleWorkflowStarted);
+      workspaceService.off('workflow:completed', handleWorkflowCompleted);
     };
   }, []);
   
@@ -291,7 +291,7 @@ export function useWorkflowState() {
  * Hook for components to execute workflows
  */
 export function useWorkflowControl() {
-  const dashboardService = DashboardDataService.getInstance();
+  const workspaceService = WorkspaceDataService.getInstance();
   const { isRunning } = useWorkflowState();
   
   const executeWorkflow = async (workflowId: string, variables?: Record<string, any>) => {
@@ -300,7 +300,7 @@ export function useWorkflowControl() {
       return { success: false, message: 'Another workflow is already running' };
     }
     
-    return await dashboardService.executeWorkflow(workflowId, variables);
+    return await workspaceService.executeWorkflow(workflowId, variables);
   };
   
   const executeMacro = async (trigger: string) => {
@@ -309,11 +309,11 @@ export function useWorkflowControl() {
       return { success: false, message: 'Another workflow is already running' };
     }
     
-    return await dashboardService.executeMacroByTrigger(trigger);
+    return await workspaceService.executeMacroByTrigger(trigger);
   };
   
   const getAllWorkflows = () => {
-    return dashboardService.getAllWorkflows();
+    return workspaceService.getAllWorkflows();
   };
   
   return {

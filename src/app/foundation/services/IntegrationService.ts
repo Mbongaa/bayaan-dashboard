@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { DashboardDataService } from './DashboardDataService';
+import { WorkspaceDataService } from './WorkspaceDataService';
 import { navigationService } from './NavigationService';
 import { globalEventBus } from './EventBus';
 
@@ -75,7 +75,7 @@ export interface WorkflowAnalytics {
 
 class IntegrationServiceClass extends EventEmitter {
   private static instance: IntegrationServiceClass;
-  private dashboardService: DashboardDataService;
+  private dashboardService: WorkspaceDataService;
   private navigationService: typeof navigationService;
   
   private userContext: UserContext;
@@ -92,7 +92,7 @@ class IntegrationServiceClass extends EventEmitter {
   private constructor() {
     super();
     
-    this.dashboardService = DashboardDataService.getInstance();
+    this.dashboardService = WorkspaceDataService.getInstance();
     this.navigationService = navigationService;
     
     // Initialize user context
@@ -668,7 +668,7 @@ class IntegrationServiceClass extends EventEmitter {
     switch (this.userPreferences.performanceMode) {
       case 'performance':
         // Maximum performance settings
-        // TODO: Implement setRefreshInterval in DashboardDataService
+        // TODO: Implement setRefreshInterval in WorkspaceDataService
         // this.dashboardService.setRefreshInterval(5000); // Faster refresh
         // TODO: Implement enablePreloading in NavigationService
         // this.navigationService.enablePreloading(true);
@@ -676,7 +676,7 @@ class IntegrationServiceClass extends EventEmitter {
         break;
       case 'battery':
         // Battery saving mode
-        // TODO: Implement setRefreshInterval in DashboardDataService
+        // TODO: Implement setRefreshInterval in WorkspaceDataService
         // this.dashboardService.setRefreshInterval(30000); // Slower refresh
         // TODO: Implement enablePreloading in NavigationService
         // this.navigationService.enablePreloading(false);
@@ -685,7 +685,7 @@ class IntegrationServiceClass extends EventEmitter {
       case 'balanced':
       default:
         // Balanced settings
-        // TODO: Implement setRefreshInterval in DashboardDataService
+        // TODO: Implement setRefreshInterval in WorkspaceDataService
         // this.dashboardService.setRefreshInterval(15000);
         // TODO: Implement enablePreloading in NavigationService
         // this.navigationService.enablePreloading(true);

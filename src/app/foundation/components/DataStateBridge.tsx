@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { dashboardDataService, MetricData, ActivityItem, SystemStatus } from '../services/DashboardDataService';
+import { workspaceDataService, MetricData, ActivityItem, SystemStatus } from '../services/WorkspaceDataService';
 import { eventMigrationHelper } from '../services/EventBus';
 
 interface DataStateBridgeProps {
@@ -48,7 +48,7 @@ export function DataStateBridge({
       }
       // Also trigger full metrics update
       if (onMetricsUpdate) {
-        onMetricsUpdate(dashboardDataService.getAllMetrics());
+        onMetricsUpdate(workspaceDataService.getAllMetrics());
       }
     };
 
@@ -56,7 +56,7 @@ export function DataStateBridge({
     const handleAllMetricsRefresh = () => {
       console.log('[DataStateBridge] All metrics refreshed');
       if (onMetricsUpdate) {
-        onMetricsUpdate(dashboardDataService.getAllMetrics());
+        onMetricsUpdate(workspaceDataService.getAllMetrics());
       }
       if (onDataRefresh) {
         onDataRefresh();
@@ -90,27 +90,27 @@ export function DataStateBridge({
     // Add event listeners using migration helper to listen to both old and new event names
     const unsubscribeMetricUpdate = eventMigrationHelper.onBoth(
       'dashboard:metric-updated',
-      'dashboard:data:metric-updated',
+      'workspace:data:metric-updated',
       handleMetricUpdate
     );
     const unsubscribeAllRefresh = eventMigrationHelper.onBoth(
       'dashboard:all-metrics-refreshed', 
-      'dashboard:data:refreshed',
+      'workspace:data:refreshed',
       handleAllMetricsRefresh
     );
     const unsubscribeActivityAdded = eventMigrationHelper.onBoth(
       'dashboard:activity-added',
-      'dashboard:data:activity-added',
+      'workspace:data:activity-added',
       handleActivityAdded  
     );
     const unsubscribeActivitiesCleared = eventMigrationHelper.onBoth(
       'dashboard:activities-cleared',
-      'dashboard:data:activities-cleared', 
+      'workspace:data:activities-cleared', 
       handleActivitiesCleared
     );
     const unsubscribeStatusUpdate = eventMigrationHelper.onBoth(
       'dashboard:status-updated',
-      'dashboard:data:status-updated',
+      'workspace:data:status-updated',
       handleStatusUpdate
     );
 
@@ -118,12 +118,12 @@ export function DataStateBridge({
     if (autoRefreshInterval && autoRefreshInterval > 0) {
       console.log(`[DataStateBridge] Setting up auto-refresh every ${autoRefreshInterval}ms`);
       autoRefreshTimer.current = setInterval(() => {
-        dashboardDataService.refreshAllMetrics().catch(console.error);
+        workspaceDataService.refreshAllMetrics().catch(console.error);
       }, autoRefreshInterval);
     }
 
     // Initial data sync
-    const initialState = dashboardDataService.getState();
+    const initialState = workspaceDataService.getState();
     console.log('[DataStateBridge] Initial state sync:', {
       metricsCount: initialState.metrics.length,
       activitiesCount: initialState.activities.length,
@@ -159,16 +159,16 @@ export function DataStateBridge({
 /**
  * Custom hook for easier usage
  */
-export function useDashboardData() {
-  const state = dashboardDataService.getState();
+export function useWorkspaceData() {
+  const state = workspaceDataService.getState();
   return {
     metrics: state.metrics,
     activities: state.activities,
     systemStatus: state.systemStatus,
     summary: state.summary,
-    refreshMetric: (id: string) => dashboardDataService.refreshMetric(id),
-    refreshAllMetrics: () => dashboardDataService.refreshAllMetrics(),
-    addActivity: (activity: Omit<ActivityItem, 'id' | 'timestamp'>) => dashboardDataService.addActivity(activity),
-    getSystemHealth: () => dashboardDataService.getSystemHealthSummary()
+    refreshMetric: (id: string) => workspaceDataService.refreshMetric(id),
+    refreshAllMetrics: () => workspaceDataService.refreshAllMetrics(),
+    addActivity: (activity: Omit<ActivityItem, 'id' | 'timestamp'>) => workspaceDataService.addActivity(activity),
+    getSystemHealth: () => workspaceDataService.getSystemHealthSummary()
   };
 }

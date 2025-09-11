@@ -7,12 +7,10 @@ import Transcript from './Transcript';
 import { Z_CHATBOX, Z_TRANSCRIPT } from '@/app/styles/z-index';
 
 interface FloatingChatWidgetProps {
-  uiMode?: 'default' | 'compact' | 'hidden';
+  // No props needed - widget always shows full transcript
 }
 
-export default function FloatingChatWidget({ 
-  uiMode = 'default'
-}: FloatingChatWidgetProps) {
+export default function FloatingChatWidget({}: FloatingChatWidgetProps = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasNewMessage, setHasNewMessage] = useState(false);
 
@@ -114,7 +112,7 @@ export default function FloatingChatWidget({
 
               {/* Transcript Content - Full Height */}
               <div className="flex-1 overflow-hidden">
-                <Transcript uiMode={uiMode} />
+                <Transcript />
               </div>
             </div>
           </motion.div>

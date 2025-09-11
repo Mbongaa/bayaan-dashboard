@@ -3,8 +3,8 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import DockExample from "./dashboard/components/navigation/DockExample";
-import { DashboardLayout } from "./dashboard/components/DashboardLayout";
+import DockExample from "./workspace/components/navigation/DockExample";
+import { WorkspaceLayout } from "./workspace/components/WorkspaceLayout";
 
 // UI components
 import Events from "./foundation/components/Events";
@@ -173,13 +173,10 @@ function App() {
     },
   );
 
-  // Dashboard state management
-  const [selectedDashboardItem, setSelectedDashboardItem] = useState<string | null>(null);
-  const [dashboardContentMode, setDashboardContentMode] = useState<'voice' | 'dashboard'>('voice');
-  const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
+  // Workspace state management
+  const [selectedWorkspaceItem, setSelectedWorkspaceItem] = useState<string | null>(null);
+  const [appMode, setAppMode] = useState<'voice' | 'workspace'>('voice');
   
-  // Foundation UI mode - controls how foundation components are organized
-  const [foundationUIMode, setFoundationUIMode] = useState<'default' | 'compact'>('default');
 
   // Theme detection for dynamic Galaxy colors
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -553,26 +550,24 @@ function App() {
     window.location.replace(url.toString());
   };
 
-  // Dashboard menu selection handlers
-  const handleDashboardMenuSelect = (menuItem: string) => {
+  // Workspace menu selection handlers
+  const handleWorkspaceMenuSelect = (menuItem: string) => {
     if (menuItem === 'logout') {
       // Handle logout logic - for now, just log
       console.log('Logout clicked');
       return;
     }
     
-    setSelectedDashboardItem(menuItem);
-    setDashboardContentMode('dashboard');
-    setFoundationUIMode('compact'); // Switch foundation to compact mode
+    setSelectedWorkspaceItem(menuItem);
+    setAppMode('workspace');
     
     // Sync with navigation service
     foundationServices.navigation.navigateToSection(menuItem as any);
   };
 
   const handleBackToVoice = () => {
-    setSelectedDashboardItem(null);
-    setDashboardContentMode('voice');
-    setFoundationUIMode('default'); // Switch foundation back to default mode
+    setSelectedWorkspaceItem(null);
+    setAppMode('voice');
     
     // Sync with navigation service
     foundationServices.navigation.backToVoice();
@@ -697,16 +692,11 @@ function App() {
       {/* Navigation State Bridge - Connects voice control to navigation */}
       <NavigationStateBridge 
         onSidebarStateChange={(state, isHovered) => {
-          setIsSidebarHovered(isHovered);
+          // Sidebar state is handled internally
         }}
         onSectionChange={(section, contentMode) => {
-          setSelectedDashboardItem(section);
-          setDashboardContentMode(contentMode);
-          if (contentMode === 'dashboard') {
-            setFoundationUIMode('compact');
-          } else {
-            setFoundationUIMode('default');
-          }
+          setSelectedWorkspaceItem(section);
+          setAppMode(contentMode as 'voice' | 'workspace');
         }}
       />
       
@@ -717,7 +707,7 @@ function App() {
       <IntegrationStateBridge />
       
       {/* Layout wrapper to ensure proper CSS selector relationships */}
-      <div className="dashboard-layout">
+      <div className="workspace-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
         <div className={`fixed left-4 top-[4vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <ThemeToggle />
@@ -726,10 +716,10 @@ function App() {
         {/* Mode Toggle - Positioned below the sidebar */}
         <div className={`fixed left-4 bottom-[4vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <ModeToggle 
-            contentMode={dashboardContentMode}
+            appMode={appMode}
             onModeChange={(mode) => {
-              if (mode === 'dashboard') {
-                handleDashboardMenuSelect('dashboard');
+              if (mode === 'workspace') {
+                handleWorkspaceMenuSelect('workspace');
               } else {
                 handleBackToVoice();
               }
@@ -737,31 +727,31 @@ function App() {
           />
         </div>
         
-        {/* Unified Dashboard Layout - Integrated sidebar and content */}
-        <DashboardLayout
-          selectedItem={selectedDashboardItem}
-          onMenuSelect={handleDashboardMenuSelect}
+        {/* Unified Workspace Layout - Integrated sidebar and content */}
+        <WorkspaceLayout
+          selectedItem={selectedWorkspaceItem}
+          onMenuSelect={handleWorkspaceMenuSelect}
           onBackToVoice={handleBackToVoice}
-          contentMode={dashboardContentMode}
+          appMode={appMode}
         />
         
         {/* Voice Interface Overlays - Always visible, high z-index */}
         {/* 3D Audio Visualization - Floating overlay */}
-        <div className={`fixed ${dashboardContentMode === 'dashboard' ? 'top-4 right-4 w-64 h-64' : 'top-0 left-0 right-0 bottom-1/2'} overflow-visible pointer-events-auto ${Z_CLASSES.orb}`}>
+        <div className={`fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-2/3 overflow-visible pointer-events-none flex items-center justify-center ${Z_CLASSES.orb}`}>
           <RealtimeProvider 
             value={realtimeContextValue}
           >
             <AudioVisualizationSection
               intensity={3.5}
               className="w-full h-full"
-              uiMode={foundationUIMode}
+              appMode={appMode}
             />
           </RealtimeProvider>
         </div>
         
         {/* Fixed positioned chatbox - Always visible at bottom */}
-        <div className={`fixed bottom-5 left-0 right-0 ${Z_CLASSES.chatbox} px-4 pointer-events-auto`}>
-          <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto">
+        <div className={`fixed bottom-5 left-0 right-0 ${Z_CLASSES.chatbox} px-4 pointer-events-none`}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSendTextMessage(); }} className="max-w-3xl mx-auto pointer-events-auto">
             <PromptBox 
               value={userText}
               onChange={(e) => setUserText(e.target.value)}
@@ -771,7 +761,7 @@ function App() {
         </div>
         
         {/* Events Panel - Only in voice mode */}
-        {dashboardContentMode !== 'dashboard' && (
+        {appMode !== 'workspace' && (
           <>
             {/* Desktop Layout */}
             <div className={`hidden xl:block fixed top-20 right-4 w-80 bottom-24 overflow-visible pointer-events-auto ${Z_CLASSES.transcript}`}>
@@ -785,7 +775,7 @@ function App() {
         )}
 
         {/* Empty main content area - just for maintaining structure */}
-        <div className={`main-content-area fixed top-0 right-0 bottom-0 flex flex-col ${Z_CLASSES.base}`}>
+        <div className={`main-content-area fixed top-0 right-0 bottom-0 flex flex-col ${Z_CLASSES.base} pointer-events-none`}>
         <div className={`p-5 text-2xl font-semibold flex justify-end items-center bg-transparent border-b border-transparent relative ${Z_CLASSES.base} pointer-events-none`}>
           {/* Theme toggle moved to sidebar */}
         </div>
@@ -868,9 +858,7 @@ function App() {
         />
 
         {/* Floating Transcript Widget - Rendered last to ensure it's on top */}
-        <FloatingChatWidget
-          uiMode={foundationUIMode}
-        />
+        <FloatingChatWidget />
       </RealtimeProvider>
     </div>
   );

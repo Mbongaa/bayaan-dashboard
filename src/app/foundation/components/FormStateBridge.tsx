@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DashboardDataService } from '../services/DashboardDataService';
+import { WorkspaceDataService } from '../services/WorkspaceDataService';
 
 /**
  * Form State Bridge Component
@@ -31,7 +31,7 @@ export function FormStateBridge() {
   const [formUpdates, setFormUpdates] = useState<Record<string, any>>({});
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Listen for form field changes
     const handleFieldChange = (event: FormFieldUpdate) => {
@@ -63,7 +63,7 @@ export function FormStateBridge() {
       console.log('[FormStateBridge] Form reset:', event);
       
       // Reset all form fields to defaults
-      const formState = dashboardService.getFormState(event.formId);
+      const formState = workspaceService.getFormState(event.formId);
       if (formState) {
         formState.fields.forEach((field, fieldId) => {
           updateFormElement(event.formId, fieldId, field.value);
@@ -74,18 +74,18 @@ export function FormStateBridge() {
     };
     
     // Subscribe to events
-    dashboardService.on('form:field-changed', handleFieldChange);
-    dashboardService.on('form:submitted', handleFormSubmit);
-    dashboardService.on('form:reset', handleFormReset);
+    workspaceService.on('form:field-changed', handleFieldChange);
+    workspaceService.on('form:submitted', handleFormSubmit);
+    workspaceService.on('form:reset', handleFormReset);
     
     // Initial sync - populate forms with current state
     syncAllForms();
     
     // Cleanup
     return () => {
-      dashboardService.off('form:field-changed', handleFieldChange);
-      dashboardService.off('form:submitted', handleFormSubmit);
-      dashboardService.off('form:reset', handleFormReset);
+      workspaceService.off('form:field-changed', handleFieldChange);
+      workspaceService.off('form:submitted', handleFormSubmit);
+      workspaceService.off('form:reset', handleFormReset);
     };
   }, []);
   
@@ -125,8 +125,8 @@ export function FormStateBridge() {
    * Sync all forms with service state
    */
   const syncAllForms = () => {
-    const dashboardService = DashboardDataService.getInstance();
-    const allForms = dashboardService.getAllFormsState();
+    const workspaceService = WorkspaceDataService.getInstance();
+    const allForms = workspaceService.getAllFormsState();
     
     Object.entries(allForms).forEach(([formId, formData]: [string, any]) => {
       Object.entries(formData.fields).forEach(([fieldId, fieldData]: [string, any]) => {
@@ -167,30 +167,30 @@ export function useFormState(formId: string) {
   const [formState, setFormState] = useState<any>(null);
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Get initial state
-    const state = dashboardService.getFormState(formId);
+    const state = workspaceService.getFormState(formId);
     if (state) {
-      const allForms = dashboardService.getAllFormsState();
+      const allForms = workspaceService.getAllFormsState();
       setFormState(allForms[formId]);
     }
     
     // Listen for changes
     const handleFieldChange = (event: FormFieldUpdate) => {
       if (event.formId === formId) {
-        const state = dashboardService.getFormState(formId);
+        const state = workspaceService.getFormState(formId);
         if (state) {
-          const allForms = dashboardService.getAllFormsState();
+          const allForms = workspaceService.getAllFormsState();
           setFormState(allForms[formId]);
         }
       }
     };
     
-    dashboardService.on('form:field-changed', handleFieldChange);
+    workspaceService.on('form:field-changed', handleFieldChange);
     
     return () => {
-      dashboardService.off('form:field-changed', handleFieldChange);
+      workspaceService.off('form:field-changed', handleFieldChange);
     };
   }, [formId]);
   
@@ -201,13 +201,13 @@ export function useFormState(formId: string) {
  * Hook for form components to update field values
  */
 export function useFormField(formId: string, fieldId: string) {
-  const dashboardService = DashboardDataService.getInstance();
+  const workspaceService = WorkspaceDataService.getInstance();
   const formState = useFormState(formId);
   
   const fieldData = formState?.fields?.[fieldId];
   
   const setValue = (value: any) => {
-    dashboardService.setFieldValue(formId, fieldId, value);
+    workspaceService.setFieldValue(formId, fieldId, value);
   };
   
   return {

@@ -8,18 +8,16 @@ import { GuardrailChip } from "./GuardrailChip";
 import TypewriterText from "./TypewriterText";
 
 export interface TranscriptProps {
-  uiMode?: 'default' | 'compact';
+  // No props needed - transcript always shows full history
 }
 
-function Transcript({ uiMode = 'default' }: TranscriptProps) {
+function Transcript({}: TranscriptProps = {}) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
   const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
   const [showNotification, setShowNotification] = useState<boolean>(false);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const [currentMode, setCurrentMode] = useState<'default' | 'compact'>(uiMode);
 
   function scrollToBottom() {
     if (transcriptRef.current) {
@@ -36,22 +34,6 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
     }
   }
 
-  // Handle mode transitions with fade effect
-  useEffect(() => {
-    if (uiMode !== currentMode) {
-      setIsTransitioning(true);
-      
-      // Fade out
-      setTimeout(() => {
-        setCurrentMode(uiMode);
-        
-        // Fade back in
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 50);
-      }, 300);
-    }
-  }, [uiMode, currentMode]);
 
   useEffect(() => {
     const hasNewMessage = transcriptItems.length > prevLogs.length;
@@ -96,26 +78,16 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
 
 
 
-  const isCompactMode = currentMode === 'compact';
   
   return (
     <>
-      <div className={`
-        flex flex-col pointer-events-none transition-all duration-700 ease-out transform-gpu
-        ${isCompactMode 
-          ? 'fixed top-[4vh] left-[100px] right-[10vw] h-[10vh] max-h-[10vh] z-40' 
-          : 'flex-1 min-h-0 scale-100 translate-x-0 translate-y-0'
-        }
-        ${isTransitioning ? 'opacity-0' : 'opacity-100'}
-      `}>
-      <div className={`flex flex-col ${isCompactMode ? 'h-full' : 'flex-1 min-h-0'}`}>
+      <div className="flex flex-col pointer-events-none flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0">
 
         {/* Transcript Content */}
         <div
           ref={transcriptRef}
-          className={`flex flex-col h-full pointer-events-auto scrollbar-hide ${
-            isCompactMode ? 'p-3 gap-y-1 overflow-hidden' : 'p-4 gap-y-4 overflow-auto'
-          }`}
+          className="flex flex-col h-full pointer-events-auto scrollbar-hide p-4 gap-y-4 overflow-auto"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {(() => {
@@ -127,10 +99,8 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
               .pop();
             const latestAgentMessageId = latestAgentMessage?.itemId;
             
-            // Filter items based on mode - show only latest assistant message in compact mode
-            const itemsToDisplay = isCompactMode 
-              ? (latestAgentMessage ? [latestAgentMessage] : [])
-              : sortedItems;
+            // Always show all items
+            const itemsToDisplay = sortedItems;
             
             return itemsToDisplay.map((item) => {
               const {
@@ -154,11 +124,9 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
               const containerClasses = `flex justify-end flex-col ${
                 isUser ? "items-end" : "items-start"
               }`;
-              const bubbleBase = `${isCompactMode ? 'w-full' : 'max-w-lg'} ${isCompactMode ? 'p-2' : 'p-3'} ${
+              const bubbleBase = `max-w-lg p-3 ${
                 isUser 
                   ? "bg-transparent text-gray-600 dark:bg-transparent dark:text-gray-400 text-sm" 
-                  : isCompactMode
-                  ? "bg-transparent text-gray-900 dark:bg-transparent dark:text-gray-100 text-base"
                   : "bg-transparent text-gray-900 dark:bg-transparent dark:text-gray-100 text-lg"
               }`;
               const isBracketedMessage =
@@ -172,22 +140,20 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
 
               return (
                 <div key={itemId} className={containerClasses}>
-                  <div className={`${isCompactMode ? 'w-full' : 'max-w-lg'}`}>
+                  <div className="max-w-lg">
                     <div
                       className={`${bubbleBase} rounded-t-xl ${
                         guardrailResult ? "" : "rounded-b-xl"
                       }`}
                     >
-                      {!isCompactMode && (
-                        <div
-                          className={`text-xs ${
-                            isUser ? "text-gray-400 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
-                          } font-mono`}
-                        >
-                          {timestamp}
-                        </div>
-                      )}
-                      <div className={`${isCompactMode ? 'line-clamp-3' : 'whitespace-pre-wrap'} ${messageStyle}`}>
+                      <div
+                        className={`text-xs ${
+                          isUser ? "text-gray-400 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
+                        } font-mono`}
+                      >
+                        {timestamp}
+                      </div>
+                      <div className={`whitespace-pre-wrap ${messageStyle}`}>
                         {!isUser && !isBracketedMessage && !typedMessages.has(`${itemId}-${displayTitle}`) ? (
                           <TypewriterText
                             key={`typewriter-${itemId}`}
@@ -265,50 +231,6 @@ function Transcript({ uiMode = 'default' }: TranscriptProps) {
       </div>
 
     </div>
-    
-    {/* Compact Mode Notification Area - Next to Mode Toggle for Breadcrumbs */}
-    {isCompactMode && (
-      <div className={`fixed bottom-[4vh] left-[10rem] max-w-[300px] h-[3rem] z-[120] 
-        bg-gray-100/5 dark:bg-black/5 backdrop-blur-sm 
-        border border-gray-200/10 dark:border-gray-700/10 rounded-xl 
-        transition-all duration-500 ease-out pointer-events-auto
-        ${showNotification && !isTransitioning ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-        <div className="h-full px-3 py-1.5 flex items-center">
-          {(() => {
-            // Get the latest breadcrumb
-            const latestBreadcrumb = [...transcriptItems]
-              .filter(item => item.type === "BREADCRUMB")
-              .sort((a, b) => b.createdAtMs - a.createdAtMs)[0];
-            
-            if (!latestBreadcrumb) return null;
-            
-            const { title, timestamp } = latestBreadcrumb;
-            
-            // Determine icon and color based on breadcrumb content
-            const isAgent = title?.toLowerCase().includes('agent') || false;
-            const isTool = title?.toLowerCase().includes('tool') || title?.toLowerCase().includes('function') || false;
-            
-            return (
-              <div className="flex items-center gap-1.5 text-xs font-mono">
-                <span className={`text-sm
-                  ${isAgent ? 'text-blue-500 dark:text-blue-400' : 
-                    isTool ? 'text-green-500 dark:text-green-400' : 
-                    'text-gray-500 dark:text-gray-400'}
-                `}>
-                  {isAgent ? '👤' : isTool ? '🔧' : '📍'}
-                </span>
-                <span className="text-gray-600 dark:text-gray-400 truncate flex-1">
-                  {title || 'Processing...'}
-                </span>
-                <span className="text-[10px] text-gray-500 dark:text-gray-500 ml-1">
-                  {timestamp}
-                </span>
-              </div>
-            );
-          })()}
-        </div>
-      </div>
-    )}
     </>
   );
 }

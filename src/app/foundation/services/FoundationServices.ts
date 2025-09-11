@@ -8,7 +8,7 @@ import { createBottleneckDetector, BottleneckDetector } from './BottleneckDetect
 import { WebGLContextService } from './WebGLContextService';
 import { WebRTCService } from './WebRTCService';
 import { navigationService } from './NavigationService';
-import { dashboardDataService } from './DashboardDataService';
+import { dashboardDataService } from './WorkspaceDataService';
 import { integrationService } from './IntegrationService';
 import { WorkspaceLayoutService } from './WorkspaceLayoutService';
 

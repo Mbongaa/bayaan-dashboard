@@ -57,7 +57,8 @@
       "Bash(npx tsx:*)",
       "Bash(npx supabase:*)",
       "Bash(source .env)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

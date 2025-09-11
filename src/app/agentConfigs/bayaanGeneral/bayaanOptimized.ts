@@ -249,12 +249,12 @@ Tools are now parameter-driven rather than single-purpose.
           }
           
           // Handle different navigation scenarios
-          if (target === "dashboard" && action === "go") {
-            navigationService.navigateToSection('dashboard');
+          if ((target === "dashboard" || target === "workspace") && action === "go") {
+            navigationService.navigateToSection('workspace');
             return {
               success: true,
-              message: "Navigated to dashboard",
-              spokenResponse: "Taking you to the dashboard"
+              message: "Navigated to workspace",
+              spokenResponse: "Taking you to the workspace"
             };
           } else if (target === "voice" && action === "go") {
             navigationService.navigateToSection('voice');
@@ -329,11 +329,11 @@ Tools are now parameter-driven rather than single-purpose.
         if (element === "theme") {
           try {
             // Import the service for proper theme handling
-            const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+            const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
             
             if (action === "get") {
               // Get current theme state - EXACTLY like original
-              const themeState = dashboardDataService.getThemeState();
+              const themeState = workspaceDataService.getThemeState();
               
               // Generate human-readable description - EXACTLY like original
               let description = "";
@@ -353,7 +353,7 @@ Tools are now parameter-driven rather than single-purpose.
               };
             } else if (action === "set" && value) {
               // Use the service's setTheme method - EXACTLY like original
-              const result = dashboardDataService.setTheme(value as any);
+              const result = workspaceDataService.setTheme(value as any);
               
               if (!result.success) {
                 return {
@@ -400,7 +400,7 @@ Tools are now parameter-driven rather than single-purpose.
               };
             } else if (action === "toggle") {
               // Use the service's toggle functionality - EXACTLY like original
-              const result = dashboardDataService.setTheme('toggle');
+              const result = workspaceDataService.setTheme('toggle');
               
               if (!result.success) {
                 return {
@@ -671,7 +671,7 @@ Tools are now parameter-driven rather than single-purpose.
         const { action, searchQuery, searchOptions, includeMetrics = true, includeActivities = true, activityLimit = 10 } = input;
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (action === "search" && searchQuery) {
             // Search across dashboard data
@@ -683,7 +683,7 @@ Tools are now parameter-driven rather than single-purpose.
             if (searchOptions?.searchIn) {
               searchParams.types = searchOptions.searchIn;
             }
-            const results = dashboardDataService.searchDashboard(searchParams);
+            const results = workspaceDataService.searchDashboard(searchParams);
             return {
               success: true,
               results,
@@ -693,7 +693,7 @@ Tools are now parameter-driven rather than single-purpose.
                 : `No results found for "${searchQuery}"`
             };
           } else if (action === "get_state") {
-            const state = dashboardDataService.getState();
+            const state = workspaceDataService.getState();
             const response: any = { success: true, summary: state.summary };
             
             if (includeMetrics) response.metrics = state.metrics;
@@ -702,20 +702,20 @@ Tools are now parameter-driven rather than single-purpose.
             response.message = `${state.summary.totalMetrics} metrics tracked, ${state.summary.criticalMetrics} critical`;
             return response;
           } else if (action === "get_summary") {
-            const summary = dashboardDataService.getDashboardSummary();
+            const summary = workspaceDataService.getDashboardSummary();
             return {
               success: true,
               summary,
               message: `${summary.metrics.total} metrics, ${summary.activities.recent} activities, system ${summary.system.health}`
             };
           } else if (action === "refresh") {
-            await dashboardDataService.refreshAllMetrics();
+            await workspaceDataService.refreshAllMetrics();
             return {
               success: true,
               message: "All metrics refreshed"
             };
           } else if (action === "system_health") {
-            const health = dashboardDataService.getSystemHealthSummary();
+            const health = workspaceDataService.getSystemHealthSummary();
             return {
               success: true,
               systemHealth: health,
@@ -771,12 +771,12 @@ Tools are now parameter-driven rather than single-purpose.
         addBreadcrumb?.('Form Management', { action, formId, fieldId, value });
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Handle state checking
           if (action === "get_state") {
             if (formId === "all") {
-              const allForms = dashboardDataService.getAllFormsState();
+              const allForms = workspaceDataService.getAllFormsState();
               return {
                 success: true,
                 forms: allForms,
@@ -784,7 +784,7 @@ Tools are now parameter-driven rather than single-purpose.
                 spokenResponse: `I can see ${Object.keys(allForms).length} forms available`
               };
             } else {
-              const formState = dashboardDataService.getFormState(formId);
+              const formState = workspaceDataService.getFormState(formId);
               
               if (!formState) {
                 return {
@@ -841,7 +841,7 @@ Tools are now parameter-driven rather than single-purpose.
               };
             }
             
-            const result = dashboardDataService.setFieldValue(formId, fieldId, value);
+            const result = workspaceDataService.setFieldValue(formId, fieldId, value);
             
             if (result.success) {
               let spokenResponse = result.message;
@@ -864,7 +864,7 @@ Tools are now parameter-driven rather than single-purpose.
             
             return result;
           } else if (action === "submit") {
-            const result = await dashboardDataService.submitForm(formId);
+            const result = await workspaceDataService.submitForm(formId);
             return {
               ...result,
               spokenResponse: result.success 
@@ -872,7 +872,7 @@ Tools are now parameter-driven rather than single-purpose.
                 : `I couldn't submit the ${formId} form`
             };
           } else if (action === "reset") {
-            const result = dashboardDataService.resetForm(formId);
+            const result = workspaceDataService.resetForm(formId);
             return {
               ...result,
               spokenResponse: result.success
@@ -880,7 +880,7 @@ Tools are now parameter-driven rather than single-purpose.
                 : `I couldn't reset the ${formId} form`
             };
           } else if (action === "validate") {
-            const formState = dashboardDataService.getFormState(formId);
+            const formState = workspaceDataService.getFormState(formId);
             if (!formState) {
               return {
                 success: false,
@@ -972,11 +972,11 @@ Tools are now parameter-driven rather than single-purpose.
         const { action, widgetId, batchOperations, widgetOrder, filter, settings } = input;
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (action === "get_state") {
             if (widgetId) {
-              const widget = dashboardDataService.getWidgetState(widgetId);
+              const widget = workspaceDataService.getWidgetState(widgetId);
               return {
                 success: true,
                 widget,
@@ -985,7 +985,7 @@ Tools are now parameter-driven rather than single-purpose.
                   : "Widget not found"
               };
             } else {
-              const widgets = dashboardDataService.getAllWidgets();
+              const widgets = workspaceDataService.getAllWidgets();
               return {
                 success: true,
                 widgets,
@@ -994,11 +994,11 @@ Tools are now parameter-driven rather than single-purpose.
             }
           } else if (action === "batch" && batchOperations) {
             // Handle batch operations on multiple widgets
-            const result = dashboardDataService.batchControlWidgets(batchOperations);
+            const result = workspaceDataService.batchControlWidgets(batchOperations);
             return result;
           } else if (action === "reorder" && widgetOrder) {
             // Reorder widgets
-            const result = dashboardDataService.reorderWidgets(widgetOrder);
+            const result = workspaceDataService.reorderWidgets(widgetOrder);
             return {
               success: true,
               message: "Widgets reordered",
@@ -1006,7 +1006,7 @@ Tools are now parameter-driven rather than single-purpose.
             };
           } else if (action === "filter" && filter) {
             // Apply filter to widgets
-            const widgets = dashboardDataService.getAllWidgets();
+            const widgets = workspaceDataService.getAllWidgets();
             const filtered = widgets.filter((w: any) => {
               if (filter.visibility === "visible" && !w.isVisible) return false;
               if (filter.visibility === "hidden" && w.isVisible) return false;
@@ -1020,16 +1020,16 @@ Tools are now parameter-driven rather than single-purpose.
               message: `Showing ${filtered.length} widgets matching filter`
             };
           } else if (["show", "hide", "toggle"].includes(action) && widgetId) {
-            const result = dashboardDataService.toggleWidget(widgetId);
+            const result = workspaceDataService.toggleWidget(widgetId);
             return result;
           } else if (action === "expand" && widgetId) {
-            const result = dashboardDataService.expandWidget(widgetId);
+            const result = workspaceDataService.expandWidget(widgetId);
             return result;
           } else if (action === "collapse" && widgetId) {
-            const result = dashboardDataService.collapseWidget(widgetId);
+            const result = workspaceDataService.collapseWidget(widgetId);
             return result;
           } else if (action === "refresh" && widgetId) {
-            const result = dashboardDataService.refreshWidget(widgetId);
+            const result = workspaceDataService.refreshWidget(widgetId);
             return result;
           }
           
@@ -1161,7 +1161,7 @@ Tools are now parameter-driven rather than single-purpose.
         const { action, workflowId, name, steps, schedule, macroTrigger, macroActions } = input;
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (action === "create" && name && steps) {
             const workflow = {
@@ -1176,14 +1176,14 @@ Tools are now parameter-driven rather than single-purpose.
                 description: step.description || `Step ${index + 1}`
               }))
             };
-            dashboardDataService.createWorkflow(workflow);
+            workspaceDataService.createWorkflow(workflow);
             return {
               success: true,
               workflowId: workflow.id,
               message: `Created workflow: ${name}`
             };
           } else if (action === "execute" && workflowId) {
-            const result = await dashboardDataService.executeWorkflow(workflowId);
+            const result = await workspaceDataService.executeWorkflow(workflowId);
             return result;
           } else if (action === "schedule" && workflowId && schedule) {
             // Schedule implementation
@@ -1216,7 +1216,7 @@ Tools are now parameter-driven rather than single-purpose.
             };
           } else if (action === "execute_macro" && macroTrigger) {
             // Execute macro by trigger phrase
-            const result = await dashboardDataService.executeMacroByTrigger(macroTrigger);
+            const result = await workspaceDataService.executeMacroByTrigger(macroTrigger);
             return result;
           } else if (action === "list_macros") {
             // List available macros

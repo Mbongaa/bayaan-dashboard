@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { DashboardDataService } from '../services/DashboardDataService';
+import { WorkspaceDataService } from '../services/WorkspaceDataService';
 
 /**
  * Widget State Bridge Component
@@ -37,7 +37,7 @@ export function WidgetStateBridge() {
   const [, setWidgetUpdates] = useState<Record<string, any>>({});
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Listen for widget visibility changes
     const handleVisibilityChange = (event: WidgetVisibilityChange) => {
@@ -115,30 +115,30 @@ export function WidgetStateBridge() {
     };
     
     // Subscribe to events
-    dashboardService.on('widget:visibility-changed', handleVisibilityChange);
-    dashboardService.on('widget:expansion-changed', handleExpansionChange);
-    dashboardService.on('widget:expanded', handleExpansionChange);
-    dashboardService.on('widget:collapsed', handleExpansionChange);
-    dashboardService.on('widget:refresh-start', handleRefreshStart);
-    dashboardService.on('widget:refresh-complete', handleRefreshComplete);
-    dashboardService.on('widgets:reordered', handleReorder);
-    dashboardService.on('widgets:filtered', handleFilter);
-    dashboardService.on('widgets:filter-cleared', handleFilterCleared);
+    workspaceService.on('widget:visibility-changed', handleVisibilityChange);
+    workspaceService.on('widget:expansion-changed', handleExpansionChange);
+    workspaceService.on('widget:expanded', handleExpansionChange);
+    workspaceService.on('widget:collapsed', handleExpansionChange);
+    workspaceService.on('widget:refresh-start', handleRefreshStart);
+    workspaceService.on('widget:refresh-complete', handleRefreshComplete);
+    workspaceService.on('widgets:reordered', handleReorder);
+    workspaceService.on('widgets:filtered', handleFilter);
+    workspaceService.on('widgets:filter-cleared', handleFilterCleared);
     
     // Initial sync - set widgets to current state
     syncAllWidgets();
     
     // Cleanup
     return () => {
-      dashboardService.off('widget:visibility-changed', handleVisibilityChange);
-      dashboardService.off('widget:expansion-changed', handleExpansionChange);
-      dashboardService.off('widget:expanded', handleExpansionChange);
-      dashboardService.off('widget:collapsed', handleExpansionChange);
-      dashboardService.off('widget:refresh-start', handleRefreshStart);
-      dashboardService.off('widget:refresh-complete', handleRefreshComplete);
-      dashboardService.off('widgets:reordered', handleReorder);
-      dashboardService.off('widgets:filtered', handleFilter);
-      dashboardService.off('widgets:filter-cleared', handleFilterCleared);
+      workspaceService.off('widget:visibility-changed', handleVisibilityChange);
+      workspaceService.off('widget:expansion-changed', handleExpansionChange);
+      workspaceService.off('widget:expanded', handleExpansionChange);
+      workspaceService.off('widget:collapsed', handleExpansionChange);
+      workspaceService.off('widget:refresh-start', handleRefreshStart);
+      workspaceService.off('widget:refresh-complete', handleRefreshComplete);
+      workspaceService.off('widgets:reordered', handleReorder);
+      workspaceService.off('widgets:filtered', handleFilter);
+      workspaceService.off('widgets:filter-cleared', handleFilterCleared);
     };
   }, []);
   
@@ -219,8 +219,8 @@ export function WidgetStateBridge() {
    * Sync all widgets with service state
    */
   const syncAllWidgets = () => {
-    const dashboardService = DashboardDataService.getInstance();
-    const widgets = dashboardService.getAllWidgets();
+    const workspaceService = WorkspaceDataService.getInstance();
+    const widgets = workspaceService.getAllWidgets();
     
     widgets.forEach(widget => {
       updateWidgetVisibility(widget.id, widget.isVisible);
@@ -263,29 +263,29 @@ export function useWidgetState(widgetId: string) {
   const [widgetState, setWidgetState] = useState<any>(null);
   
   useEffect(() => {
-    const dashboardService = DashboardDataService.getInstance();
+    const workspaceService = WorkspaceDataService.getInstance();
     
     // Get initial state
-    const state = dashboardService.getWidgetState(widgetId);
+    const state = workspaceService.getWidgetState(widgetId);
     setWidgetState(state);
     
     // Listen for changes
     const handleChange = (event: any) => {
       if (event.widgetId === widgetId) {
-        const state = dashboardService.getWidgetState(widgetId);
+        const state = workspaceService.getWidgetState(widgetId);
         setWidgetState(state);
       }
     };
     
     // Subscribe to all widget events
-    dashboardService.on('widget:visibility-changed', handleChange);
-    dashboardService.on('widget:expansion-changed', handleChange);
-    dashboardService.on('widget:refresh-complete', handleChange);
+    workspaceService.on('widget:visibility-changed', handleChange);
+    workspaceService.on('widget:expansion-changed', handleChange);
+    workspaceService.on('widget:refresh-complete', handleChange);
     
     return () => {
-      dashboardService.off('widget:visibility-changed', handleChange);
-      dashboardService.off('widget:expansion-changed', handleChange);
-      dashboardService.off('widget:refresh-complete', handleChange);
+      workspaceService.off('widget:visibility-changed', handleChange);
+      workspaceService.off('widget:expansion-changed', handleChange);
+      workspaceService.off('widget:refresh-complete', handleChange);
     };
   }, [widgetId]);
   
@@ -296,19 +296,19 @@ export function useWidgetState(widgetId: string) {
  * Hook for components to control widgets
  */
 export function useWidgetControl(widgetId: string) {
-  const dashboardService = DashboardDataService.getInstance();
+  const workspaceService = WorkspaceDataService.getInstance();
   const widgetState = useWidgetState(widgetId);
   
   const toggleVisibility = () => {
-    dashboardService.toggleWidget(widgetId);
+    workspaceService.toggleWidget(widgetId);
   };
   
   const toggleExpansion = () => {
-    dashboardService.toggleWidgetExpansion(widgetId);
+    workspaceService.toggleWidgetExpansion(widgetId);
   };
   
   const refresh = () => {
-    dashboardService.refreshWidget(widgetId);
+    workspaceService.refreshWidget(widgetId);
   };
   
   return {

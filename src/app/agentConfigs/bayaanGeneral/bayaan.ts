@@ -657,10 +657,10 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Get current theme state
-          const themeState = dashboardDataService.getThemeState();
+          const themeState = workspaceDataService.getThemeState();
           
           // Generate human-readable description
           let description = "";
@@ -724,10 +724,10 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Use the service's state-aware setTheme method
-          const result = dashboardDataService.setTheme(themePreference);
+          const result = workspaceDataService.setTheme(themePreference);
           
           if (!result.success) {
             addBreadcrumb?.('Theme Change Failed', { error: result.message });
@@ -1489,10 +1489,10 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically to avoid circular dependencies
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Get complete dashboard state
-          const state = dashboardDataService.getState();
+          const state = workspaceDataService.getState();
           
           // Build response based on requested data
           const response: any = {
@@ -1604,7 +1604,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           const result: any = { success: true };
           
@@ -1613,30 +1613,30 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               if (!metricId) {
                 throw new Error('Metric ID required for refresh_metric action');
               }
-              await dashboardDataService.refreshMetric(metricId);
-              const metric = dashboardDataService.getMetric(metricId);
+              await workspaceDataService.refreshMetric(metricId);
+              const metric = workspaceDataService.getMetric(metricId);
               result.message = `Refreshed ${metric?.label}`;
               result.metric = metric;
               break;
               
             case 'refresh_all':
-              await dashboardDataService.refreshAllMetrics();
+              await workspaceDataService.refreshAllMetrics();
               result.message = "All metrics refreshed";
-              result.metrics = dashboardDataService.getAllMetrics();
+              result.metrics = workspaceDataService.getAllMetrics();
               break;
               
             case 'query_activities':
               if (activityFilter) {
-                result.activities = dashboardDataService.getFilteredActivities(activityFilter);
+                result.activities = workspaceDataService.getFilteredActivities(activityFilter);
                 result.message = `Found ${result.activities.length} matching activities`;
               } else {
-                result.activities = dashboardDataService.getRecentActivities(10);
+                result.activities = workspaceDataService.getRecentActivities(10);
                 result.message = `Retrieved ${result.activities.length} recent activities`;
               }
               break;
               
             case 'system_health':
-              const health = dashboardDataService.getSystemHealthSummary();
+              const health = workspaceDataService.getSystemHealthSummary();
               result.systemHealth = health;
               result.message = `System is ${health.overall} with ${health.avgHealth.toFixed(1)}% average health`;
               if (health.issues.length > 0) {
@@ -1648,7 +1648,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               if (!activityFilter) {
                 throw new Error('Activity filter required for filter_activities action');
               }
-              result.activities = dashboardDataService.getFilteredActivities(activityFilter);
+              result.activities = workspaceDataService.getFilteredActivities(activityFilter);
               result.message = `Found ${result.activities.length} activities matching your criteria`;
               break;
               
@@ -1656,7 +1656,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               if (!activityMessage || !activityType) {
                 throw new Error('Activity message and type required for add_activity action');
               }
-              dashboardDataService.addActivity({
+              workspaceDataService.addActivity({
                 type: activityType,
                 message: activityMessage,
                 severity: 'info'
@@ -1705,10 +1705,10 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Form State Query', { formId });
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (formId === 'all') {
-            const allForms = dashboardDataService.getAllFormsState();
+            const allForms = workspaceDataService.getAllFormsState();
             
             // Create summary message
             const formCount = Object.keys(allForms).length;
@@ -1727,7 +1727,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               message: messages.join('. ')
             };
           } else {
-            const formState = dashboardDataService.getFormState(formId);
+            const formState = workspaceDataService.getFormState(formId);
             
             if (!formState) {
               return {
@@ -1738,7 +1738,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             }
             
             // Get form definition for better context
-            const allForms = dashboardDataService.getAllFormsState();
+            const allForms = workspaceDataService.getAllFormsState();
             const formDetails = allForms[formId];
             
             // Create summary of form state
@@ -1815,7 +1815,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Form Control Request', { action, formId, fieldId, value });
         
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           let result: any = { success: false, message: '' };
           
@@ -1824,7 +1824,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               if (!fieldId || value === undefined) {
                 throw new Error('Field ID and value required for fill_field action');
               }
-              const fillResult = dashboardDataService.setFieldValue(formId, fieldId, value);
+              const fillResult = workspaceDataService.setFieldValue(formId, fieldId, value);
               result = {
                 success: fillResult.success,
                 message: fillResult.message
@@ -1832,7 +1832,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               break;
               
             case 'submit':
-              const submitResult = await dashboardDataService.submitForm(formId);
+              const submitResult = await workspaceDataService.submitForm(formId);
               result = {
                 success: submitResult.success,
                 message: submitResult.message,
@@ -1841,7 +1841,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               break;
               
             case 'reset':
-              const resetResult = dashboardDataService.resetForm(formId);
+              const resetResult = workspaceDataService.resetForm(formId);
               result = {
                 success: resetResult.success,
                 message: resetResult.message
@@ -1849,7 +1849,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               break;
               
             case 'validate':
-              const formState = dashboardDataService.getFormState(formId);
+              const formState = workspaceDataService.getFormState(formId);
               if (!formState) {
                 throw new Error(`Form ${formId} not found`);
               }
@@ -1916,11 +1916,11 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (widgetId) {
             // Get specific widget state
-            const widget = dashboardDataService.getWidgetState(widgetId);
+            const widget = workspaceDataService.getWidgetState(widgetId);
             if (!widget) {
               return {
                 success: false,
@@ -1937,7 +1937,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             };
           } else {
             // Get all widgets
-            const widgets = dashboardDataService.getAllWidgets();
+            const widgets = workspaceDataService.getAllWidgets();
             const visibleCount = widgets.filter(w => w.isVisible).length;
             const expandedCount = widgets.filter(w => w.isExpanded).length;
             
@@ -2017,11 +2017,11 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Workflow Execution', { workflowId, customSteps });
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           if (workflowId) {
             // Execute predefined workflow
-            const result = await dashboardDataService.executeWorkflow(workflowId, variables);
+            const result = await workspaceDataService.executeWorkflow(workflowId, variables);
             return {
               success: result.success,
               message: result.message,
@@ -2042,8 +2042,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               })),
             };
             
-            dashboardDataService.createWorkflow(customWorkflow);
-            const result = await dashboardDataService.executeWorkflow(customWorkflow.id, variables);
+            workspaceDataService.createWorkflow(customWorkflow);
+            const result = await workspaceDataService.executeWorkflow(customWorkflow.id, variables);
             
             return {
               success: result.success,
@@ -2106,9 +2106,9 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Batch Widget Control', { operations });
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
-          const result = dashboardDataService.batchControlWidgets(operations);
+          const result = workspaceDataService.batchControlWidgets(operations);
           
           return {
             success: result.success,
@@ -2196,7 +2196,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Dashboard Search', { query, scope, filters });
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Convert time range if provided
           let searchFilters = filters;
@@ -2213,7 +2213,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             };
           }
           
-          const results = dashboardDataService.searchDashboard({
+          const results = workspaceDataService.searchDashboard({
             query,
             scope,
             filters: searchFilters,
@@ -2295,7 +2295,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Create Macro', { name, voiceTriggers });
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           // Create workflow for the macro
           const workflow = {
@@ -2313,7 +2313,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             usageCount: 0
           };
           
-          dashboardDataService.createWorkflow(workflow);
+          workspaceDataService.createWorkflow(workflow);
           
           // Create the macro
           const macro = {
@@ -2327,7 +2327,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             usageCount: 0
           };
           
-          const result = dashboardDataService.createMacro(macro);
+          const result = workspaceDataService.createMacro(macro);
           
           return {
             success: result.success,
@@ -2367,9 +2367,9 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Execute Macro', { trigger });
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
-          const result = await dashboardDataService.executeMacroByTrigger(trigger);
+          const result = await workspaceDataService.executeMacroByTrigger(trigger);
           
           return {
             success: result.success,
@@ -2401,9 +2401,9 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
         addBreadcrumb?.('Dashboard Summary Request', {});
 
         try {
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
-          const summary = dashboardDataService.getDashboardSummary();
+          const summary = workspaceDataService.getDashboardSummary();
           
           // Generate human-readable summary
           const messages: string[] = [];
@@ -2821,7 +2821,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
           
           let result: any;
           
@@ -2832,53 +2832,53 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               if (!widgetId) {
                 throw new Error('Widget ID required for visibility control');
               }
-              result = dashboardDataService.toggleWidget(widgetId);
+              result = workspaceDataService.toggleWidget(widgetId);
               break;
               
             case 'expand':
               if (!widgetId) {
                 throw new Error('Widget ID required for expand action');
               }
-              result = dashboardDataService.expandWidget(widgetId);
+              result = workspaceDataService.expandWidget(widgetId);
               break;
               
             case 'collapse':
               if (!widgetId) {
                 throw new Error('Widget ID required for collapse action');
               }
-              result = dashboardDataService.collapseWidget(widgetId);
+              result = workspaceDataService.collapseWidget(widgetId);
               break;
               
             case 'toggle_expansion':
               if (!widgetId) {
                 throw new Error('Widget ID required for expansion toggle');
               }
-              result = dashboardDataService.toggleWidgetExpansion(widgetId);
+              result = workspaceDataService.toggleWidgetExpansion(widgetId);
               break;
               
             case 'refresh':
               if (!widgetId) {
                 throw new Error('Widget ID required for refresh action');
               }
-              result = dashboardDataService.refreshWidget(widgetId);
+              result = workspaceDataService.refreshWidget(widgetId);
               break;
               
             case 'reorder':
               if (!widgetOrder || widgetOrder.length === 0) {
                 throw new Error('Widget order array required for reorder action');
               }
-              result = dashboardDataService.reorderWidgets(widgetOrder);
+              result = workspaceDataService.reorderWidgets(widgetOrder);
               break;
               
             case 'filter':
               if (!filter) {
                 throw new Error('Filter criteria required for filter action');
               }
-              result = dashboardDataService.applyWidgetFilter(filter);
+              result = workspaceDataService.applyWidgetFilter(filter);
               break;
               
             case 'clear_filter':
-              result = dashboardDataService.clearWidgetFilters();
+              result = workspaceDataService.clearWidgetFilters();
               break;
               
             default:

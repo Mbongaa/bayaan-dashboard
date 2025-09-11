@@ -6,7 +6,7 @@
  * 
  * HIERARCHY:
  * 1. Background Layer (0-10): Galaxy and base elements
- * 2. Dashboard Layer (20-50): Dashboard, sidebar, controls
+ * 2. Workspace Layer (20-50): Workspace, sidebar, controls
  * 3. Foundation/Voice Layer (60-90): 3D Orb, Chatbox, PTT (HIGHEST PRIORITY)
  * 4. Critical Overlays (100+): Modals, drag states, debug
  */
@@ -18,10 +18,10 @@ export const Z_GALAXY_BACKGROUND = 0;        // Galaxy background effect
 export const Z_BASE_CONTENT = 10;            // Base content layer
 
 // ============================================
-// LAYER 2: DASHBOARD (20-50)
+// LAYER 2: WORKSPACE (20-50)
 // ============================================
 export const Z_SIDEBAR = 20;                 // Sidebar navigation
-export const Z_DASHBOARD_CONTENT = 30;       // Dashboard overlay and content
+export const Z_WORKSPACE_CONTENT = 30;       // Workspace overlay and content
 export const Z_CONTROLS = 40;                // Theme toggle, mode toggle
 export const Z_DROPDOWN = 50;                // Dropdown menus
 
@@ -50,7 +50,7 @@ export const Z_CLASSES = {
   galaxy: 'z-0',
   base: 'z-10',
   sidebar: 'z-20',
-  dashboard: 'z-30',
+  workspace: 'z-30',
   controls: 'z-40',
   dropdown: 'z-50',
   transcript: 'z-[60]',

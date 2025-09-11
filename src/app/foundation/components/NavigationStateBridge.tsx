@@ -17,8 +17,8 @@ import { eventMigrationHelper } from '../services/EventBus';
 
 interface NavigationStateBridgeProps {
   onSidebarStateChange?: (state: SidebarState, isHovered: boolean) => void;
-  onSectionChange?: (section: NavigationSection, contentMode: 'voice' | 'dashboard') => void;
-  onContentModeChange?: (mode: 'voice' | 'dashboard') => void;
+  onSectionChange?: (section: NavigationSection, contentMode: 'voice' | 'workspace') => void;
+  onContentModeChange?: (mode: 'voice' | 'workspace') => void;
 }
 
 export function NavigationStateBridge({

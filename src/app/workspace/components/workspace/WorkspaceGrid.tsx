@@ -46,10 +46,6 @@ const LAYOUT_TEMPLATES: { [key: string]: Layout[] } = {
     { i: 'item-1', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 4 },
     { i: 'item-2', x: 6, y: 0, w: 6, h: 10, minW: 3, minH: 4 }
   ],
-  'side-by-side': [
-    { i: 'item-1', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 4 },
-    { i: 'item-2', x: 6, y: 0, w: 6, h: 10, minW: 3, minH: 4 }
-  ],
   stacked: [
     { i: 'item-1', x: 0, y: 0, w: 12, h: 5, minW: 4, minH: 3 },
     { i: 'item-2', x: 0, y: 5, w: 12, h: 5, minW: 4, minH: 3 }
@@ -613,7 +609,9 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         alignItems: 'center',
         flexWrap: 'wrap',
         borderBottom: `1px solid ${colors.border.default}`,
-        backgroundColor: 'transparent'
+        backgroundColor: 'transparent',
+        position: 'relative',
+        zIndex: 35
       }}>
         <span style={{ 
           fontSize: '13px', 
@@ -661,7 +659,10 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
               boxShadow: activeLayout === template 
                 ? colors.shadow.activeButton
                 : colors.shadow.button,
-              transform: activeLayout === template ? 'scale(1.02)' : 'scale(1)'
+              transform: activeLayout === template ? 'scale(1.02)' : 'scale(1)',
+              pointerEvents: 'auto',
+              position: 'relative',
+              zIndex: 1
             }}
           >
             {template.charAt(0).toUpperCase() + template.slice(1).replace('-', ' ')}

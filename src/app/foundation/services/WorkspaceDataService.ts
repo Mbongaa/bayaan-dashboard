@@ -164,7 +164,7 @@ export interface WorkflowStepResult {
   error?: string;
 }
 
-export interface DashboardMacro {
+export interface WorkspaceMacro {
   id: string;
   name: string;
   description: string;
@@ -198,7 +198,7 @@ export interface SearchResult {
   highlight?: string;
 }
 
-export interface DashboardDataState {
+export interface WorkspaceDataState {
   metrics: Map<string, MetricData>;
   activities: ActivityItem[];
   systemStatus: SystemStatus[];
@@ -208,16 +208,16 @@ export interface DashboardDataState {
   widgets: Map<string, WidgetState>;
   widgetFilters: Map<string, WidgetFilter>;
   workflows: Map<string, WorkflowDefinition>;
-  macros: Map<string, DashboardMacro>;
+  macros: Map<string, WorkspaceMacro>;
   currentWorkflow: WorkflowExecution | null;
   workflowHistory: WorkflowExecution[];
   lastRefresh: Date;
 }
 
-export class DashboardDataService extends EventEmitter {
-  private state: DashboardDataState;
+export class WorkspaceDataService extends EventEmitter {
+  private state: WorkspaceDataState;
   private refreshIntervals: Map<string, NodeJS.Timeout> = new Map();
-  private static instance: DashboardDataService | null = null;
+  private static instance: WorkspaceDataService | null = null;
 
   private constructor() {
     super();
@@ -250,11 +250,11 @@ export class DashboardDataService extends EventEmitter {
   /**
    * Get singleton instance
    */
-  static getInstance(): DashboardDataService {
-    if (!DashboardDataService.instance) {
-      DashboardDataService.instance = new DashboardDataService();
+  static getInstance(): WorkspaceDataService {
+    if (!WorkspaceDataService.instance) {
+      WorkspaceDataService.instance = new WorkspaceDataService();
     }
-    return DashboardDataService.instance;
+    return WorkspaceDataService.instance;
   }
 
   /**
@@ -485,7 +485,7 @@ export class DashboardDataService extends EventEmitter {
   getFormState(formId: string): FormState | null {
     const form = this.state.forms.get(formId);
     if (!form) {
-      console.warn(`[DashboardDataService] Form ${formId} not found`);
+      console.warn(`[WorkspaceDataService] Form ${formId} not found`);
       return null;
     }
     return form;
@@ -1184,7 +1184,7 @@ export class DashboardDataService extends EventEmitter {
       };
 
     } catch (error) {
-      console.error('[DashboardDataService] Failed to set theme:', error);
+      console.error('[WorkspaceDataService] Failed to set theme:', error);
       return {
         success: false,
         alreadyInState: false,
@@ -1314,7 +1314,7 @@ export class DashboardDataService extends EventEmitter {
       expandedOnly: false
     });
 
-    console.log('[DashboardDataService] Widgets initialized:', this.state.widgets.size);
+    console.log('[WorkspaceDataService] Widgets initialized:', this.state.widgets.size);
   }
 
   /**
@@ -1323,7 +1323,7 @@ export class DashboardDataService extends EventEmitter {
   getWidgetState(widgetId: string): WidgetState | null {
     const widget = this.state.widgets.get(widgetId);
     if (!widget) {
-      console.warn(`[DashboardDataService] Widget ${widgetId} not found`);
+      console.warn(`[WorkspaceDataService] Widget ${widgetId} not found`);
       return null;
     }
     return widget;
@@ -1688,7 +1688,7 @@ export class DashboardDataService extends EventEmitter {
 
     this.state.macros.set(morningMacro.id, morningMacro);
 
-    console.log('[DashboardDataService] Workflows initialized:', this.state.workflows.size);
+    console.log('[WorkspaceDataService] Workflows initialized:', this.state.workflows.size);
   }
 
   /**
@@ -2313,7 +2313,7 @@ export class DashboardDataService extends EventEmitter {
    * Handle voice commands for dashboard data
    */
   handleVoiceCommand(command: string, parameters?: any): { success: boolean; message: string; data?: any } {
-    console.log('[DashboardDataService] Voice command:', command, parameters);
+    console.log('[WorkspaceDataService] Voice command:', command, parameters);
 
     switch (command) {
       case 'query_metrics':
@@ -2414,11 +2414,11 @@ export class DashboardDataService extends EventEmitter {
     this.removeAllListeners();
     
     // Reset singleton
-    DashboardDataService.instance = null;
+    WorkspaceDataService.instance = null;
     
-    console.log('[DashboardDataService] Service shutdown complete');
+    console.log('[WorkspaceDataService] Service shutdown complete');
   }
 }
 
 // Export singleton instance
-export const dashboardDataService = DashboardDataService.getInstance();
+export const workspaceDataService = WorkspaceDataService.getInstance();

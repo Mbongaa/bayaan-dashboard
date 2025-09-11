@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout');
-  redirect('/dashboard');
+  redirect('/workspace');
 }
 
 export async function signup(formData: FormData) {
@@ -113,7 +113,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
   
   if (error) {
-    redirect('/dashboard?error=' + encodeURIComponent(error.message));
+    redirect('/workspace?error=' + encodeURIComponent(error.message));
   }
   
   revalidatePath('/', 'layout');

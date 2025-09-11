@@ -111,7 +111,7 @@ export default function ChatboxSettingsMenu(props: AgentSettingsMenuProps) {
 
   // Modal overlay that appears when settings are opened
   const settingsModal = isOpen ? (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[85] flex items-center justify-center">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
