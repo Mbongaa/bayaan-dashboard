@@ -1,27 +1,26 @@
 /**
- * NavigationService - Manages workspace navigation state and sidebar control
+ * NavigationService - Manages workspace navigation state
  * 
  * This service provides a centralized navigation state management system that:
- * - Controls sidebar expand/collapse state
  * - Manages workspace section navigation
  * - Emits events for React component subscriptions
  * - Supports both voice control and manual interaction
+ * - Works with icon/tooltip navigation (no traditional sidebar)
  */
 
-import { eventMigrationHelper, NavigationSection, SidebarState } from './EventBus';
+import { eventMigrationHelper, NavigationSection } from './EventBus';
 import { ServiceContainer } from './ServiceContainer';
 
 // Re-export types for backward compatibility
-export type { NavigationSection, SidebarState } from './EventBus';
+export type { NavigationSection } from './EventBus';
 
 interface NavigationState {
-  sidebarState: SidebarState;
   currentSection: NavigationSection;
   contentMode: 'voice' | 'workspace';
 }
 
 interface NavigationEvent {
-  type: 'sidebar-state' | 'section-change' | 'content-mode';
+  type: 'section-change' | 'content-mode';
   payload: any;
 }
 
@@ -33,7 +32,6 @@ class NavigationService {
 
   private constructor() {
     this.state = {
-      sidebarState: 'collapsed',
       currentSection: null,
       contentMode: 'voice'
     };
@@ -89,68 +87,8 @@ class NavigationService {
     }
   }
 
-  // Sidebar control methods
-  expandSidebar(): void {
-    if (this.state.sidebarState === 'expanded') return;
-    
-    console.log('[NavigationService] Expanding sidebar');
-    this.state.sidebarState = 'expanded';
-    this.saveState();
-    
-    // Emit to both legacy and new event names during transition
-    eventMigrationHelper.emitBoth(
-      'navigation:sidebar-state',
-      'navigation:sidebar:changed',
-      {
-        state: 'expanded',
-        source: 'service'
-      }
-    );
-  }
-
-  collapseSidebar(): void {
-    if (this.state.sidebarState === 'collapsed') return;
-    
-    console.log('[NavigationService] Collapsing sidebar');
-    this.state.sidebarState = 'collapsed';
-    this.saveState();
-    
-    // Emit to both legacy and new event names during transition
-    eventMigrationHelper.emitBoth(
-      'navigation:sidebar-state',
-      'navigation:sidebar:changed',
-      {
-        state: 'collapsed',
-        source: 'service'
-      }
-    );
-  }
-
-  toggleSidebar(): void {
-    if (this.state.sidebarState === 'expanded') {
-      this.collapseSidebar();
-    } else {
-      this.expandSidebar();
-    }
-  }
-
-  setSidebarState(state: SidebarState): void {
-    if (this.state.sidebarState === state) return;
-    
-    console.log('[NavigationService] Setting sidebar state:', state);
-    this.state.sidebarState = state;
-    this.saveState();
-    
-    // Emit to both legacy and new event names during transition
-    eventMigrationHelper.emitBoth(
-      'navigation:sidebar-state',
-      'navigation:sidebar:changed',
-      {
-        state,
-        source: 'service'
-      }
-    );
-  }
+  // Navigation control methods
+  // Note: Removed sidebar methods - using icon/tooltip navigation instead
 
   // Navigation methods
   navigateToSection(section: NavigationSection): void {
@@ -232,10 +170,6 @@ class NavigationService {
   }
 
   // State getters
-  getSidebarState(): SidebarState {
-    return this.state.sidebarState;
-  }
-
   getCurrentSection(): NavigationSection {
     return this.state.currentSection;
   }
@@ -254,21 +188,7 @@ class NavigationService {
     
     try {
       switch (action) {
-        case 'expand_sidebar':
-          this.expandSidebar();
-          return { success: true, message: 'Sidebar expanded' };
-          
-        case 'collapse_sidebar':
-          this.collapseSidebar();
-          return { success: true, message: 'Sidebar collapsed' };
-          
-        case 'toggle_sidebar':
-          this.toggleSidebar();
-          return { 
-            success: true, 
-            message: `Sidebar ${this.state.sidebarState === 'expanded' ? 'collapsed' : 'expanded'}` 
-          };
-          
+        // Removed sidebar actions - no longer applicable
         case 'navigate_section':
           if (!target) {
             return { success: false, message: 'No section specified' };

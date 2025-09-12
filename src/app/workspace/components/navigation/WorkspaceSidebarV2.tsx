@@ -222,8 +222,7 @@ export function WorkspaceSidebarV2({
                   setOpenTooltip(openTooltip === 'module' ? null : 'module');
                 }
               }}
-              onMouseEnter={() => !isMobileDevice && foundationServices.navigation.setSidebarState('expanded')}
-              onMouseLeave={() => !isMobileDevice && foundationServices.navigation.setSidebarState('collapsed')}
+              // Removed onMouseEnter/onMouseLeave - no sidebar state to manage
             >
               <Package2 className="h-4 w-4" />
             </Button>

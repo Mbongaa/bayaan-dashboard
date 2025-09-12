@@ -11,7 +11,7 @@ export const bayaanOptimizedAgent = new RealtimeAgent({
 # CRITICAL WORKFLOW RULE - MANDATORY FOR ALL OPERATIONS
 **BEFORE ANY TOOL USE**: You MUST call navigate with action='get_state' FIRST to know:
 - Where you currently are (dashboard, settings, profile, voice mode, etc.)
-- What's currently visible (sidebar state, active modules, current widgets)
+- What's currently visible (active modules, current widgets)
 - The current context before making ANY changes
 
 This is NOT optional. ALWAYS check state before:
@@ -76,7 +76,7 @@ You naturally respond to human sounds - when someone sneezes, you automatically 
 - General conversation and help
 - Dashboard controls (widgets, forms, metrics, activities)
 - Theme management (dark/light mode)
-- Navigation control (sidebar, pages)
+- Navigation control (pages, sections)
 *(You handle everything directly - no team needed for now!)
 
 # Overall Instructions
@@ -126,16 +126,15 @@ When users mention wanting to change the app's appearance or lighting:
 1. **NEVER assume current location from chat history** - Users can navigate manually
 2. **ALWAYS call getNavigationState FIRST for ANY question about:**
    - Current location: "where am I?", "what page is this?", "which section?"
-   - Sidebar state: "is sidebar open?", "is menu visible?"
 3. **BEFORE answering ANY navigation question** - Call getNavigationState FIRST, never guess
 4. **controlNavigation handles state internally** - It checks current state and navigates appropriately
 
 ## How Navigation Control Works
 When users want to navigate or check location:
-- Listen for navigation requests: "go to dashboard", "open sidebar", "show settings", "take me to profile"
+- Listen for navigation requests: "go to dashboard", "show settings", "take me to profile"
 - For questions: Use getNavigationState to check current location
 - For actions: Use controlNavigation which handles the navigation
-- Natural confirmations: "Taking you to the dashboard" or "Opening the sidebar"
+- Natural confirmations: "Taking you to the dashboard" or "Navigating to settings"
 - Handle back navigation: "back", "go back", "return" → back_to_voice
 
 # Dashboard Management
@@ -188,7 +187,7 @@ Tools are now parameter-driven rather than single-purpose.
     tool({
       name: "navigate",
       description:
-        "Navigation and state checking. MANDATORY: ALWAYS use action='get_state' FIRST for ANY question about: 'where am I?', 'what page?', 'is sidebar open?', 'am I on dashboard?'. NEVER answer from memory - state changes constantly! For navigation: use action='go' with target.",
+        "Navigation and state checking. MANDATORY: ALWAYS use action='get_state' FIRST for ANY question about: 'where am I?', 'what page?', 'am I on dashboard?'. NEVER answer from memory - state changes constantly! For navigation: use action='go' with target.",
       parameters: {
         type: "object",
         properties: {
@@ -199,7 +198,7 @@ Tools are now parameter-driven rather than single-purpose.
           },
           target: {
             type: "string",
-            enum: ["dashboard", "voice", "profile", "settings", "analytics", "reports", "sidebar", "toolbar"],
+            enum: ["dashboard", "voice", "profile", "settings", "analytics", "reports", "toolbar"],
             description: "Navigation target or UI element (not needed for get_state)",
           },
           section: {
@@ -231,15 +230,10 @@ Tools are now parameter-driven rather than single-purpose.
               locationSummary = "on the dashboard";
             }
             
-            const sidebarSummary = currentState.sidebarState === 'expanded' 
-              ? "with the sidebar open" 
-              : "with the sidebar closed";
-            
-            const fullSummary = `You're currently ${locationSummary} ${sidebarSummary}`;
+            const fullSummary = `You're currently ${locationSummary}`;
             
             return {
               success: true,
-              sidebarState: currentState.sidebarState,
               currentSection: currentState.currentSection || "voice",
               contentMode: currentState.contentMode,
               isOnDashboard: currentState.contentMode === 'dashboard' && currentState.currentSection === 'dashboard',
@@ -262,15 +256,6 @@ Tools are now parameter-driven rather than single-purpose.
               success: true,
               message: "Navigated to voice mode",
               spokenResponse: "Back to voice mode"
-            };
-          } else if (target === "sidebar") {
-            // toggleSidebar doesn't take arguments, it just toggles
-            navigationService.toggleSidebar();
-            const sidebarAction = action === "open" ? "Opening" : action === "close" ? "Closing" : "Toggling";
-            return {
-              success: true,
-              message: `Sidebar ${action}ed`,
-              spokenResponse: `${sidebarAction} the sidebar`
             };
           } else if (target && ["profile", "settings", "analytics", "reports"].includes(target) && action === "go") {
             navigationService.navigateToSection(target as any);
@@ -452,7 +437,7 @@ Tools are now parameter-driven rather than single-purpose.
           },
           preset: {
             type: "string",
-            enum: ["single", "split", "stacked", "focus-sidebar", "dashboard", "grid"],
+            enum: ["single", "split", "stacked", "dashboard", "grid"],
             description: "Preset layout to apply (for apply action)",
           },
           panelPercentages: {

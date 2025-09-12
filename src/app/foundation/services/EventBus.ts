@@ -27,7 +27,7 @@ export type EventUnsubscribe = () => void;
 
 // Navigation Types
 export type NavigationSection = 'workspace' | 'profile' | 'settings' | 'voice' | null;
-export type SidebarState = 'expanded' | 'collapsed';
+// Removed SidebarState - no longer using sidebar paradigm
 
 // Workspace Types
 export interface WorkspaceModuleEvent {
@@ -130,7 +130,7 @@ export interface ServiceEventMap {
   'foundation:system:initialized': undefined;
   
   // Navigation Events (New Standard Names)
-  'navigation:sidebar:changed': { state: SidebarState; source: string };
+  // Removed sidebar:changed - using icon/tooltip navigation instead
   'navigation:section:changed': { section: NavigationSection; contentMode: string; source: string };
   'navigation:section:mode-changed': { mode: string; section: NavigationSection; source: string };
   
@@ -200,7 +200,7 @@ export interface ServiceEventMap {
   'session:webrtc:disconnected': Record<string, never>;
   
   // Legacy Events (Backward Compatibility - will be deprecated)
-  'navigation:sidebar-state': { state: SidebarState; source: string };
+  // Removed sidebar-state - no longer applicable
   'navigation:section-change': { section: NavigationSection; contentMode: string; source: string };
   'navigation:content-mode': { mode: string; section: NavigationSection; source: string };
   'workspace-layout-changed': WorkspaceLayoutEvent;
@@ -230,7 +230,7 @@ export class EventBus {
 
   // Legacy event to new event mapping
   private eventMigrationMap: Record<string, string> = {
-    'navigation:sidebar-state': 'navigation:sidebar:changed',
+    // Removed sidebar-state mapping - no longer exists
     'navigation:section-change': 'navigation:section:changed', 
     'navigation:content-mode': 'navigation:section:mode-changed',
     'workspace-layout-changed': 'workspace:layout:changed',

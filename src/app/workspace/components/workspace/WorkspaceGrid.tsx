@@ -112,9 +112,13 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
   const [activeLayout, setActiveLayout] = useState<string>('dashboard');
   const [isDragging, setIsDragging] = useState(false);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   
   // Track when we're applying a preset to avoid triggering custom layout
   const isApplyingPreset = useRef(false);
+  
+  // Refs for grid items to enable scrolling
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Wait for client-side mount to detect theme
   useEffect(() => {
@@ -361,6 +365,55 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
     onItemActivate?.(itemId);
   }, [onModuleDrop, onItemActivate]);
 
+  // Handle focus changes and scrolling
+  useEffect(() => {
+    if (focusedItemId) {
+      const element = itemRefs.current.get(focusedItemId);
+      if (element) {
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center',
+          inline: 'center' 
+        });
+      }
+      
+      // Notify the service about focus change
+      foundationServices.workspace.setFocusedModule(focusedItemId);
+    } else {
+      foundationServices.workspace.setFocusedModule(null);
+    }
+  }, [focusedItemId]);
+  
+  // Listen for programmatic focus commands from VA
+  useEffect(() => {
+    const handleFocusCommand = (event: CustomEvent) => {
+      const { moduleId } = event.detail;
+      setFocusedItemId(moduleId);
+    };
+    
+    window.addEventListener('workspace:focus-module', handleFocusCommand as EventListener);
+    
+    return () => {
+      window.removeEventListener('workspace:focus-module', handleFocusCommand as EventListener);
+    };
+  }, []);
+  
+  // Handle clicks outside to clear focus
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.workspace-item')) {
+        setFocusedItemId(null);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   // Add listener for custom touch drop events
   useEffect(() => {
     const handleTouchDrop = (e: Event) => {
@@ -457,6 +510,9 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
     return (
       <motion.div
         key={item.id}
+        ref={(el) => {
+          if (el) itemRefs.current.set(item.id, el);
+        }}
         data-item-id={item.id}
         data-item-type={item.type}
         className={`workspace-item ${item.type} ${item.status}`}
@@ -464,6 +520,10 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.3 }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setFocusedItemId(item.id);
+        }}
         onDragOver={(e) => handleDragOver(e, item.id)}
         onDragLeave={(e) => handleDragLeave(e, item.id)}
         onDrop={(e) => handleDrop(e, item.id)}
@@ -476,7 +536,9 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
           backdropFilter: 'blur(10px)',
           border: isDraggedOver
             ? `1px solid ${colors.border.active}` // Visible when dragging
-            : 'none', // No border for normal or active state
+            : focusedItemId === item.id
+              ? '1px solid rgba(59, 130, 246, 0.3)' // Very subtle thin blue focus border
+              : 'none', // No border for normal state
           borderRadius: '24px',
           padding: '10px',
           display: 'flex',

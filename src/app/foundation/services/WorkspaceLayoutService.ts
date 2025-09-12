@@ -397,6 +397,73 @@ class WorkspaceLayoutService {
   }
 
   /**
+   * Focus control methods for VA integration
+   */
+  public focusModule(moduleId: string): void {
+    this.state.focusedModuleId = moduleId;
+    
+    // Emit event for UI to handle focus
+    window.dispatchEvent(new CustomEvent('workspace:focus-module', {
+      detail: { moduleId }
+    }));
+    
+    // Also emit through EventBus for other services
+    this.eventBus.emit('workspace:module-focused', {
+      moduleId,
+      timestamp: new Date()
+    });
+    
+    console.log(`🎯 WorkspaceLayout: Focused on module ${moduleId}`);
+  }
+  
+  // Clear focus
+  public clearFocus(): void {
+    this.state.focusedModuleId = null;
+    
+    window.dispatchEvent(new CustomEvent('workspace:focus-module', {
+      detail: { moduleId: null }
+    }));
+    
+    this.eventBus.emit('workspace:focus-cleared', {
+      timestamp: new Date()
+    });
+  }
+  
+  // Get currently focused module
+  public getFocusedModule(): string | null {
+    return this.state.focusedModuleId;
+  }
+  
+  // Set focused module (called by UI)
+  public setFocusedModule(moduleId: string | null): void {
+    this.state.focusedModuleId = moduleId;
+    
+    if (moduleId) {
+      this.eventBus.emit('workspace:module-focused', {
+        moduleId,
+        timestamp: new Date()
+      });
+    } else {
+      this.eventBus.emit('workspace:focus-cleared', {
+        timestamp: new Date()
+      });
+    }
+  }
+  
+  // Focus on module by type (useful for VA commands like "focus on email")
+  public focusModuleByType(moduleType: string): void {
+    // Find the first module of the given type
+    for (const [id, module] of this.state.modules) {
+      if (module.type === moduleType) {
+        this.focusModule(id);
+        return;
+      }
+    }
+    
+    console.warn(`⚠️ No module of type '${moduleType}' found`);
+  }
+
+  /**
    * Create a custom proportional layout with specified percentages
    * Supports any number of panels, partial layouts, and multi-row grids
    * Phase 3: Enhanced with intelligent caching for faster performance

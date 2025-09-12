@@ -57,6 +57,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
     body: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const [nextPageToken, setNextPageToken] = useState<string>('');
   
   // Refs for managing intervals and initialization
@@ -571,8 +572,13 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
         marginBottom: '12px'
         // No border - just spacing for visual separation
       }}>
-        <div>
-          <h3 style={{
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          flex: 1
+        }}>
+          <span style={{
             margin: 0,
             fontSize: '11px',
             fontWeight: 500,
@@ -582,17 +588,142 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
             opacity: 0.7
           }}>
             Gmail
-          </h3>
+          </span>
           {status.gmailEmail && (
-            <p style={{
-              margin: 0,
-              fontSize: '11px',
-              color: colors.text.muted,
-              marginTop: '2px',
-              opacity: 0.6
+            <>
+              <span style={{
+                margin: 0,
+                fontSize: '11px',
+                color: colors.text.muted,
+                opacity: 0.5
+              }}>
+                •
+              </span>
+              <span style={{
+                margin: 0,
+                fontSize: '11px',
+                color: colors.text.muted,
+                opacity: 0.6
+              }}>
+                {status.gmailEmail}
+              </span>
+            </>
+          )}
+          
+          {/* Search functionality - integrated into header */}
+          {status.connected && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginLeft: '12px',
+              flex: 1
             }}>
-              {status.gmailEmail}
-            </p>
+              <AnimatePresence mode="wait">
+                {!searchExpanded ? (
+                  <motion.button
+                    key="search-icon"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => setSearchExpanded(true)}
+                    style={{
+                      padding: '4px',
+                      fontSize: '14px',
+                      background: 'none',
+                      border: 'none',
+                      color: colors.text.muted,
+                      cursor: 'pointer',
+                      opacity: 0.6,
+                      transition: 'opacity 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '0.6';
+                    }}
+                    title="Search emails"
+                  >
+                    🔍
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    key="search-bar"
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: '180px', opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      onBlur={() => {
+                        // Only collapse if search is empty
+                        if (!searchQuery) {
+                          setTimeout(() => setSearchExpanded(false), 200);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setSearchQuery('');
+                          handleSearch('');
+                          setSearchExpanded(false);
+                        }
+                      }}
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '4px 24px 4px 8px',
+                        fontSize: '11px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                        color: colors.text.primary,
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        handleSearch('');
+                        setSearchExpanded(false);
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: '4px',
+                        padding: '2px',
+                        fontSize: '10px',
+                        background: 'none',
+                        border: 'none',
+                        color: colors.text.muted,
+                        cursor: 'pointer',
+                        opacity: 0.5,
+                        transition: 'opacity 0.15s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.5';
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </div>
         
@@ -698,27 +829,8 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
           flex: 1,
           minHeight: 0,
           overflow: 'auto', // Allow this container to scroll when needed
-          maxHeight: 'calc(100% - 50px)' // Account for header height
+          maxHeight: 'calc(100% - 38px)' // Account for more compact header height
         }}>
-          {/* Search Bar - Minimal */}
-          <div style={{ marginBottom: '12px' }}>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '6px 8px',
-                fontSize: '12px',
-                border: 'none',
-                borderRadius: '4px',
-                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                color: colors.text.primary,
-                outline: 'none'
-              }}
-            />
-          </div>
 
           {/* Compose Form - Minimal overlay */}
           <AnimatePresence>

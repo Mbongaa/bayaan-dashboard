@@ -6,23 +6,20 @@
  * 
  * Usage:
  * <NavigationStateBridge 
- *   onSidebarStateChange={(state) => setSidebarState(state)}
  *   onSectionChange={(section) => setSelectedSection(section)}
  * />
  */
 
 import { useEffect, useRef } from 'react';
-import { navigationService, NavigationSection, SidebarState } from '../services/NavigationService';
+import { navigationService, NavigationSection } from '../services/NavigationService';
 import { eventMigrationHelper } from '../services/EventBus';
 
 interface NavigationStateBridgeProps {
-  onSidebarStateChange?: (state: SidebarState, isHovered: boolean) => void;
   onSectionChange?: (section: NavigationSection, contentMode: 'voice' | 'workspace') => void;
   onContentModeChange?: (mode: 'voice' | 'workspace') => void;
 }
 
 export function NavigationStateBridge({
-  onSidebarStateChange,
   onSectionChange,
   onContentModeChange
 }: NavigationStateBridgeProps) {
@@ -36,16 +33,6 @@ export function NavigationStateBridge({
       console.log('[NavigationStateBridge] Navigation service initialized');
     }
 
-    // Subscribe to sidebar state changes
-    const handleSidebarState = (event: any) => {
-      console.log('[NavigationStateBridge] Sidebar state event:', event);
-      if (onSidebarStateChange) {
-        // Convert expanded/collapsed to hover state
-        const isHovered = event.state === 'expanded';
-        onSidebarStateChange(event.state, isHovered);
-      }
-    };
-
     // Subscribe to section changes
     const handleSectionChange = (event: any) => {
       console.log('[NavigationStateBridge] Section change event:', event);
@@ -58,12 +45,6 @@ export function NavigationStateBridge({
     };
 
     // Add event listeners using the migration helper to listen to both old and new events
-    const unsubscribeSidebar = eventMigrationHelper.onBoth(
-      'navigation:sidebar-state',
-      'navigation:sidebar:changed',
-      handleSidebarState
-    );
-
     const unsubscribeSection = eventMigrationHelper.onBoth(
       'navigation:section-change', 
       'navigation:section:changed',
@@ -74,10 +55,6 @@ export function NavigationStateBridge({
     const initialState = navigationService.getState();
     console.log('[NavigationStateBridge] Initial state:', initialState);
     
-    if (onSidebarStateChange) {
-      const isHovered = initialState.sidebarState === 'expanded';
-      onSidebarStateChange(initialState.sidebarState, isHovered);
-    }
     if (onSectionChange) {
       onSectionChange(initialState.currentSection, initialState.contentMode);
     }
@@ -87,11 +64,10 @@ export function NavigationStateBridge({
 
     // Cleanup
     return () => {
-      unsubscribeSidebar();
       unsubscribeSection();
       console.log('[NavigationStateBridge] Event listeners removed');
     };
-  }, [onSidebarStateChange, onSectionChange, onContentModeChange]);
+  }, [onSectionChange, onContentModeChange]);
 
   // This component doesn't render anything
   return null;
@@ -103,12 +79,8 @@ export function NavigationStateBridge({
 export function useNavigationState() {
   const state = navigationService.getState();
   return {
-    sidebarState: state.sidebarState,
     currentSection: state.currentSection,
     contentMode: state.contentMode,
-    expandSidebar: () => navigationService.expandSidebar(),
-    collapseSidebar: () => navigationService.collapseSidebar(),
-    toggleSidebar: () => navigationService.toggleSidebar(),
     navigateToSection: (section: NavigationSection) => navigationService.navigateToSection(section),
     backToVoice: () => navigationService.backToVoice()
   };

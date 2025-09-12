@@ -16,9 +16,9 @@ interface WorkspaceLayoutProps {
 /**
  * Unified Workspace Layout Component
  * 
- * This component integrates the sidebar and content area into a single
- * fluid layout system. The sidebar keeps its original floating design
- * but is properly integrated with the content flow.
+ * This component integrates the icon navigation and content area into a single
+ * fluid layout system. The navigation icons use a floating design
+ * with tooltips for navigation control.
  */
 export function WorkspaceLayout({
   selectedItem,
@@ -33,14 +33,14 @@ export function WorkspaceLayout({
 
   return (
     <div className={`workspace-layout-container fixed inset-0 ${Z_CLASSES.workspace}`}>
-      {/* New Icon-based Sidebar */}
+      {/* Icon-based Navigation */}
       <WorkspaceSidebarV2 
         selectedItem={selectedItem}
         onMenuSelect={onMenuSelect}
         onBackToVoice={onBackToVoice}
       />
 
-      {/* Content Area - Full screen with padding to avoid sidebar overlap */}
+      {/* Content Area - Full screen with padding to avoid icon navigation overlap */}
       <div className="w-full h-full overflow-hidden pl-20 pr-4">
         <WorkspaceContentRenderer
           selectedItem={selectedItem}
