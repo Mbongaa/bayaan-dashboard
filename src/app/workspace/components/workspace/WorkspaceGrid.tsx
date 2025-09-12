@@ -138,8 +138,8 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         ? 'rgba(55, 65, 81, 0.2)' // Subtle on hover/drag
         : 'rgba(156, 163, 175, 0.2)', // Subtle on hover/drag
       active: isDark
-        ? 'rgba(59, 130, 246, 0.3)' // Blue for active/selected
-        : 'rgba(59, 130, 246, 0.2)', // Blue for active/selected
+        ? 'rgba(59, 130, 246, 0.8)' // Strong blue for active/selected
+        : 'rgba(59, 130, 246, 0.6)', // Strong blue for active/selected
     },
     background: {
       card: isDark 
@@ -155,8 +155,8 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         ? 'rgba(0, 0, 0, 0.1)' // same as sidebar
         : 'rgba(255, 255, 255, 0.1)', // same as sidebar
       activeButton: isDark
-        ? 'rgba(0, 0, 0, 0.1)' // same as sidebar
-        : 'rgba(255, 255, 255, 0.1)', // same as sidebar
+        ? 'rgba(59, 130, 246, 0.2)' // Blue tinted for active
+        : 'rgba(59, 130, 246, 0.1)', // Blue tinted for active
     },
     shadow: {
       button: 'none', // no shadow for clean look
@@ -361,6 +361,45 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
     onItemActivate?.(itemId);
   }, [onModuleDrop, onItemActivate]);
 
+  // Add listener for custom touch drop events
+  useEffect(() => {
+    const handleTouchDrop = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { moduleType, x, y } = customEvent.detail;
+      
+      // Find which grid item was dropped on
+      const gridItems = document.querySelectorAll('[data-item-id]');
+      let targetItemId: string | null = null;
+      
+      gridItems.forEach((item) => {
+        const rect = item.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          // Get the item id from the data attribute
+          targetItemId = item.getAttribute('data-item-id');
+        }
+      });
+      
+      // If we couldn't find an exact match, find the closest empty slot
+      if (!targetItemId) {
+        const emptyItem = items.find(item => item.type === 'empty');
+        if (emptyItem) {
+          targetItemId = emptyItem.id;
+        }
+      }
+      
+      if (targetItemId) {
+        handleModuleDrop(targetItemId, moduleType);
+      }
+    };
+    
+    // Listen for custom module-drop events
+    document.addEventListener('module-drop', handleTouchDrop);
+    
+    return () => {
+      document.removeEventListener('module-drop', handleTouchDrop);
+    };
+  }, [handleModuleDrop, items]);
+
   // Handle drag over grid item
   const handleDragOver = useCallback((e: React.DragEvent, itemId: string) => {
     e.preventDefault();
@@ -418,6 +457,8 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
     return (
       <motion.div
         key={item.id}
+        data-item-id={item.id}
+        data-item-type={item.type}
         className={`workspace-item ${item.type} ${item.status}`}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -431,25 +472,19 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
           width: '100%',
           backgroundColor: isDraggedOver
             ? colors.background.selected
-            : isActive 
-              ? colors.background.active
-              : colors.background.card,
+            : colors.background.card, // Removed active background color change
           backdropFilter: 'blur(10px)',
           border: isDraggedOver
             ? `1px solid ${colors.border.active}` // Visible when dragging
-            : isActive 
-              ? `1px solid ${colors.border.active}` // Visible when active
-              : 'none', // No border for normal state
+            : 'none', // No border for normal or active state
           borderRadius: '24px',
           padding: '10px',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          overflow: 'hidden', // Contain content within grid bounds
+          overflow: 'auto', // Allow scrolling within grid items
           cursor: isDragging ? 'grabbing' : 'default', // Default cursor for content area
-          boxShadow: isActive 
-            ? colors.shadow.activeButton
-            : colors.shadow.card
+          boxShadow: colors.shadow.card // Removed active box shadow change
         }}
       >
         {/* Header */}
@@ -488,9 +523,12 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
         <div className="workspace-item-content" style={{
           flex: 1,
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: colors.text.secondary
+          flexDirection: 'column',
+          alignItems: item.type === 'empty' ? 'center' : 'stretch',
+          justifyContent: item.type === 'empty' ? 'center' : 'flex-start',
+          color: colors.text.secondary,
+          overflow: 'auto',
+          minHeight: 0  // Important for flex children to scroll properly
         }}>
           {isLoading ? (
             <div className="loading-spinner">
@@ -651,7 +689,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
                 : colors.background.button,
               backdropFilter: 'blur(12px)',
               color: activeLayout === template 
-                ? '#ffffff' 
+                ? (isDark ? '#ffffff' : '#1e40af') // White in dark, blue in light
                 : colors.text.primary,
               cursor: 'pointer',
               transition: 'all 0.2s ease',

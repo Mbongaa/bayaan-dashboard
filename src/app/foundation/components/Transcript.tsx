@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/shared/types/types";
 import { useTranscript } from "@/app/foundation/contexts/TranscriptContext";
-import { GuardrailChip } from "./GuardrailChip";
+import { GuardrailChip } from "./_archive/ui-elements/GuardrailChip";
 import TypewriterText from "./TypewriterText";
 
 export interface TranscriptProps {

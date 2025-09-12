@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Sidebar, SidebarBody } from '@/app/shared/components/sidebar';
-import { WorkspaceSidebar } from './navigation/WorkspaceSidebar';
+import React from 'react';
 import { WorkspaceSidebarV2 } from './navigation/WorkspaceSidebarV2';
 import WorkspaceContentRenderer from './WorkspaceContentRenderer';
 import { WorkspaceNotification } from './WorkspaceNotification';
 import { Z_CLASSES } from '@/app/styles/z-index';
-import { foundationServices } from '../../foundation/services/FoundationServices';
-import { cn } from '@/app/shared/lib/utils';
 
 interface WorkspaceLayoutProps {
   selectedItem: string | null;
@@ -30,8 +26,6 @@ export function WorkspaceLayout({
   onBackToVoice,
   appMode
 }: WorkspaceLayoutProps) {
-  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
-
   // Only render when in workspace mode
   if (appMode !== 'workspace') {
     return null;

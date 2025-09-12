@@ -1,7 +1,7 @@
 import React from 'react';
-import { useServicedGalaxyRenderer } from '../hooks/useServicedGalaxyRenderer';
-import { SessionStatus } from '../../shared/types/types';
-import './Galaxy.css';
+import { useServicedGalaxyRenderer } from '../../../hooks/useServicedGalaxyRenderer';
+import { SessionStatus } from '../../../../shared/types/types';
+import '../Galaxy.css';
 
 interface ServicedGalaxyProps {
   focal?: [number, number];

@@ -25,8 +25,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Z_CLASSES } from "./styles/z-index";
 import FloatingChatWidget from "./foundation/components/FloatingChatWidget";
-// import WebRTCServiceTest from "./dev/components/WebRTCServiceTest";
-// import ServiceLayerDemo from "./dev/components/ServiceLayerDemo";
 
 // Types
 import type { RealtimeAgent } from '@openai/agents/realtime';
@@ -698,7 +696,7 @@ function App() {
       
       {/* Navigation State Bridge - Connects voice control to navigation */}
       <NavigationStateBridge 
-        onSidebarStateChange={(state, isHovered) => {
+        onSidebarStateChange={() => {
           // Sidebar state is handled internally
         }}
         onSectionChange={(section, contentMode) => {
@@ -869,15 +867,6 @@ function App() {
 
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
-
-      {/* WebRTC Service Test (development only) - HIDDEN */}
-      {/* <WebRTCServiceTest 
-        useImprovedGalaxy={useImprovedGalaxy} 
-        setUseImprovedGalaxy={setUseImprovedGalaxy} 
-      /> */}
-
-      {/* Service Layer Demo (development only) - HIDDEN */}
-      {/* <ServiceLayerDemo /> */}
 
       {/* Single PTT Icon - Rendered via Portal with RealtimeProvider context */}
       <RealtimeProvider value={realtimeContextValue}>
