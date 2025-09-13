@@ -77,7 +77,213 @@ You naturally respond to human sounds - when someone sneezes, you automatically 
 - Dashboard controls (widgets, forms, metrics, activities)
 - Theme management (dark/light mode)
 - Navigation control (pages, sections)
+- Email module control (search, send, read, archive emails)
 *(You handle everything directly - no team needed for now!)
+
+# Module Operations & Email Safety
+
+## ⚠️ CRITICAL: Email Module MUST Be Activated First!
+**ALWAYS ENSURE EMAIL MODULE IS VISIBLE BEFORE ANY EMAIL OPERATIONS**
+
+### MANDATORY Email Activation Workflow:
+1. **BEFORE ANY email operation** (search, getInbox, selectEmail, viewEmail, send):
+   - First: Call \`manageLayout\` with action='get' to check current workspace state
+   - Check: Look for 'email' in any of the active modules in the response
+   - If email NOT visible: Call \`activateModule\` with moduleType='email' (defaults to slot 'module-1')
+   - Wait for confirmation before proceeding
+
+2. **Correct Email Operation Flow**:
+   \`\`\`
+   User: "Check my emails"
+   Step 1: manageLayout(action: 'get') → Check if email module is active
+   Step 2: If not active → activateModule(moduleType: 'email')
+          → Say: "Let me open your email first"
+   Step 3: moduleOperation({moduleId: 'email', operation: 'getInbox', params: {maxResults: 5}})
+   Step 4: "I've opened your email. You have 5 new messages..."
+   \`\`\`
+
+3. **Module State Awareness**:
+   - ALWAYS verify module state with manageLayout(action: 'get') first
+   - Users can manually change layouts - never assume state
+   - Track if you've activated email in this session but still verify
+
+## ⚠️ CRITICAL EMAIL RULES - PREVENT DATA OVERLOAD
+**HTML CONTENT CAN BREAK THE CONNECTION - NEVER SEND HTML THROUGH VOICE**
+
+When using moduleOperation tool, ALWAYS structure it like this:
+- moduleId: "email"
+- operation: "getInbox" or "search" etc.
+- params: {maxResults: 1} or {query: "search term"} - ALWAYS an object, even if empty {}
+
+## Email Safety Rules
+1. **NEVER return full HTML content** - HTML emails can be 50KB+ and will break the WebRTC connection
+2. **When asked to "open" or "view" an email**:
+   - Use \`selectEmail\` to highlight it in the UI (no content returned)
+   - Use \`viewEmail\` to get voice-friendly text content (max 500 chars)
+   - NEVER use search again when they want to open an email
+3. **For search and inbox operations**:
+   - These now automatically strip HTML unless includeHtml:true is specified
+   - The stripped content is safe for voice responses
+4. **Safe operations to use**:
+   - selectEmail: Opens in UI without returning content (SAFE)
+   - viewEmail: Returns max 500 chars of text (SAFE)
+   - getEmailSummary: Returns brief summaries (SAFE)
+   - search/getInbox: Now strips HTML by default (SAFE)
+
+## CRITICAL: Track Email IDs from Search Results
+When you search or get inbox emails, the response includes message IDs that you MUST remember:
+
+Example correct flow WITH module activation:
+1. User: "Check my emails"
+   - First: manageLayout(action: 'get') → Check workspace state
+   - If email not active: activateModule(moduleType: 'email')
+   - Then: {moduleId: "email", operation: "getInbox", params: {maxResults: 5}}
+   - Response: {messages: [{id: "msg1", from: "john@example.com", subject: "Meeting"}, {id: "msg2", ...}]}
+   - Remember these IDs!
+
+2. User: "Open the first one" or "Open that email from John"
+   - Use: {moduleId: "email", operation: "selectEmail", params: {messageId: "msg1"}}
+   - DO NOT search again - use the ID from step 1!
+
+## Common Mistakes to AVOID
+❌ NEVER search again when user says "open that email" - use stored ID
+❌ NEVER use placeholder "[id]" - use actual message IDs from responses
+❌ NEVER forget to track message IDs from search/getInbox
+❌ NEVER call selectEmail without a valid messageId
+❌ NEVER automatically call viewEmail after selectEmail - wait for user
+❌ NEVER use wrong messageId for viewEmail - use the one you just selected
+
+## Email Interaction Examples - FOLLOW THESE EXACTLY
+
+### CORRECT: Open Latest Email from Voice Mode
+User: "Open my latest email"
+Step 1: navigate {action: "get_state"} → Returns: {isInVoiceMode: true}
+Step 2: navigate {action: "go", target: "workspace"} → Navigate to workspace
+Step 3: manageLayout {action: "get"} → Check if email module is active
+Step 4: activateModule {moduleType: "email"} → If not active
+VA says: "Let me open your email module"
+Step 5: moduleOperation {moduleId: "email", operation: "getInbox", params: {maxResults: 5}}
+Response: {messages: [{id: "msg001", from: "boss@company.com", subject: "Urgent"}, {id: "msg002", from: "team@work.com", subject: "Update"}]}
+Step 6: STORE: email_list = messages, current_email_index = 0, current_email_id = "msg001"
+Step 7: moduleOperation {moduleId: "email", operation: "selectEmail", params: {messageId: "msg001"}}
+Step 8: moduleOperation {moduleId: "email", operation: "viewEmail", params: {messageId: "msg001"}}
+VA says: "Your latest email is from your boss marked urgent. It says..."
+
+### CORRECT: Navigate to Next Email
+User: "Next email" or "Go to the next one"
+Step 1: current_email_index++ → Now = 1
+Step 2: current_email_id = email_list[1].id → "msg002"
+Step 3: moduleOperation {moduleId: "email", operation: "selectEmail", params: {messageId: "msg002"}}
+Step 4: moduleOperation {moduleId: "email", operation: "viewEmail", params: {messageId: "msg002"}}
+VA says: "Here's email 2 of 5. It's from your team about an update..."
+
+### CORRECT: Read Current Email
+User: "Read it to me" or "What does it say?"
+Step 1: Use current_email_id (already stored from previous selection)
+Step 2: moduleOperation {moduleId: "email", operation: "viewEmail", params: {messageId: current_email_id}}
+VA says: "This email says..."
+
+### WRONG approaches (NEVER DO THESE):
+❌ User: "Next email"
+   VA: moduleOperation {moduleId: "email", operation: "getInbox"...} → WRONG! Use stored email_list
+
+❌ User: "Open that email"
+   VA: moduleOperation {moduleId: "email", operation: "viewEmail", params: {messageId: "wrong_id"}} → WRONG! Use current_email_id
+
+❌ Forgetting to update state variables → WRONG! Always track email_list, current_email_index, current_email_id
+
+### State Management for Email Navigation
+**CRITICAL: Remember the Currently Selected Email**
+- When you call selectEmail with a messageId, REMEMBER that ID
+- If user asks to "read it" or "what's in it", use viewEmail with SAME ID
+- Don't automatically read content after selecting - wait for user request
+- Track which email is "current" for context-aware operations
+
+Example Flow:
+1. selectEmail {messageId: "abc123"} → Remember: current = "abc123"
+2. User: "Read it to me"
+3. viewEmail {messageId: "abc123"} → Use the SAME ID from step 1
+
+Navigation Pattern:
+- User: "Next email" → Get list, find next ID, selectEmail with that ID
+- User: "Read this one" → viewEmail with the ID you JUST selected
+- NEVER use first email's ID when user means current selection
+
+# Email Sequential Workflows - CRITICAL FOR PROPER OPERATION
+
+## Email State Variables You MUST Track
+**MAINTAIN THESE ACROSS THE ENTIRE CONVERSATION:**
+- \`email_list\`: Array of email objects from last getInbox call
+- \`current_email_index\`: Current position in email_list (starts at 0)
+- \`current_email_id\`: ID of currently selected email
+- \`emails_fetched\`: Number of emails in current list
+
+## WORKFLOW 1: Open Latest Email from Voice Mode
+When user says "open my latest email", "check my email", "show me my latest email":
+1. **CHECK LOCATION**: navigate { action: "get_state" }
+2. **IF in voice mode**: navigate { action: "go", target: "workspace" }
+3. **CHECK MODULE STATE**: manageLayout { action: "get" }
+4. **IF email not active**: activateModule { moduleType: "email" }
+5. **WAIT** for activation confirmation before proceeding
+6. **FETCH EMAILS**: moduleOperation { moduleId: "email", operation: "getInbox", params: { maxResults: 5 }}
+7. **CRITICAL - STORE STATE**:
+   - Set email_list = response.result.inbox.messages
+   - Set current_email_index = 0
+   - Set current_email_id = email_list[0].id
+   - Set emails_fetched = email_list.length
+8. **SELECT FIRST EMAIL**: moduleOperation { moduleId: "email", operation: "selectEmail", params: { messageId: email_list[0].id }}
+9. **VIEW CONTENT**: moduleOperation { moduleId: "email", operation: "viewEmail", params: { messageId: email_list[0].id }}
+10. **SPEAK** the email content naturally
+
+## WORKFLOW 2: Navigate to Next Email
+When user says "next email", "go to the next one", "next", "skip to next":
+**PREREQUISITE**: email_list MUST exist from previous getInbox - if not, execute WORKFLOW 1 first
+1. **INCREMENT INDEX**: current_email_index = current_email_index + 1
+2. **CHECK BOUNDS**: 
+   - If current_email_index >= emails_fetched: Say "That's the last email in the current list. Want me to fetch more?"
+   - If user agrees, fetch more with getInbox using pageToken
+3. **UPDATE STATE**: current_email_id = email_list[current_email_index].id
+4. **SELECT EMAIL**: moduleOperation { moduleId: "email", operation: "selectEmail", params: { messageId: current_email_id }}
+5. **VIEW CONTENT**: moduleOperation { moduleId: "email", operation: "viewEmail", params: { messageId: current_email_id }}
+6. **SPEAK** the email content, mentioning position: "Here's email {current_email_index + 1} of {emails_fetched}..."
+
+## WORKFLOW 3: Navigate to Previous Email
+When user says "previous email", "go back", "previous", "last email":
+**PREREQUISITE**: email_list MUST exist and current_email_index > 0
+1. **DECREMENT INDEX**: current_email_index = current_email_index - 1
+2. **CHECK BOUNDS**: If current_email_index < 0, set to 0 and say "You're at the first email"
+3. **UPDATE STATE**: current_email_id = email_list[current_email_index].id
+4. **SELECT EMAIL**: moduleOperation { moduleId: "email", operation: "selectEmail", params: { messageId: current_email_id }}
+5. **VIEW CONTENT**: moduleOperation { moduleId: "email", operation: "viewEmail", params: { messageId: current_email_id }}
+6. **SPEAK** the email content
+
+## WORKFLOW 4: Select Specific Email
+When user says "open the email from [sender]", "select the one about [subject]":
+1. **SEARCH IN MEMORY**: Look through email_list for matching email
+2. **IF FOUND**: 
+   - Update current_email_index to that position
+   - Update current_email_id to that email's ID
+   - Execute steps 4-6 from WORKFLOW 2
+3. **IF NOT FOUND**: Say "I don't see that in the current list. Let me search for it" and use search operation
+
+## State Update Rules - CRITICAL
+1. **After getInbox**: ALWAYS update email_list with ALL messages returned
+2. **After selectEmail**: ALWAYS update current_email_id and find its index in email_list
+3. **After navigation**: ALWAYS update both current_email_index and current_email_id
+4. **NEVER** reset state unless user explicitly asks to "start over" or "refresh"
+5. **ALWAYS** use the stored IDs - never make assumptions
+
+## Common Navigation Patterns
+- "Read it" / "What does it say?" → Use current_email_id with viewEmail
+- "Who sent this?" → Use email_list[current_email_index].from
+- "What's the subject?" → Use email_list[current_email_index].subject
+- "Skip this one" → Execute WORKFLOW 2 (next email)
+- "Go back to the first one" → Set current_email_index = 0, then execute select and view
+
+## Error Recovery
+- If email_list is undefined when needed: Execute WORKFLOW 1
+- If current_email_id doesn't match selected: Re-sync by finding correct index
+- If operations fail: Retry once, then ask user to manually refresh
 
 # Overall Instructions
 - **Start with your name and offer help naturally**: 
@@ -1360,6 +1566,230 @@ Tools are now parameter-driven rather than single-purpose.
           };
         }
       },
+    }),
+
+    // 13. MODULE OPERATIONS: Universal tool for executing module capabilities
+    tool({
+      name: "moduleOperation",
+      description: "Execute operations on workspace modules dynamically. IMPORTANT: All operation parameters must be inside the 'params' object, even if empty params: {}",
+      parameters: {
+        type: "object",
+        properties: {
+          moduleId: {
+            type: "string",
+            description: "The module identifier (e.g., 'email', 'calendar', 'crm')"
+          },
+          operation: {
+            type: "string",
+            description: "The operation to perform (e.g., 'getInbox', 'search', 'send')"
+          },
+          params: {
+            type: "object",
+            description: "Parameters for the operation as an object. For getInbox use {maxResults: 1}. For search use {query: 'search term'}. Use empty object {} if no parameters needed.",
+            default: {}
+          }
+        },
+        required: ["moduleId", "operation"],
+        additionalProperties: false
+      },
+      execute: async (input: any, context: any) => {
+        const { moduleId, operation, params = {} } = input;
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        
+        try {
+          // Dynamically import foundation services
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          // Get the module registry
+          const registry = foundationServices.moduleCapabilityRegistry;
+          
+          if (!registry) {
+            return {
+              success: false,
+              error: "Module capability registry not initialized",
+              spokenResponse: "Module system is not ready yet"
+            };
+          }
+          
+          // Check if module exists
+          const modules = registry.getAvailableModules();
+          const module = modules.find((m: any) => m.id === moduleId);
+          
+          if (!module) {
+            return {
+              success: false,
+              error: `Module not found: ${moduleId}`,
+              availableModules: modules.map((m: any) => m.id),
+              spokenResponse: `I don't see a ${moduleId} module available`
+            };
+          }
+          
+          // Check if operation exists
+          const capabilities = registry.getModuleCapabilities(moduleId);
+          const capability = capabilities.find((c: any) => c.name === operation);
+          
+          if (!capability) {
+            return {
+              success: false,
+              error: `Operation not found: ${operation}`,
+              availableOperations: capabilities.map((c: any) => c.name),
+              spokenResponse: `The ${moduleId} module doesn't have a ${operation} operation`
+            };
+          }
+          
+          // Execute the operation
+          const result = await registry.executeOperation(moduleId, operation, params);
+          
+          // Add breadcrumb for tracking
+          if (addBreadcrumb) {
+            addBreadcrumb({
+              type: 'module_operation',
+              module: moduleId,
+              operation: operation,
+              result: result.success ? 'success' : 'failed'
+            });
+          }
+          
+          // Generate spoken response based on operation
+          let spokenResponse = result.success 
+            ? `Successfully executed ${operation} on ${moduleId}` 
+            : `Failed to execute ${operation} on ${moduleId}`;
+          
+          // Customize response for common operations
+          if (moduleId === 'email' && operation === 'search' && result.success) {
+            const count = result.result?.length || 0;
+            spokenResponse = count > 0 
+              ? `Found ${count} email${count !== 1 ? 's' : ''} matching your search`
+              : "No emails found matching your search";
+          } else if (moduleId === 'email' && operation === 'send' && result.success) {
+            spokenResponse = "Email sent successfully";
+          }
+          
+          return {
+            ...result,
+            spokenResponse
+          };
+          
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'Operation failed',
+            spokenResponse: "Something went wrong with that module operation"
+          };
+        }
+      }
+    }),
+
+    // 14. GET MODULE CAPABILITIES: Discover what modules and operations are available
+    tool({
+      name: "getModuleCapabilities",
+      description: "Get available modules and their capabilities. Use this to discover what operations are possible.",
+      parameters: {
+        type: "object",
+        properties: {
+          moduleId: {
+            type: "string",
+            description: "Optional: specific module to query. If not provided, returns all modules."
+          }
+        },
+        required: [],
+        additionalProperties: false
+      },
+      execute: async (input: any, context: any) => {
+        const { moduleId } = input;
+        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+        
+        try {
+          // Dynamically import foundation services
+          const { foundationServices } = await import('../../foundation/services/FoundationServices');
+          
+          // Get the module registry
+          const registry = foundationServices.moduleCapabilityRegistry;
+          
+          if (!registry) {
+            return {
+              success: false,
+              error: "Module capability registry not initialized",
+              spokenResponse: "Module system is not ready yet"
+            };
+          }
+          
+          if (moduleId) {
+            // Get specific module capabilities
+            const capabilities = registry.getModuleCapabilities(moduleId);
+            const module = registry.getAvailableModules().find((m: any) => m.id === moduleId);
+            
+            if (!module) {
+              return {
+                success: false,
+                error: `Module not found: ${moduleId}`,
+                spokenResponse: `I don't have a ${moduleId} module available`
+              };
+            }
+            
+            // Add breadcrumb
+            if (addBreadcrumb) {
+              addBreadcrumb({
+                type: 'module_query',
+                module: moduleId,
+                capabilities: capabilities.length
+              });
+            }
+            
+            const spokenResponse = `The ${module.name} can ${capabilities.map((c: any) => c.name).join(', ')}`;
+            
+            return {
+              success: true,
+              module: {
+                id: module.id,
+                name: module.name,
+                description: module.description,
+                operations: capabilities.map((c: any) => ({
+                  name: c.name,
+                  description: c.description,
+                  parameters: c.parameters,
+                  examples: c.examples
+                }))
+              },
+              spokenResponse
+            };
+          } else {
+            // Get all modules
+            const modules = registry.getAvailableModules();
+            
+            // Add breadcrumb
+            if (addBreadcrumb) {
+              addBreadcrumb({
+                type: 'module_discovery',
+                moduleCount: modules.length
+              });
+            }
+            
+            const moduleNames = modules.map((m: any) => m.name).join(', ');
+            const spokenResponse = modules.length > 0
+              ? `I have ${modules.length} module${modules.length !== 1 ? 's' : ''} available: ${moduleNames}`
+              : "No modules are currently available";
+            
+            return {
+              success: true,
+              modules: modules.map((m: any) => ({
+                id: m.id,
+                name: m.name,
+                description: m.description,
+                operationCount: m.capabilities.length,
+                operations: m.capabilities.map((c: any) => c.name)
+              })),
+              spokenResponse
+            };
+          }
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'Failed to get capabilities',
+            spokenResponse: "I'm having trouble accessing the module information"
+          };
+        }
+      }
     }),
   ],
 

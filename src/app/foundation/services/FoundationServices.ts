@@ -8,9 +8,10 @@ import { createBottleneckDetector, BottleneckDetector } from './BottleneckDetect
 import { WebGLContextService } from './WebGLContextService';
 import { WebRTCService } from './WebRTCService';
 import { navigationService } from './NavigationService';
-import { dashboardDataService } from './WorkspaceDataService';
+import { workspaceDataService } from './WorkspaceDataService';
 import { integrationService } from './IntegrationService';
 import { WorkspaceLayoutService } from './WorkspaceLayoutService';
+import { ModuleCapabilityRegistry } from './ModuleCapabilityRegistry';
 
 /**
  * Foundation Services Container - Enhanced with Phase 2 Service Communication
@@ -45,8 +46,11 @@ export class FoundationServices {
   public readonly webrtc: WebRTCService;
   public readonly workspace: WorkspaceLayoutService;
   public readonly navigation = navigationService;
-  public readonly dashboardData = dashboardDataService;
+  public readonly dashboardData = workspaceDataService;
   public readonly integration = integrationService;
+  
+  // Module capability registry for dynamic module operations
+  public readonly moduleCapabilityRegistry: ModuleCapabilityRegistry;
 
   private static _instance: FoundationServices | null = null;
   private isInitialized: boolean = false;
@@ -66,6 +70,9 @@ export class FoundationServices {
     this.webgl = new WebGLContextService(this.eventBus);
     this.webrtc = new WebRTCService(this.eventBus);
     this.workspace = WorkspaceLayoutService.getInstance(this.eventBus);
+    
+    // Initialize module capability registry
+    this.moduleCapabilityRegistry = new ModuleCapabilityRegistry(this.eventBus);
     
     // Phase 2: Connect navigation service to the communication system
     this.navigation.setServiceContainer(this.serviceContainer);
@@ -121,6 +128,13 @@ export class FoundationServices {
       
       // Initialize workspace layout service
       this.workspace.initialize();
+      
+      // Initialize module capability registry
+      await this.moduleCapabilityRegistry.initialize();
+      console.log('[FoundationServices] Module capability registry initialized');
+      
+      // Auto-register default modules
+      await this.registerDefaultModules();
 
       // Phase 2: Start service monitoring (Deploy the security guards)
       this.serviceMonitor.startMonitoring();
@@ -184,6 +198,30 @@ export class FoundationServices {
    */
   getEnhancedSystemHealth(): ReturnType<ServiceContainer['getSystemHealth']> {
     return this.serviceContainer.getSystemHealth();
+  }
+
+  /**
+   * Register default modules with the capability registry
+   */
+  private async registerDefaultModules(): Promise<void> {
+    try {
+      // Register the REAL email module that connects to your Gmail API
+      const { RealEmailModulePlugin } = await import('@/app/modules/email/RealEmailModulePlugin');
+      const realEmailModule = new RealEmailModulePlugin();
+      await this.moduleCapabilityRegistry.registerModule(realEmailModule);
+      console.log('[FoundationServices] Real Gmail module registered successfully');
+      
+      // The module will automatically get the userId from the session
+      // and use your existing Gmail API routes
+      
+      // Future: Register other modules here
+      // const { CalendarModulePlugin } = await import('@/app/modules/calendar/CalendarModulePlugin');
+      // const calendarModule = new CalendarModulePlugin();
+      // await this.moduleCapabilityRegistry.registerModule(calendarModule);
+    } catch (error) {
+      console.warn('[FoundationServices] Failed to register some modules:', error);
+      // Don't throw - allow system to continue without modules
+    }
   }
 
   /**

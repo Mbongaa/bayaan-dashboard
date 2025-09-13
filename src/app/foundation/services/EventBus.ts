@@ -199,6 +199,48 @@ export interface ServiceEventMap {
   'session:webrtc:connected': SessionEvent;
   'session:webrtc:disconnected': Record<string, never>;
   
+  // Module System Events (New)
+  'module:registry:ready': Record<string, never>;
+  'module:registering': { moduleId: string; name: string };
+  'module:registered': { moduleId: string; name: string; capabilityCount: number };
+  'module:operation:request': { 
+    moduleId: string; 
+    operation: string; 
+    params: any; 
+    requestId: string 
+  };
+  'module:operation:response': { 
+    requestId: string; 
+    success: boolean; 
+    result?: any; 
+    error?: string 
+  };
+  'module:operation:started': { 
+    moduleId: string; 
+    operation: string; 
+    params: any 
+  };
+  'module:operation:completed': { 
+    moduleId: string; 
+    operation: string; 
+    success: boolean 
+  };
+  'module:operation:failed': { 
+    moduleId: string; 
+    operation: string; 
+    error: string 
+  };
+  
+  // Email Module Events
+  'email:sent': { to: string | string[]; subject: string; id: string };
+  'email:archived': { messageIds: string[]; count: number };
+  'email:marked': { messageIds: string[]; read: boolean; count: number };
+  'email:trashed': { messageIds: string[]; count: number };
+  'email:search:completed': { query: string; resultCount: number };
+  'email:thread:fetched': { threadId: string; messageCount: number };
+  'email:refresh': Record<string, never>;
+  'email:sync': Record<string, never>;
+  
   // Legacy Events (Backward Compatibility - will be deprecated)
   // Removed sidebar-state - no longer applicable
   'navigation:section-change': { section: NavigationSection; contentMode: string; source: string };

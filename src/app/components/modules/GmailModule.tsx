@@ -545,6 +545,36 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
     }
   }, [mounted, userId, checkStatus]);
 
+  // Handle email selection events from VA
+  useEffect(() => {
+    if (!mounted) return;
+
+    const handleEmailSelect = (event: CustomEvent) => {
+      console.log('📧 Email select event received:', event.detail);
+      const { messageId } = event.detail;
+      
+      // Find the message in the current list
+      const message = messages.find(m => m.id === messageId);
+      if (message) {
+        setSelectedMessage(message);
+        // Mark as read if unread
+        if (!message.isRead) {
+          markAsRead(messageId);
+        }
+      } else {
+        console.log('📧 Message not found in current list:', messageId);
+        // Optionally, you could fetch the specific message here
+      }
+    };
+
+    // Listen for email:select events from the EventBus
+    window.addEventListener('email:select', handleEmailSelect as EventListener);
+    
+    return () => {
+      window.removeEventListener('email:select', handleEmailSelect as EventListener);
+    };
+  }, [mounted, messages, markAsRead]);
+
   if (!mounted) {
     return <div style={{ ...style }} className={className}>Loading...</div>;
   }

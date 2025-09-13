@@ -110,8 +110,8 @@ export default function FloatingChatWidget({}: FloatingChatWidgetProps = {}) {
                 </button>
               </div>
 
-              {/* Transcript Content - Full Height */}
-              <div className="flex-1 overflow-hidden">
+              {/* Transcript Content - Full Height with Scroll */}
+              <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
                 <Transcript />
               </div>
             </div>
