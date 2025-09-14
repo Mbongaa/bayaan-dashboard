@@ -12,12 +12,14 @@ import { eventMigrationHelper } from '../../../foundation/services/EventBus';
 import { GmailModule } from '../../../components/modules/GmailModule';
 import { useAuth } from '../../../hooks/useSupabase';
 import { AgentOutputDisplay } from '../AgentOutputDisplay';
+import { OutputModule } from '../../../modules/output/OutputModule';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // Available module types for dragging
 export const MODULE_TYPES = [
   { type: 'email', icon: '✉️', title: 'Gmail', description: 'Email management' },
+  { type: 'output', icon: '📝', title: 'Output', description: 'Visual display panel' },
   { type: 'crm', icon: '🤝', title: 'CRM', description: 'Customer relations' },
   { type: 'calendar', icon: '📅', title: 'Calendar', description: 'Schedule management' },
   { type: 'analytics', icon: '📊', title: 'Analytics', description: 'Data insights' }
@@ -26,7 +28,7 @@ export const MODULE_TYPES = [
 export interface WorkspaceItem {
   id: string;
   title: string;
-  type: 'email' | 'crm' | 'calendar' | 'analytics' | 'empty';
+  type: 'email' | 'output' | 'crm' | 'calendar' | 'analytics' | 'empty';
   status: 'loading' | 'active' | 'idle';
   metadata?: any;
 }
@@ -461,7 +463,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
   }, []);
 
   // Handle drag leave
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent, itemId: string) => {
     // Only clear drag over if we're actually leaving the element
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX;
@@ -531,7 +533,7 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
           height: '100%',
           width: '100%',
           backgroundColor: isDraggedOver
-            ? colors.background.selected
+            ? colors.background.activeButton
             : colors.background.card, // Removed active background color change
           backdropFilter: 'blur(10px)',
           border: isDraggedOver
@@ -658,6 +660,28 @@ export function WorkspaceGrid({ onLayoutChange, onItemActivate, onModuleDrop }: 
                 </p>
                 <p style={{ fontSize: '10px', opacity: 0.5, marginTop: '8px' }}>
                   Go to /login to authenticate
+                </p>
+              </div>
+            )
+          ) : item.type === 'output' ? (
+            // Render Output Module
+            user?.id ? (
+              <OutputModule
+                userId={user.id}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: '0',
+                  padding: '0',
+                  backgroundColor: 'transparent'
+                }}
+              />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔒</div>
+                <p style={{ fontSize: '12px', opacity: 0.7 }}>
+                  Please log in to access Output Panel
                 </p>
               </div>
             )

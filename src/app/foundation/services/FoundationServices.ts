@@ -211,8 +211,14 @@ export class FoundationServices {
       await this.moduleCapabilityRegistry.registerModule(realEmailModule);
       console.log('[FoundationServices] Real Gmail module registered successfully');
       
-      // The module will automatically get the userId from the session
-      // and use your existing Gmail API routes
+      // Register the Output module for visual display
+      const { OutputModulePlugin } = await import('@/app/modules/output/OutputModulePlugin');
+      const outputModule = new OutputModulePlugin();
+      await this.moduleCapabilityRegistry.registerModule(outputModule);
+      console.log('[FoundationServices] Output module registered successfully');
+      
+      // The modules will automatically get the userId from the session
+      // and use your existing API routes
       
       // Future: Register other modules here
       // const { CalendarModulePlugin } = await import('@/app/modules/calendar/CalendarModulePlugin');
