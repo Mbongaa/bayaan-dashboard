@@ -759,7 +759,7 @@ function App() {
         </div>
         
         {/* User Profile Button - Always visible above the mode toggle */}
-        <div className={`fixed left-4 bottom-[12vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
+        <div className={`fixed left-4 bottom-[11vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
           <UserProfileButton />
         </div>
         

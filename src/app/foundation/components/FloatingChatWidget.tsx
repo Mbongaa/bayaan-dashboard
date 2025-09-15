@@ -47,11 +47,13 @@ export default function FloatingChatWidget({}: FloatingChatWidgetProps = {}) {
             className={`
               fixed bottom-5 right-5 
               w-14 h-14 rounded-full
-              bg-gradient-to-r from-blue-500 to-purple-600
-              hover:from-blue-600 hover:to-purple-700
-              text-white shadow-lg
+              bg-white/10 dark:bg-black/10 backdrop-blur-sm
+              border border-gray-400/60 dark:border-gray-700/50
+              text-gray-700 dark:text-gray-300
+              shadow-lg
               flex items-center justify-center
               transition-all duration-300
+              hover:scale-110
               ${hasNewMessage ? 'animate-pulse' : ''}
             `}
             style={{ zIndex: Z_CHATBOX }}

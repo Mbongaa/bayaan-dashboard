@@ -66,7 +66,7 @@ export function UserProfileButton({ className }: UserProfileButtonProps) {
           <Button
             variant="outline"
             size="icon"
-            className={`rounded-full bg-gradient-to-r from-blue-500 to-purple-600 border-0 hover:scale-110 transform-gpu transition duration-150 ${className}`}
+            className={`rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-gray-400/60 dark:border-gray-700/50 hover:scale-110 transform-gpu transition duration-150 ${className}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -75,7 +75,7 @@ export function UserProfileButton({ className }: UserProfileButtonProps) {
             onMouseEnter={() => setOpenTooltip(true)}
             onMouseLeave={() => setOpenTooltip(false)}
           >
-            <User className="h-4 w-4 text-white" />
+            <User className="h-4 w-4 text-gray-700 dark:text-gray-300" />
           </Button>
         </TooltipTrigger>
         <TooltipContent
