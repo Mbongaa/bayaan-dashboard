@@ -16,6 +16,7 @@ import ImprovedServicedGalaxy from "./foundation/components/ImprovedServicedGala
 import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
 import ModeToggle from "./shared/components/ModeToggle";
+import { UserProfileButton } from "./shared/components/UserProfileButton";
 import MiniOrb from "./foundation/components/MiniOrb";
 import AgentOutputDisplay from "./workspace/components/AgentOutputDisplay";
 import {
@@ -714,9 +715,6 @@ function App() {
       
       {/* Navigation State Bridge - Connects voice control to navigation */}
       <NavigationStateBridge 
-        onSidebarStateChange={() => {
-          // Sidebar state is handled internally
-        }}
         onSectionChange={(section, contentMode) => {
           setSelectedWorkspaceItem(section);
           setAppMode(contentMode as 'voice' | 'workspace');
@@ -758,6 +756,11 @@ function App() {
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
         <div className={`fixed left-4 top-[9vh] z-[75] pointer-events-auto px-2.5`}>
           <ThemeToggle />
+        </div>
+        
+        {/* User Profile Button - Always visible above the mode toggle */}
+        <div className={`fixed left-4 bottom-[12vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
+          <UserProfileButton />
         </div>
         
         {/* Mode Toggle - Positioned below the sidebar */}

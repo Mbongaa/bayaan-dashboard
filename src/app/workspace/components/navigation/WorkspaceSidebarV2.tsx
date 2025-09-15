@@ -6,8 +6,6 @@ import {
   Grid3x3,
   UserCog, 
   Settings, 
-  LogOut,
-  User,
   Mail,
   Users,
   Calendar,
@@ -22,10 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { signOut } from "@/app/(auth)/login/actions";
-import { createClient } from "@/app/utils/supabase/client";
 import { foundationServices } from "../../../foundation/services/FoundationServices";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { MODULE_TYPES } from "../workspace/WorkspaceGrid";
 import { isMobile } from "@/app/shared/lib/mobileUtils";
 
@@ -51,8 +46,6 @@ export function WorkspaceSidebarV2({
   activeModules = [],
   currentLayout = 'workspace'
 }: WorkspaceSidebarV2Props) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const [openTooltip, setOpenTooltip] = useState<string | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
 
@@ -144,43 +137,6 @@ export function WorkspaceSidebarV2({
       document.removeEventListener('click', handleClickOutside);
     };
   }, [isMobileDevice, openTooltip]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadUserData = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
-        
-        if (mounted) {
-          setUser(currentUser);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        if (mounted) {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    };
-
-    loadUserData();
-
-    const timeoutId = setTimeout(() => {
-      if (mounted && loading) {
-        console.warn('User loading timeout - displaying fallback');
-        setUser(null);
-        setLoading(false);
-      }
-    }, 3000);
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [loading]);
 
   // Helper function to get module icon
   const getModuleIcon = (type: string) => {
@@ -337,7 +293,7 @@ export function WorkspaceSidebarV2({
                       document.addEventListener('touchend', handleTouchEnd);
                     }}
                     className="flex flex-col items-center justify-center p-2 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/50 cursor-grab hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700/50 dark:hover:to-gray-800/50 transition-all duration-200 hover:scale-110 active:scale-95 active:cursor-grabbing touch-none group relative"
-                    style={{ userSelect: 'none', WebkitUserDrag: 'element' as any, aspectRatio: '1/1' }}
+                    style={{ userSelect: 'none', aspectRatio: '1/1' }}
                   >
                     {/* App Icon */}
                     <div className="text-3xl mb-1 group-hover:scale-110 transition-transform duration-200">
@@ -482,71 +438,6 @@ export function WorkspaceSidebarV2({
             className="px-3 py-1.5 bg-gray-900 text-white rounded-md"
           >
             Settings
-          </TooltipContent>
-        </Tooltip>
-
-        {/* User Info & Logout */}
-        <Tooltip delayDuration={isMobileDevice ? 0 : 200} open={isMobileDevice ? openTooltip === 'user' : undefined}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full bg-gradient-to-r from-blue-500 to-purple-600 border-0"
-              data-tooltip-trigger="user"
-              onClick={(e) => {
-                if (isMobileDevice) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setOpenTooltip(openTooltip === 'user' ? null : 'user');
-                }
-              }}
-            >
-              <User className="h-4 w-4 text-white" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            sideOffset={8}
-            align="center"
-            className="p-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl ml-1"
-          >
-            <div className="space-y-3">
-              {loading ? (
-                <div className="space-y-1">
-                  <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-24" />
-                  <div className="h-2 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-32" />
-                </div>
-              ) : (
-                <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {user?.email?.split('@')[0] || 'User'}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.email || 'No email available'}
-                  </div>
-                </div>
-              )}
-              
-              <button
-                type="button"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  // Close tooltip first on mobile
-                  if (isMobileDevice) {
-                    setOpenTooltip(null);
-                  }
-                  // Small delay to ensure tooltip closes before form submission
-                  setTimeout(async () => {
-                    await signOut();
-                  }, 100);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              >
-                <LogOut className="h-3 w-3" />
-                Logout
-              </button>
-            </div>
           </TooltipContent>
         </Tooltip>
       </div>
