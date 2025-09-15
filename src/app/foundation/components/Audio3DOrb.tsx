@@ -154,6 +154,7 @@ const Audio3DOrb: React.FC<Audio3DOrbProps> = ({
       renderer.domElement.style.display = 'block';
       renderer.domElement.style.margin = 'auto';
       renderer.domElement.style.cursor = 'default';
+      renderer.domElement.style.pointerEvents = 'auto';
       
       // Add click event listener for raycasting
       renderer.domElement.addEventListener('click', handleCanvasClick);

@@ -19,7 +19,7 @@ const AudioVisualizationSection: React.FC<AudioVisualizationSectionProps> = ({
   return (
     <div 
       className={`
-        relative w-full h-full transition-all duration-1200 ease-in-out pointer-events-auto
+        relative w-full h-full transition-all duration-1200 ease-in-out
         ${isWorkspaceMode 
           ? 'scale-[0.2] translate-x-[45vw] translate-y-[-25vh]' 
           : 'scale-100 translate-x-0 translate-y-0'

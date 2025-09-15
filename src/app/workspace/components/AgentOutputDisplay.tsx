@@ -5,13 +5,18 @@ import { useTranscript } from '@/app/foundation/contexts/TranscriptContext';
 import TypewriterText from '@/app/foundation/components/TypewriterText';
 import { TranscriptItem } from '@/app/shared/types/types';
 
+interface AgentOutputDisplayProps {
+  mode?: 'voice' | 'workspace';
+}
+
 /**
  * AgentOutputDisplay Component
  * 
  * Displays the latest agent message with a typewriter effect.
  * Minimal design - just text, no container or background.
+ * Can be styled differently for voice mode vs workspace mode.
  */
-export function AgentOutputDisplay() {
+export function AgentOutputDisplay({ mode = 'workspace' }: AgentOutputDisplayProps) {
   const { transcriptItems } = useTranscript();
   const [latestAgentMessage, setLatestAgentMessage] = useState<string>('');
   const [messageKey, setMessageKey] = useState<number>(0);
@@ -40,27 +45,49 @@ export function AgentOutputDisplay() {
     return null;
   }
 
-  // Truncate very long messages for header display
-  const displayText = latestAgentMessage.length > 150 
-    ? latestAgentMessage.substring(0, 150) + '...'
-    : latestAgentMessage;
+  // Mode-specific configuration
+  const isVoiceMode = mode === 'voice';
+  
+  // Truncate for workspace mode, show full text for voice mode
+  const displayText = isVoiceMode 
+    ? latestAgentMessage 
+    : latestAgentMessage.length > 150 
+      ? latestAgentMessage.substring(0, 150) + '...'
+      : latestAgentMessage;
+  
+  // Different cursor characters for different modes
+  const cursorChar = isVoiceMode ? "•" : "|";
+  
+  // Different text styles for different modes
+  const textClassName = isVoiceMode 
+    ? "text-white text-xl font-light"
+    : "text-gray-600 dark:text-gray-400 text-sm font-normal";
+  
+  // Different container styles for different modes
+  const containerStyle = isVoiceMode 
+    ? {
+        minWidth: 0,
+        wordWrap: 'break-word' as const,
+        whiteSpace: 'pre-wrap' as const,
+      }
+    : {
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      };
 
   return (
     <div 
-      className="flex-1 ml-6"
-      style={{
-        minWidth: 0, // Allow text to shrink
-        overflow: 'hidden',
-        textOverflow: 'ellipsis'
-      }}
+      className={!isVoiceMode ? "flex-1 ml-6" : ""}
+      style={containerStyle}
     >
       <TypewriterText
         key={messageKey} // Force re-render on new message
         text={displayText}
         typingSpeed={25}
         showCursor={true}
-        cursorCharacter="|"
-        className="text-gray-600 dark:text-gray-400 text-sm font-normal"
+        cursorCharacter={cursorChar}
+        className={textClassName}
         isLatestMessage={true}
       />
     </div>

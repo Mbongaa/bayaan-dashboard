@@ -17,6 +17,7 @@ import PWAInstallPrompt from "./shared/components/PWAInstallPrompt";
 import ThemeToggle from "./shared/components/ThemeToggle";
 import ModeToggle from "./shared/components/ModeToggle";
 import MiniOrb from "./foundation/components/MiniOrb";
+import AgentOutputDisplay from "./workspace/components/AgentOutputDisplay";
 import {
   Tooltip,
   TooltipContent,
@@ -738,7 +739,7 @@ function App() {
       {/* Layout wrapper to ensure proper CSS selector relationships */}
       <div className="workspace-layout">
         {/* Theme Toggle - Aligned with sidebar, positioned above it with proper spacing */}
-        <div className={`fixed left-4 top-[9vh] ${Z_CLASSES.controls} pointer-events-auto px-2.5`}>
+        <div className={`fixed left-4 top-[9vh] z-[75] pointer-events-auto px-2.5`}>
           <ThemeToggle />
         </div>
         
@@ -777,6 +778,15 @@ function App() {
             />
           </RealtimeProvider>
         </div>
+        
+        {/* Agent Output Display - Below the orb, only in voice mode */}
+        {appMode !== 'workspace' && (
+          <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 translate-y-40 w-full max-w-2xl pointer-events-none ${Z_CLASSES.transcript}`}>
+            <div className="text-center">
+              <AgentOutputDisplay mode="voice" />
+            </div>
+          </div>
+        )}
         
         {/* Fixed positioned chatbox - Always visible at bottom */}
         <div className={`fixed bottom-5 left-0 right-0 ${Z_CLASSES.chatbox} px-4 pointer-events-none`}>
