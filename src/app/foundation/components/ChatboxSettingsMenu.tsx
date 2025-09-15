@@ -46,8 +46,6 @@ interface AgentSettingsMenuProps {
   setIsPTTActive: (active: boolean) => void;
   isAutoConnectEnabled: boolean;
   setIsAutoConnectEnabled: (enabled: boolean) => void;
-  isDockVisible: boolean;
-  setIsDockVisible: (visible: boolean) => void;
   
   // Session Status
   sessionStatus: string;
@@ -469,8 +467,6 @@ function InterfaceSection({
   setIsPTTActive,
   isAutoConnectEnabled,
   setIsAutoConnectEnabled,
-  isDockVisible,
-  setIsDockVisible,
   setHasChanges 
 }: AgentSettingsMenuProps & { setHasChanges: (hasChanges: boolean) => void }) {
 
@@ -498,12 +494,6 @@ function InterfaceSection({
       description: "Connect automatically on page load",
       value: isAutoConnectEnabled,
       onChange: setIsAutoConnectEnabled,
-    },
-    {
-      label: "Show Agent Dock",
-      description: "Display floating agent controls",
-      value: isDockVisible,
-      onChange: setIsDockVisible,
     },
   ];
 

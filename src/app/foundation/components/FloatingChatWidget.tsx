@@ -74,7 +74,7 @@ export default function FloatingChatWidget({}: FloatingChatWidgetProps = {}) {
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed bottom-5 right-5 w-96 h-[600px] max-h-[85vh]"
-            style={{ zIndex: Z_TRANSCRIPT }}
+            style={{ zIndex: 90 }}
           >
             <div className="
               h-full rounded-2xl overflow-hidden

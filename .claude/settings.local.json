@@ -58,7 +58,16 @@
       "Bash(npx supabase:*)",
       "Bash(source .env)",
       "Bash(curl:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:v0.app)",
+      "Bash(yes n)",
+      "Bash(sed:*)",
+      "Bash(cat:*)",
+      "Bash(for port in 3000 3001 3002 3003 8080 8081)",
+      "Bash(do fuser -k $port/tcp)",
+      "Bash(done)",
+      "Bash(while read pid)",
+      "Bash(do kill -9 $pid)"
     ],
     "deny": [],
     "ask": []

@@ -82,7 +82,7 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({
       {showCursor && (
         <span
           ref={cursorRef}
-          className="typewriter-cursor"
+          className="typewriter-cursor text-gray-800 dark:text-white"
           style={{ 
             marginLeft: '2px',
             opacity: 1,

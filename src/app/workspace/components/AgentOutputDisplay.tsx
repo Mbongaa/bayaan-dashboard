@@ -60,7 +60,7 @@ export function AgentOutputDisplay({ mode = 'workspace' }: AgentOutputDisplayPro
   
   // Different text styles for different modes
   const textClassName = isVoiceMode 
-    ? "text-white text-xl font-light"
+    ? "text-gray-800 dark:text-white text-xl font-normal dark:font-light"
     : "text-gray-600 dark:text-gray-400 text-sm font-normal";
   
   // Different container styles for different modes

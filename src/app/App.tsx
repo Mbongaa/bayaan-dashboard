@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import DockExample from "./workspace/components/navigation/DockExample";
+import { AgentDockVertical } from "@/components/agent-dock-vertical";
 import { WorkspaceLayout } from "./workspace/components/WorkspaceLayout";
 
 // UI components
@@ -95,6 +95,8 @@ function App() {
   const {
     addTranscriptMessage,
     addTranscriptBreadcrumb,
+    transcriptItems,
+    clearTranscript,
   } = useTranscript();
   const { logClientEvent, logServerEvent } = useEvent();
 
@@ -141,7 +143,7 @@ function App() {
 
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] = useState<boolean>(false);
   const [userText, setUserText] = useState<string>("");
-  const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
+  const [isPTTActive, setIsPTTActive] = useState<boolean>(true);
   const [isRecordingActive, setIsRecordingActive] = useState<boolean>(false);
   
   // Removed PTT portal state - now handled in PTTPortal component
@@ -165,19 +167,12 @@ function App() {
 
   const [isAutoConnectEnabled, setIsAutoConnectEnabled] = useState<boolean>(
     () => {
-      if (typeof window === 'undefined') return true;
+      if (typeof window === 'undefined') return false;
       const stored = localStorage.getItem('autoConnectEnabled');
-      return stored ? stored === 'true' : true;
+      return stored ? stored === 'true' : false;
     },
   );
 
-  const [isDockVisible, setIsDockVisible] = useState<boolean>(
-    () => {
-      if (typeof window === 'undefined') return true;
-      const stored = localStorage.getItem('dockVisible');
-      return stored ? stored === 'true' : true;
-    },
-  );
 
   // Workspace state management
   const [selectedWorkspaceItem, setSelectedWorkspaceItem] = useState<string | null>(null);
@@ -372,6 +367,10 @@ function App() {
     const agentSetKey = searchParams.get("agentConfig") || "default";
     if (sdkScenarioMap[agentSetKey]) {
       if (sessionStatus !== "DISCONNECTED") return;
+      
+      // Clear transcript and input when connecting to start fresh
+      clearTranscript();
+      setUserText('');
 
       try {
         const EPHEMERAL_KEY = await fetchEphemeralKey();
@@ -491,6 +490,27 @@ function App() {
     }
 
     setUserText("");
+  };
+
+  // Send text directly without relying on state
+  const sendTextDirectly = (text: string) => {
+    if (!text.trim()) return;
+    interrupt();
+
+    try {
+      sendUserText(text.trim());
+    } catch (err) {
+      console.error('Failed to send via SDK', err);
+    }
+
+    // Clear the input after sending
+    setUserText("");
+  };
+
+  // Handle auto-sending suggestion cards
+  const handleSuggestionSend = (text: string) => {
+    // Send the text directly, bypassing state
+    sendTextDirectly(text);
   };
 
   const handleToggleRecording = () => {
@@ -620,9 +640,6 @@ function App() {
     localStorage.setItem("autoConnectEnabled", isAutoConnectEnabled.toString());
   }, [isAutoConnectEnabled]);
 
-  useEffect(() => {
-    localStorage.setItem("dockVisible", isDockVisible.toString());
-  }, [isDockVisible]);
 
   useEffect(() => {
     if (audioElementRef.current) {
@@ -795,6 +812,31 @@ function App() {
               value={userText}
               onChange={(e) => setUserText(e.target.value)}
               placeholder="Type your message..."
+              scenarioKey={agentSetKey}
+              onSuggestionSend={handleSuggestionSend}
+              showSuggestions={(() => {
+                // Check if we only have system/hidden messages, not real user conversation
+                const hasUserMessages = transcriptItems.some(item => 
+                  item.type === 'MESSAGE' && item.role === 'user' && !item.isHidden
+                );
+                const shouldShow = agentSetKey === 'translationDirect' && 
+                                   !hasUserMessages && 
+                                   sessionStatus === 'CONNECTED' && 
+                                   userText.trim().length === 0;
+                console.log('Suggestion Cards Debug:', {
+                  agentSetKey,
+                  isTranslationDirect: agentSetKey === 'translationDirect',
+                  transcriptLength: transcriptItems.length,
+                  transcriptItems: transcriptItems.map(t => ({ type: t.type, role: t.role, isHidden: t.isHidden })),
+                  hasUserMessages,
+                  sessionStatus,
+                  isConnected: sessionStatus === 'CONNECTED',
+                  userText,
+                  isInputEmpty: userText.trim().length === 0,
+                  shouldShow
+                });
+                return shouldShow;
+              })()}
             />
           </form>
         </div>
@@ -822,25 +864,23 @@ function App() {
         <div className={`flex flex-1 flex-col gap-2 px-2 overflow-visible relative ${Z_CLASSES.base} pointer-events-none`}>
           {/* Content area - now empty as elements are positioned absolutely */}
         </div>
-
-        {/* Vertical Dock on Right Side */}
-        {isDockVisible && (
-          <div className={`fixed right-4 top-1/2 -translate-y-1/2 ${Z_CLASSES.base} pointer-events-auto`}>
-            <RealtimeProvider 
-              value={realtimeContextValue}
-            >
-              <DockExample 
-                onScenarioSelect={handleDockScenarioSelect}
-                onDisconnect={disconnectFromRealtime}
-                selectedScenario={agentSetKey}
-                isConnected={sessionStatus === "CONNECTED"}
-              />
-            </RealtimeProvider>
-          </div>
-        )}
         
         </div>
       </div>
+
+      {/* Vertical Dock on Right Side - Always visible - Moved outside of pointer-events-none containers */}
+      <RealtimeProvider 
+        value={realtimeContextValue}
+      >
+        <AgentDockVertical 
+          onConnect={connectToRealtime}
+          onDisconnect={disconnectFromRealtime}
+          onScenarioSelect={handleDockScenarioSelect}
+          selectedScenario={agentSetKey}
+          isConnected={sessionStatus === "CONNECTED"}
+          sessionStatus={sessionStatus}
+        />
+      </RealtimeProvider>
       
       {/* Settings Menu - portaled into chatbox */}
       <ChatboxSettingsMenu
@@ -870,8 +910,6 @@ function App() {
         setIsPTTActive={setIsPTTActive}
         isAutoConnectEnabled={isAutoConnectEnabled}
         setIsAutoConnectEnabled={setIsAutoConnectEnabled}
-        isDockVisible={isDockVisible}
-        setIsDockVisible={setIsDockVisible}
         sessionStatus={sessionStatus}
       />
 

@@ -126,7 +126,7 @@ function Transcript({}: TranscriptProps = {}) {
               const bubbleBase = `max-w-lg p-3 ${
                 isUser 
                   ? "bg-transparent text-gray-600 dark:bg-transparent dark:text-gray-400 text-sm" 
-                  : "bg-transparent text-gray-900 dark:bg-transparent dark:text-gray-100 text-lg"
+                  : "bg-transparent text-gray-800 dark:bg-transparent dark:text-white text-lg"
               }`;
               const isBracketedMessage =
                 title.startsWith("[") && title.endsWith("]");
