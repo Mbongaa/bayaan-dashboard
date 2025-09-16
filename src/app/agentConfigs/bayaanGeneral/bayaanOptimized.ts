@@ -1805,14 +1805,14 @@ Tools are now parameter-driven rather than single-purpose.
               });
             }
             
-            const spokenResponse = `The ${module.name} can ${capabilities.map((c: any) => c.name).join(', ')}`;
+            const spokenResponse = `The ${moduleFound.name} can ${capabilities.map((c: any) => c.name).join(', ')}`;
             
             return {
               success: true,
               module: {
-                id: module.id,
-                name: module.name,
-                description: module.description,
+                id: moduleFound.id,
+                name: moduleFound.name,
+                description: moduleFound.description,
                 operations: capabilities.map((c: any) => ({
                   name: c.name,
                   description: c.description,
