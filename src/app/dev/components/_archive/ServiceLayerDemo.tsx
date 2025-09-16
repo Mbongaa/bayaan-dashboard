@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { foundationServices } from '../../foundation/services/FoundationServices';
-import { useWebRTCService } from '../../foundation/hooks/useWebRTCService';
+import { foundationServices } from '../../../foundation/services/FoundationServices';
+import { useWebRTCService } from '../../../foundation/hooks/useWebRTCService';
 
 /**
  * Service Layer Demo Component
