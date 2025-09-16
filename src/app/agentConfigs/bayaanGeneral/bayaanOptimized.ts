@@ -514,7 +514,7 @@ Tools are now parameter-driven rather than single-purpose.
               success: true,
               currentSection: currentState.currentSection || "voice",
               contentMode: currentState.contentMode,
-              isOnDashboard: currentState.contentMode === 'dashboard' && currentState.currentSection === 'dashboard',
+              isOnWorkspace: currentState.contentMode === 'workspace' && currentState.currentSection === 'workspace',
               isInVoiceMode: currentState.contentMode === 'voice',
               spokenResponse: fullSummary
             };
