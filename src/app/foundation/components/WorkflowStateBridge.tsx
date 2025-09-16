@@ -257,7 +257,7 @@ export function WorkflowStateBridge() {
  * Hook for components to get current workflow execution state
  */
 export function useWorkflowState() {
-  const [currentWorkflow, setCurrentWorkflow] = useState<WorkflowExecution | null>(null);
+  const [, setCurrentWorkflow] = useState<WorkflowExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   
   useEffect(() => {
@@ -294,13 +294,13 @@ export function useWorkflowControl() {
   const workspaceService = WorkspaceDataService.getInstance();
   const { isRunning } = useWorkflowState();
   
-  const executeWorkflow = async (workflowId: string, variables?: Record<string, any>) => {
+  const executeWorkflow = async (workflowId: string, _variables?: Record<string, any>) => {
     if (isRunning) {
       console.warn('[WorkflowStateBridge] Another workflow is already running');
       return { success: false, message: 'Another workflow is already running' };
     }
     
-    return await workspaceService.executeWorkflow(workflowId, variables);
+    return await workspaceService.executeWorkflow(workflowId, _variables);
   };
   
   const executeMacro = async (trigger: string) => {

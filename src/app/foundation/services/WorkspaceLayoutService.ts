@@ -28,6 +28,7 @@ export interface WorkspaceState {
   layouts: Map<string, Layout[]>;
   history: LayoutHistoryItem[];
   userPreferences: UserLayoutPreferences;
+  focusedModuleId?: string;
 }
 
 interface LayoutHistoryItem {

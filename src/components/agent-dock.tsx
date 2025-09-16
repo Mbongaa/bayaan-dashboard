@@ -2,7 +2,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/app/shared/lib/utils"
-import { Bot, Brain, Cpu, Database, MessageSquare, Zap } from "lucide-react"
+import { Bot, Brain, Cpu, Database, MessageSquare, Zap, Search } from "lucide-react"
 import { MagnifyingGlassIcon, GearIcon, PlusIcon } from "@radix-ui/react-icons"
 
 interface AgentItem {

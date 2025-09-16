@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X } from 'lucide-react';
 import Transcript from './Transcript';
-import { Z_CHATBOX, Z_TRANSCRIPT } from '@/app/styles/z-index';
+import { Z_CHATBOX } from '@/app/styles/z-index';
 
-interface FloatingChatWidgetProps {
+interface FloatingChatWidgetProps extends Record<string, never> {
   // No props needed - widget always shows full transcript
 }
 

@@ -7,7 +7,7 @@ import { useTranscript } from "@/app/foundation/contexts/TranscriptContext";
 import { GuardrailChip } from "./_archive/ui-elements/GuardrailChip";
 import TypewriterText from "./TypewriterText";
 
-export interface TranscriptProps {
+export interface TranscriptProps extends Record<string, never> {
   // No props needed - transcript always shows full history
 }
 
@@ -16,7 +16,7 @@ function Transcript({}: TranscriptProps = {}) {
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
   const [typedMessages, setTypedMessages] = useState<Set<string>>(new Set());
-  const [showNotification, setShowNotification] = useState<boolean>(false);
+  const [showNotification] = useState<boolean>(false);
   const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   function scrollToBottom() {

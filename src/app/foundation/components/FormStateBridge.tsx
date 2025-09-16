@@ -28,7 +28,7 @@ interface FormReset {
 }
 
 export function FormStateBridge() {
-  const [formUpdates, setFormUpdates] = useState<Record<string, any>>({});
+  const [, setFormUpdates] = useState<Record<string, any>>({});
   
   useEffect(() => {
     const workspaceService = WorkspaceDataService.getInstance();

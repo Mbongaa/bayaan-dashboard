@@ -475,7 +475,7 @@ async function executeHandleWorkspaceCommand(args: any): Promise<any> {
 // CRITICAL: Must match BayaanGeneral's resizeWorkspaceLayout exactly
 async function executeResizeWorkspaceLayout(args: any): Promise<any> {
   try {
-    const { panelPercentages, rows, layoutPattern, fillRemaining } = args;
+    const { panelPercentages, rows, layoutPattern } = args;
     
     // Validation: Prevent conflicting parameters (from BayaanGeneral)
     if (rows && rows > 1 && layoutPattern === 'vertical') {
@@ -488,7 +488,7 @@ async function executeResizeWorkspaceLayout(args: any): Promise<any> {
     
     // Validation: Check if panel count matches intended grid
     if (rows && rows > 1) {
-      const expectedPanels = rows * Math.ceil(panelPercentages.length / rows);
+      // const expectedPanels = rows * Math.ceil(panelPercentages.length / rows);
       if (panelPercentages.length < rows * 2) {
         return {
           success: false,
@@ -555,7 +555,7 @@ async function executeResizeWorkspaceLayout(args: any): Promise<any> {
 async function executeGetFormState(args: any): Promise<any> {
   try {
     const { formId = 'all' } = args;
-    const dashboardData = dashboardDataService.getState();
+    // const dashboardData = dashboardDataService.getState();
     
     // Simulate form state (in real implementation, would get from dashboardDataService)
     const mockForms = {
@@ -585,7 +585,7 @@ async function executeGetFormState(args: any): Promise<any> {
       const formCount = Object.keys(mockForms).length;
       const messages = [`${formCount} forms available`];
       
-      Object.entries(mockForms).forEach(([id, form]: [string, any]) => {
+      Object.entries(mockForms).forEach(([, form]: [string, any]) => {
         const fieldCount = Object.keys(form.fields).length;
         const dirtyStatus = form.isDirty ? ' with unsaved changes' : '';
         messages.push(`${form.name}: ${fieldCount} fields${dirtyStatus}`);

@@ -49,13 +49,13 @@ export async function signup(formData: FormData) {
   if (authData.user) {
     const { error: profileError } = await supabase
       .from('profiles')
-      .insert({
+      .insert([{
         id: authData.user.id,
         email: email,
         full_name: fullName,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      }]);
 
     if (profileError) {
       console.error('Profile creation error:', profileError);

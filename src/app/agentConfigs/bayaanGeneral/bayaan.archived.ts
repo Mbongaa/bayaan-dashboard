@@ -1440,7 +1440,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
           let emptySpace = 100 - total;
           
           // If fillRemaining is true and there's only one panel, add a second panel with remaining space
-          let finalPercentages = [...panelPercentages];
+          const finalPercentages = [...panelPercentages];
           if (fillRemaining && panelPercentages.length === 1 && emptySpace > 0) {
             finalPercentages.push(emptySpace);
             emptySpace = 0;
@@ -1800,7 +1800,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             const formCount = Object.keys(allForms).length;
             const messages: string[] = [`I can see ${formCount} forms`];
             
-            Object.entries(allForms).forEach(([id, form]: [string, any]) => {
+            Object.entries(allForms).forEach(([, form]: [string, any]) => {
               const fieldCount = Object.keys(form.fields).length;
               const dirtyStatus = form.isDirty ? ' with unsaved changes' : '';
               const validStatus = form.isValid ? '' : ' (has validation errors)';
@@ -1830,7 +1830,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             // Create summary of form state
             const fieldCount = formState.fields.size;
             const filledFields = Array.from(formState.fields.values()).filter(f => f.value).length;
-            const touchedFields = Array.from(formState.fields.values()).filter(f => f.touched).length;
+            // const touchedFields = Array.from(formState.fields.values()).filter(f => f.touched).length;
             
             let message = `${formDetails.name} has ${fieldCount} fields`;
             if (filledFields > 0) {
@@ -1941,7 +1941,7 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
               }
               
               const invalidFields = Array.from(formState.fields.entries())
-                .filter(([_, field]) => !field.isValid)
+                .filter(([, field]) => !field.isValid)
                 .map(([id, field]) => ({ id, error: field.errorMessage }));
               
               if (invalidFields.length === 0) {

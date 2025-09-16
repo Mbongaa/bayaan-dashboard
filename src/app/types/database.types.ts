@@ -9,9 +9,9 @@ export interface Database {
         Update: ProfileUpdate;
       };
     };
-    Views: {};
-    Functions: {};
-    Enums: {};
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
   };
   auth: {
     Tables: {

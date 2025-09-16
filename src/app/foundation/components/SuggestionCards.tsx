@@ -2,7 +2,7 @@
 
 import React, { memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getSuggestionsForScenario, SuggestionCard } from '@/app/agentConfigs/suggestionConfig';
+import { getSuggestionsForScenario } from '@/app/agentConfigs/suggestionConfig';
 
 interface SuggestionCardsProps {
   scenarioKey: string;

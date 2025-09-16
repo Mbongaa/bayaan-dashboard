@@ -80,14 +80,14 @@ export class ModuleCapabilityRegistry {
   }
 
   async unregisterModule(moduleId: string): Promise<void> {
-    const module = this.modules.get(moduleId);
-    if (!module) {
+    const moduleItem = this.modules.get(moduleId);
+    if (!moduleItem) {
       console.warn(`[ModuleRegistry] Module ${moduleId} not found for unregistration`);
       return;
     }
 
     // Dispose the module
-    await module.dispose();
+    await moduleItem.dispose();
 
     // Remove capabilities
     const capabilitiesToRemove: string[] = [];
@@ -110,8 +110,8 @@ export class ModuleCapabilityRegistry {
     params: any
   ): Promise<ModuleOperationResult> {
     try {
-      const module = this.modules.get(moduleId);
-      if (!module) {
+      const moduleItem = this.modules.get(moduleId);
+      if (!moduleItem) {
         return {
           success: false,
           error: `Module not found: ${moduleId}`,
@@ -154,7 +154,7 @@ export class ModuleCapabilityRegistry {
       });
       
       // Execute operation
-      const result = await module.executeOperation(operation, params);
+      const result = await moduleItem.executeOperation(operation, params);
       
       // Emit completion event
       this.eventBus.emit('module:operation:completed', {
@@ -192,19 +192,19 @@ export class ModuleCapabilityRegistry {
   }
 
   getModuleCapabilities(moduleId: string): ModuleCapability[] {
-    const module = this.modules.get(moduleId);
-    return module ? module.descriptor.capabilities : [];
+    const moduleItem = this.modules.get(moduleId);
+    return moduleItem ? moduleItem.descriptor.capabilities : [];
   }
 
   getAllCapabilities(): Array<ModuleCapability & { moduleId: string; moduleName: string }> {
     const result: Array<ModuleCapability & { moduleId: string; moduleName: string }> = [];
     
     this.capabilities.forEach((capability) => {
-      const module = this.modules.get(capability.moduleId);
-      if (module) {
+      const moduleItem = this.modules.get(capability.moduleId);
+      if (moduleItem) {
         result.push({
           ...capability,
-          moduleName: module.descriptor.name
+          moduleName: moduleItem.descriptor.name
         });
       }
     });

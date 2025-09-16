@@ -240,6 +240,52 @@ export interface ServiceEventMap {
   'email:thread:fetched': { threadId: string; messageCount: number };
   'email:refresh': Record<string, never>;
   'email:sync': Record<string, never>;
+
+  // Dashboard Events (for backward compatibility)
+  'dashboard:data:updated': any;
+  'dashboard:metrics:refresh': Record<string, never>;
+  'dashboard:metrics:updated': any;
+  'dashboard:data:added': any;
+  'dashboard:data:removed': any;
+  'dashboard:data:cleared': Record<string, never>;
+  'dashboard:form:field-changed': FormEvent;
+  'dashboard:form:validation-failed': FormEvent;
+  'dashboard:form:submitting': FormEvent;
+  'dashboard:form:submitted': FormEvent;
+  'dashboard:form:reset': FormEvent;
+  'dashboard:theme-changed': any;
+  'dashboard:data:theme-changed': any;
+  'dashboard:metric-updated': any;
+  'dashboard:data:metric-updated': any;
+  'dashboard:all-metrics-refreshed': Record<string, never>;
+  'dashboard:data:refreshed': Record<string, never>;
+  'dashboard:activity-added': any;
+  'dashboard:data:activity-added': any;
+  'dashboard:activities-cleared': any;
+  'dashboard:data:activities-cleared': any;
+  'dashboard:status-updated': any;
+  'dashboard:data:status-updated': any;
+  'dashboard:auto-refresh-set': any;
+  'dashboard:data:auto-refresh-set': any;
+  'dashboard:auto-refresh-cleared': any;
+  'dashboard:data:auto-refresh-cleared': any;
+  'dashboard:widget:visibility-changed': WidgetEvent;
+  'dashboard:widget:expanded': WidgetEvent;
+  'dashboard:widget:collapsed': WidgetEvent;
+  'dashboard:widget:expansion-changed': WidgetEvent;
+  'dashboard:widget:refresh-start': WidgetEvent;
+  'dashboard:widget:refresh-complete': WidgetEvent;
+  'dashboard:widgets:reordered': WidgetsEvent;
+  'dashboard:widgets:filtered': WidgetsEvent;
+  'dashboard:widgets:filter-cleared': Record<string, never>;
+  'dashboard:widgets:all-hidden': Record<string, never>;
+  'dashboard:widgets:all-shown': Record<string, never>;
+  'dashboard:widgets:batch-controlled': WidgetsEvent;
+  'dashboard:workflow:started': WorkflowEvent;
+  'dashboard:workflow:step-completed': WorkflowEvent;
+  'dashboard:workflow:completed': WorkflowEvent;
+  'dashboard:workflow:created': WorkflowEvent;
+  'dashboard:macro:created': MacroEvent;
   
   // Legacy Events (Backward Compatibility - will be deprecated)
   // Removed sidebar-state - no longer applicable

@@ -61,13 +61,11 @@ export function WorkspaceContentRenderer({
     }
   }, []); // Empty deps - only run on mount
 
-  // If no item selected, return null (voice assistant mode)
-  if (!currentPage) {
-    return null;
-  }
-
   // Handle workspace module activation events
   useEffect(() => {
+    if (!currentPage) {
+      return; // Return early if no current page, but still render the hook
+    }
     const handleModuleActivation = (event: CustomEvent) => {
       const { moduleId, type } = event.detail;
       setActiveModules(prev => {
@@ -133,6 +131,11 @@ export function WorkspaceContentRenderer({
         );
     }
   };
+
+  // If no item selected, return null (voice assistant mode)
+  if (!currentPage) {
+    return null;
+  }
 
   return (
     <div className={className}>

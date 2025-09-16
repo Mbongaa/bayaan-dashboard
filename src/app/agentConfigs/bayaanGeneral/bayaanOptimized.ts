@@ -487,9 +487,9 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
-        const { target, action, section } = input as { target?: string; action: string; section?: string };
-        const addBreadcrumb = context?.addTranscriptBreadcrumb;
+      execute: async (input: any) => {
+        const { target, action } = input as { target?: string; action: string; section?: string };
+        // const addBreadcrumb = context?.addTranscriptBreadcrumb;
         
         try {
           // Import navigation service
@@ -586,7 +586,7 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["element", "action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
+      execute: async (input: any) => {
         const { element, action, value } = input as { element: string; action: string; value?: string };
         
         if (element === "theme") {
@@ -739,14 +739,14 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
+      execute: async (input: any) => {
         const { action, preset, panelPercentages, rows, gridRows, gridColumns } = input;
         
         try {
           const { foundationServices } = await import('../../foundation/services/FoundationServices');
           
           if (action === "get") {
-            const state = foundationServices.workspace.getState();
+            // const state = foundationServices.workspace.getState();
             const currentLayout = foundationServices.workspace.getCurrentLayout();
             return {
               success: true,
@@ -846,7 +846,7 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["moduleType"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
+      execute: async (input: any) => {
         const { moduleType, slot = "module-1" } = input;
         
         try {
@@ -930,7 +930,7 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
+      execute: async (input: any) => {
         const { action, searchQuery, searchOptions, includeMetrics = true, includeActivities = true, activityLimit = 10 } = input;
         
         try {
@@ -1153,7 +1153,7 @@ Tools are now parameter-driven rather than single-purpose.
             }
             
             const invalidFields = Array.from(formState.fields.entries())
-              .filter(([_, field]) => !field.isValid)
+              .filter(([_fieldId, field]) => !field.isValid)
               .map(([id, field]) => ({ id, error: field.errorMessage }));
             
             const isValid = invalidFields.length === 0;
@@ -1231,8 +1231,8 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
-        const { action, widgetId, batchOperations, widgetOrder, filter, settings } = input;
+      execute: async (input: any) => {
+        const { action, widgetId, batchOperations, widgetOrder, filter } = input;
         
         try {
           const { workspaceDataService } = await import('../../foundation/services/WorkspaceDataService');
@@ -1261,7 +1261,7 @@ Tools are now parameter-driven rather than single-purpose.
             return result;
           } else if (action === "reorder" && widgetOrder) {
             // Reorder widgets
-            const result = workspaceDataService.reorderWidgets(widgetOrder);
+            // const result = workspaceDataService.reorderWidgets(widgetOrder);
             return {
               success: true,
               message: "Widgets reordered",
@@ -1420,7 +1420,7 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
+      execute: async (input: any) => {
         const { action, workflowId, name, steps, schedule, macroTrigger, macroActions } = input;
         
         try {
@@ -1462,11 +1462,11 @@ Tools are now parameter-driven rather than single-purpose.
             };
           } else if (action === "create_macro" && macroTrigger && macroActions) {
             // Create voice macro
-            const macro = {
-              trigger: macroTrigger,
-              actions: macroActions,
-              createdAt: new Date()
-            };
+            // const macro = {
+            //   trigger: macroTrigger,
+            //   actions: macroActions,
+            //   createdAt: new Date()
+            // };
             // Store macro (service might not have this method, handle gracefully)
             const macroStore = (dashboardDataService as any).createDashboardMacro;
             if (macroStore) {
@@ -1537,8 +1537,8 @@ Tools are now parameter-driven rather than single-purpose.
         required: ["action", "target"],
         additionalProperties: false,
       },
-      execute: async (input: any, context: any) => {
-        const { action, target, data, suggestionId, behaviorAction, behaviorContext } = input;
+      execute: async (input: any) => {
+        const { action, target, suggestionId, behaviorAction, behaviorContext } = input;
         
         try {
           const { integrationService } = await import('../../foundation/services/IntegrationService');
@@ -1685,9 +1685,9 @@ Tools are now parameter-driven rather than single-purpose.
           
           // Check if module exists
           const modules = registry.getAvailableModules();
-          const module = modules.find((m: any) => m.id === moduleId);
+          const moduleItem = modules.find((m: any) => m.id === moduleId);
           
-          if (!module) {
+          if (!moduleItem) {
             return {
               success: false,
               error: `Module not found: ${moduleId}`,
@@ -1789,9 +1789,9 @@ Tools are now parameter-driven rather than single-purpose.
           if (moduleId) {
             // Get specific module capabilities
             const capabilities = registry.getModuleCapabilities(moduleId);
-            const module = registry.getAvailableModules().find((m: any) => m.id === moduleId);
+            const moduleFound = registry.getAvailableModules().find((m: any) => m.id === moduleId);
             
-            if (!module) {
+            if (!moduleFound) {
               return {
                 success: false,
                 error: `Module not found: ${moduleId}`,

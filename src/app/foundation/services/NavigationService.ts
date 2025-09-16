@@ -17,6 +17,7 @@ export type { NavigationSection } from './EventBus';
 interface NavigationState {
   currentSection: NavigationSection;
   contentMode: 'voice' | 'workspace';
+  sidebarState?: 'collapsed' | 'expanded';
 }
 
 interface NavigationEvent {
@@ -180,6 +181,10 @@ class NavigationService {
 
   getState(): NavigationState {
     return { ...this.state };
+  }
+
+  getSidebarState(): 'collapsed' | 'expanded' {
+    return this.state.sidebarState || 'expanded';
   }
 
   // Voice control integration with Phase 2 service communication

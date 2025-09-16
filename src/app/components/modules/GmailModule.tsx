@@ -129,7 +129,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
 
       // Return the connection status
       return data.connected && !data.requiresReauth;
-    } catch (err) {
+    } catch {
       // Silently handle network errors - don't spam console
       // This is expected if the API isn't running
       setStatus({ 
@@ -234,7 +234,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                 });
               }, 1000);
             }
-          } catch (e) {
+          } catch {
             // Cross-origin error means popup is still open
           }
         }, 1000);
@@ -982,7 +982,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
             <div 
               onMouseDown={(e) => {
                 // Only stop propagation if it's not a scroll action
-                const target = e.target as HTMLElement;
+                // const target = e.target as HTMLElement;
                 const scrollableElement = e.currentTarget as HTMLElement;
                 // Check if the element has scrollable content
                 if (scrollableElement.scrollHeight > scrollableElement.clientHeight) {
@@ -1000,12 +1000,12 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                 // Allow touch scrolling
                 const touch = e.touches[0];
                 const startY = touch.clientY;
-                let lastY = startY;
+                // let lastY = startY;
                 
                 const handleTouchMove = (moveEvent: TouchEvent) => {
                   const currentTouch = moveEvent.touches[0];
-                  const deltaY = currentTouch.clientY - lastY;
-                  lastY = currentTouch.clientY;
+                  // const deltaY = currentTouch.clientY - lastY;
+                  // lastY = currentTouch.clientY;
                   
                   // If significant vertical movement, it's a scroll gesture
                   if (Math.abs(currentTouch.clientY - startY) > 5) {
@@ -1061,7 +1061,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
                   {messages.map((message) => (
                     <div
                       key={message.id}
-                      onClick={(e) => {
+                      onClick={() => {
                         // Don't stop propagation for clicks - just handle the click
                         setSelectedMessage(message);
                         if (!message.isRead) {

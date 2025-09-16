@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const next = searchParams.get('next') ?? '/dashboard';
 
   // Create redirect link without the secret token
-  const redirectTo = request.nextUrl.clone();
+  const redirectTo = new URL(request.url);
   redirectTo.pathname = next;
   redirectTo.searchParams.delete('token_hash');
   redirectTo.searchParams.delete('type');
