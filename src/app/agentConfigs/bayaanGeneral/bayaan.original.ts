@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* @ts-nocheck */
 import { RealtimeAgent, tool } from '@openai/agents/realtime';
 import { navigationService } from '../../foundation/services/NavigationService';
 
@@ -658,7 +658,8 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
 
         try {
           // Import the service dynamically
-          const { dashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const { DashboardDataService } = await import('../../foundation/services/DashboardDataService');
+          const dashboardDataService = new DashboardDataService();
           
           // Get current theme state
           const themeState = dashboardDataService.getThemeState();

@@ -68,7 +68,8 @@
       "Bash(done)",
       "Bash(while read pid)",
       "Bash(do kill -9 $pid)",
-      "Bash(timeout 60s npm run build)"
+      "Bash(timeout 60s npm run build)",
+      "Bash(timeout 45s npm run build)"
     ],
     "deny": [],
     "ask": []

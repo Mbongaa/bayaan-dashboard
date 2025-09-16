@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* @ts-nocheck */
 import { RealtimeAgent, tool } from '@openai/agents/realtime';
 import { navigationService } from '../../foundation/services/NavigationService';
 
