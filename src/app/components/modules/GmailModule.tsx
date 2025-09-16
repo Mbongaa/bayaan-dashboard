@@ -61,7 +61,7 @@ export function GmailModule({ userId, onConnectionChange, className, style }: Gm
   const [nextPageToken, setNextPageToken] = useState<string>('');
   
   // Refs for managing intervals and initialization
-  const refreshInterval = useRef<NodeJS.Timeout>();
+  const refreshInterval = useRef<NodeJS.Timeout | null>(null);
   const authCheckRef = useRef<boolean>(false);
   const isInitializedRef = useRef<boolean>(false);
   const checkStatusRef = useRef<(() => Promise<boolean>) | null>(null);

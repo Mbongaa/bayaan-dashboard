@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Power,
   Brain,
-  Home,
   Shuffle,
   Headset,
   MessageSquare,
@@ -34,12 +33,6 @@ const scenarios: ScenarioConfig[] = [
     name: 'Bayaan General',
     icon: <Brain className="w-5 h-5" />,
     color: 'from-purple-500 to-pink-500',
-  },
-  {
-    key: 'jarvisCore',
-    name: 'Jarvis Core',
-    icon: <Home className="w-5 h-5" />,
-    color: 'from-blue-500 to-cyan-500',
   },
   {
     key: 'simpleHandoff',
@@ -76,6 +69,9 @@ export default function ScenarioDock({
   sessionStatus,
 }: ScenarioDockProps) {
   const [hoveredScenario, setHoveredScenario] = useState<string | null>(null);
+  
+  // Determine if the dock should show as "active" based on connection state
+  const localVisible = isConnected || sessionStatus === "CONNECTING";
 
   const handleToggle = () => {
     if (isConnected || sessionStatus === "CONNECTING") {
