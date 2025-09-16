@@ -3,7 +3,8 @@ import { profileService, realtimeService } from '../services/databaseService';
 import type { Profile } from '../types/database.types';
 
 // Re-export useAuth from AuthProvider
-export { useAuth } from '../providers/AuthProvider';
+import { useAuth } from '../providers/AuthProvider';
+export { useAuth };
 
 // Hook for profile operations
 export function useProfile(userId?: string) {
