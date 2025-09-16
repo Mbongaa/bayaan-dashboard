@@ -375,7 +375,7 @@ export class CacheManager {
     requests.forEach(request => {
       // Pre-load based on resource type
       if (request.resource.startsWith('layout:')) {
-        this.preloadLayoutCalculations(request);
+        this.preloadLayoutCalculations();
       } else if (request.resource.startsWith('module:')) {
         this.preloadModuleData(request);
       }
