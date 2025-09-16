@@ -237,9 +237,12 @@ export class ModuleCapabilityRegistry {
         const value = params[param.name];
         const valueType = Array.isArray(value) ? 'array' : typeof value;
         
-        if (valueType !== param.type && param.type !== 'object') {
-          // Allow object type to be more flexible
-          if (!(param.type === 'object' && typeof value === 'object')) {
+        // Type validation with object flexibility
+        if (valueType !== param.type) {
+          // Allow object type to be more flexible (includes null, arrays, etc.)
+          if (param.type === 'object' && typeof value === 'object' && value !== null) {
+            // Object type is valid
+          } else {
             return `Invalid type for ${param.name}: expected ${param.type}, got ${valueType}`;
           }
         }
