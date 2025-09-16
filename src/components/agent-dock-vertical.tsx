@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/app/shared/lib/utils"

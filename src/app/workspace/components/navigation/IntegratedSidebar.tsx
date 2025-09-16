@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React from "react";
 import { 
@@ -10,8 +11,7 @@ import {
   Calendar,
   BarChart3,
   CheckSquare,
-  Layers,
-  User
+  Layers
 } from "lucide-react";
 import Link from "next/link";
 import MiniOrb from "../../../foundation/components/MiniOrb";
@@ -38,8 +38,8 @@ export function IntegratedSidebar({
   selectedItem, 
   onMenuSelect, 
   onBackToVoice,
-  activeModules = [],
-  currentLayout = 'dashboard',
+  activeModules: _activeModules = [],
+  currentLayout: _currentLayout = 'dashboard',
   isExpanded = false
 }: IntegratedSidebarProps) {
   const links = [

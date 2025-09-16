@@ -257,7 +257,7 @@ export function WorkflowStateBridge() {
  * Hook for components to get current workflow execution state
  */
 export function useWorkflowState() {
-  const [currentWorkflow] = useState<WorkflowExecution | null>(null);
+  useState<WorkflowExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   
   useEffect(() => {

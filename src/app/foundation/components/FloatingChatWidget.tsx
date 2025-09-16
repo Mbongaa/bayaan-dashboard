@@ -8,6 +8,7 @@ import { Z_CHATBOX } from '@/app/styles/z-index';
 
 interface FloatingChatWidgetProps {
   // No props needed - widget always shows full transcript
+  [key: string]: never;
 }
 
 export default function FloatingChatWidget({}: FloatingChatWidgetProps = {}) {

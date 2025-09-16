@@ -9,6 +9,7 @@ import TypewriterText from "./TypewriterText";
 
 export interface TranscriptProps {
   // No props needed - transcript always shows full history
+  [key: string]: never;
 }
 
 function Transcript({}: TranscriptProps = {}) {
