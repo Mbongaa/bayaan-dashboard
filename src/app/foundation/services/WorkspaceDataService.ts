@@ -1675,7 +1675,7 @@ export class WorkspaceDataService extends EventEmitter {
     });
 
     // Create a macro for morning routine
-    const morningMacro: DashboardMacro = {
+    const morningMacro = {
       id: 'morning-macro',
       name: 'Morning Routine Macro',
       description: 'Quick morning dashboard setup',
@@ -2047,12 +2047,12 @@ export class WorkspaceDataService extends EventEmitter {
   /**
    * Create a macro
    */
-  createMacro(macro: Omit<DashboardMacro, 'createdAt' | 'usageCount'>): { success: boolean; message: string; macroId?: string } {
+  createMacro(macro: any): { success: boolean; message: string; macroId?: string } {
     if (this.state.macros.has(macro.id)) {
       return { success: false, message: 'Macro with this ID already exists' };
     }
 
-    const newMacro: DashboardMacro = {
+    const newMacro = {
       ...macro,
       createdAt: new Date(),
       usageCount: 0
