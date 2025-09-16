@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/app/shared/lib/utils";
-import { Mic, LayoutDashboard, Headphones } from "lucide-react";
+import { LayoutDashboard, Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
 import { navigationService } from "@/app/foundation/services/NavigationService";
 

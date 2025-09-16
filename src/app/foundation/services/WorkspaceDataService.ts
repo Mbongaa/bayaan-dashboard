@@ -1807,7 +1807,7 @@ export class WorkspaceDataService extends EventEmitter {
   /**
    * Execute a single workflow step
    */
-  private async executeWorkflowStep(step: WorkflowStep, variables: Record<string, any>): Promise<WorkflowStepResult> {
+  private async executeWorkflowStep(step: WorkflowStep): Promise<WorkflowStepResult> {
     const result: WorkflowStepResult = {
       stepId: step.id,
       status: 'success',

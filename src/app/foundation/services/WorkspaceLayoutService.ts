@@ -472,13 +472,14 @@ class WorkspaceLayoutService {
   public createProportionalLayout(
     percentages: number[] | number, 
     rows?: number, 
-    layoutPattern?: 'horizontal' | 'vertical' | 'grid'
+    layoutPattern?: 'horizontal' | 'vertical' | 'grid',
+    ...additionalArgs: number[]
   ): void {
     // Handle legacy calls with individual parameters
     if (typeof percentages === 'number') {
       // Legacy call with individual parameters - convert to array
-      const args = Array.from(arguments).filter(arg => typeof arg === 'number');
-      percentages = args;
+      const allNumbers = [percentages, ...(rows !== undefined ? [rows] : []), ...additionalArgs].filter(arg => typeof arg === 'number');
+      percentages = allNumbers;
       rows = 1; // Default to single row for legacy calls
     }
     

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { profileService, realtimeService } from '../services/databaseService';
 import type { Profile } from '../types/database.types';
 

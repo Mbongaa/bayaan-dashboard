@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranscript } from '@/app/foundation/contexts/TranscriptContext';
 import TypewriterText from '@/app/foundation/components/TypewriterText';
-import { TranscriptItem } from '@/app/shared/types/types';
 
 interface AgentOutputDisplayProps {
   mode?: 'voice' | 'workspace';

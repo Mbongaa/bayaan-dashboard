@@ -29,7 +29,7 @@ interface OutputContent {
  * Output Module Component
  * Displays VA results with typewriter animation for natural text appearance
  */
-export function OutputModule({ userId, className = '', style }: OutputModuleProps) {
+export function OutputModule({ className = '', style }: OutputModuleProps) {
   const [content, setContent] = useState<OutputContent | null>(null);
   const [displayText, setDisplayText] = useState<string>('');
   const [isAnimating, setIsAnimating] = useState(false);

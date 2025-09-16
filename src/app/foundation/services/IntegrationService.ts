@@ -429,8 +429,7 @@ class IntegrationServiceClass extends EventEmitter {
   /**
    * Check if an action was performed recently
    */
-  private hasRecentAction(action: string, withinMinutes: number = 60): boolean {
-    const recentTime = Date.now() - (withinMinutes * 60 * 1000);
+  private hasRecentAction(action: string): boolean {
     return this.userContext.recentActions.some(a => {
       if (a.includes(action)) {
         // Check if action timestamp is within the time window

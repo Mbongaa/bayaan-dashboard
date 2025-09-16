@@ -20,11 +20,6 @@ interface NavigationState {
   sidebarState?: 'collapsed' | 'expanded';
 }
 
-interface NavigationEvent {
-  type: 'section-change' | 'content-mode';
-  payload: any;
-}
-
 class NavigationService {
   private static instance: NavigationService;
   private state: NavigationState;

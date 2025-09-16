@@ -6,7 +6,7 @@ import { MessageCircle, X } from 'lucide-react';
 import Transcript from './Transcript';
 import { Z_CHATBOX } from '@/app/styles/z-index';
 
-interface FloatingChatWidgetProps extends Record<string, never> {
+interface FloatingChatWidgetProps {
   // No props needed - widget always shows full transcript
 }
 

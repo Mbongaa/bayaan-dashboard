@@ -385,7 +385,7 @@ export class CacheManager {
   /**
    * Pre-load layout calculations for common patterns
    */
-  private preloadLayoutCalculations(request: PreloadRequest): void {
+  private preloadLayoutCalculations(): void {
     // Pre-calculate common layout patterns
     const commonLayouts = [
       { proportions: [70, 30], pattern: 'horizontal' },

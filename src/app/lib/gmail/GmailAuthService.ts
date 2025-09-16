@@ -210,7 +210,7 @@ export class GmailAuthService {
     try {
       const decoded = jwt.verify(encryptedTokens, process.env.JWT_SECRET) as GmailTokens;
       return decoded;
-    } catch (error) {
+    } catch {
       throw new Error('Failed to decrypt tokens - tokens may be expired or invalid');
     }
   }

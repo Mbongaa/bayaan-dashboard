@@ -1153,7 +1153,7 @@ Tools are now parameter-driven rather than single-purpose.
             }
             
             const invalidFields = Array.from(formState.fields.entries())
-              .filter(([_fieldId, field]) => !field.isValid)
+              .filter(([, field]) => !field.isValid)
               .map(([id, field]) => ({ id, error: field.errorMessage }));
             
             const isValid = invalidFields.length === 0;

@@ -40,7 +40,7 @@ interface WorkflowProgress {
 }
 
 export function WorkflowStateBridge() {
-  const [workflowProgress, setWorkflowProgress] = useState<WorkflowProgress>({
+  const [, setWorkflowProgress] = useState<WorkflowProgress>({
     isRunning: false,
     currentStep: 0,
     totalSteps: 0,
@@ -257,7 +257,7 @@ export function WorkflowStateBridge() {
  * Hook for components to get current workflow execution state
  */
 export function useWorkflowState() {
-  const [, setCurrentWorkflow] = useState<WorkflowExecution | null>(null);
+  const [currentWorkflow] = useState<WorkflowExecution | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   
   useEffect(() => {
@@ -282,7 +282,6 @@ export function useWorkflowState() {
   }, []);
   
   return {
-    currentWorkflow,
     isRunning
   };
 }
