@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import StandalonePTTIcon from "./_archive/audio-visual/StandalonePTTIcon";
 import { useWebRTCAudioSession } from "@/app/foundation/hooks/useWebRTCAudioSession";
 import { useMicrophoneAnalysis } from "@/app/foundation/hooks/useMicrophoneAnalysis";
 
@@ -31,15 +30,9 @@ const PTTPortal: React.FC<PTTPortalProps> = ({
   if (!portalTarget) return null;
 
   return createPortal(
-    <StandalonePTTIcon
-      sessionStatus={sessionStatus}
-      isPTTActive={isPTTActive}
-      isRecordingActive={isRecordingActive}
-      volumeLevel={microphoneVolume}
-      onToggleRecording={onToggleRecording}
-      isDarkMode={isDarkMode}
-      conversationState={conversationState}
-    />,
+    <div className="ptt-placeholder">
+      {/* PTT Icon removed - StandalonePTTIcon was deleted */}
+    </div>,
     portalTarget
   );
 };

@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/shared/types/types";
 import { useTranscript } from "@/app/foundation/contexts/TranscriptContext";
-import { GuardrailChip } from "./_archive/ui-elements/GuardrailChip";
 import TypewriterText from "./TypewriterText";
 
 export interface TranscriptProps {
@@ -59,18 +58,12 @@ function Transcript({}: TranscriptProps = {}) {
       .sort((a, b) => b.createdAtMs - a.createdAtMs)[0];
     
     if (latestBreadcrumb && (!prevLatestBreadcrumb || latestBreadcrumb.itemId !== prevLatestBreadcrumb.itemId)) {
-      // New breadcrumb detected, show notification
-      setShowNotification(true);
+      // New breadcrumb detected - notification functionality removed for now
       
       // Clear existing timer
       if (notificationTimerRef.current) {
         clearTimeout(notificationTimerRef.current);
       }
-      
-      // Hide after 5 seconds
-      notificationTimerRef.current = setTimeout(() => {
-        setShowNotification(false);
-      }, 5000);
     }
 
     setPrevLogs(transcriptItems);
@@ -173,7 +166,9 @@ function Transcript({}: TranscriptProps = {}) {
                     </div>
                     {guardrailResult && (
                       <div className="bg-white/10 backdrop-blur-sm px-3 py-2 rounded-b-xl">
-                        <GuardrailChip guardrailResult={guardrailResult} />
+                        <div className="text-sm text-gray-400">
+                          Guardrail: {guardrailResult.status}
+                        </div>
                       </div>
                     )}
                   </div>
