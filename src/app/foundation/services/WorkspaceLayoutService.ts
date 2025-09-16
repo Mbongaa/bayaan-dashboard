@@ -419,10 +419,10 @@ class WorkspaceLayoutService {
   
   // Clear focus
   public clearFocus(): void {
-    this.state.focusedModuleId = null;
+    this.state.focusedModuleId = undefined;
     
     window.dispatchEvent(new CustomEvent('workspace:focus-module', {
-      detail: { moduleId: null }
+      detail: { moduleId: undefined }
     }));
     
     this.eventBus.emit('workspace:focus-cleared', {

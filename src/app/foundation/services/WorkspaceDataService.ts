@@ -1744,7 +1744,7 @@ export class WorkspaceDataService extends EventEmitter {
       }
 
       // Execute step
-      const stepResult = await this.executeWorkflowStep(step, execution.results);
+      const stepResult = await this.executeWorkflowStep(step);
       execution.executionHistory.push(stepResult);
 
       if (stepResult.status === 'failed') {
