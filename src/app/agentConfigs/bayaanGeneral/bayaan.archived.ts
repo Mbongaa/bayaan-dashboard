@@ -932,9 +932,9 @@ You: "Yeah, Bayaan here! What's up? Need help with something?"
             sidebarState: state.sidebarState,
             currentSection: state.currentSection || "voice",
             contentMode: state.contentMode,
-            isOnDashboard: state.contentMode === 'dashboard' && state.currentSection === 'dashboard',
-            isOnProfile: state.contentMode === 'dashboard' && state.currentSection === 'profile',
-            isOnSettings: state.contentMode === 'dashboard' && state.currentSection === 'settings',
+            isOnDashboard: state.contentMode === 'workspace' && state.currentSection === 'workspace',
+            isOnProfile: state.contentMode === 'workspace' && state.currentSection === 'workspace',
+            isOnSettings: state.contentMode === 'workspace' && state.currentSection === 'workspace',
             isInVoiceMode: state.contentMode === 'voice',
             spokenSummary: fullSummary
           };
