@@ -1467,11 +1467,8 @@ Tools are now parameter-driven rather than single-purpose.
             //   actions: macroActions,
             //   createdAt: new Date()
             // };
-            // Store macro (service might not have this method, handle gracefully)
-            const macroStore = (dashboardDataService as any).createDashboardMacro;
-            if (macroStore) {
-              macroStore.call(dashboardDataService, macroTrigger, macroActions);
-            }
+            // Note: Macro storage functionality was part of old dashboard system
+            // Current implementation focuses on voice interaction without persistent macros
             return {
               success: true,
               message: `Created macro "${macroTrigger}". You can now say "${macroTrigger}" anytime.`,

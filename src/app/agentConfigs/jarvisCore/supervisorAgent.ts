@@ -1,4 +1,4 @@
-import { workspaceDataService as dashboardDataService } from '../../foundation/services/WorkspaceDataService';
+import { workspaceDataService } from '../../foundation/services/WorkspaceDataService';
 import { navigationService } from '../../foundation/services/NavigationService';
 import { integrationService } from '../../foundation/services/IntegrationService';
 import { foundationServices } from '../../foundation/services/FoundationServices';
@@ -186,8 +186,8 @@ async function executeControlTheme(args: any): Promise<any> {
     
     // Update dashboard data service if it has theme support
     // Note: updateTheme might not exist yet, so we check first
-    if (typeof (dashboardDataService as any).updateTheme === 'function') {
-      (dashboardDataService as any).updateTheme(theme);
+    if (typeof (workspaceDataService as any).updateTheme === 'function') {
+      (workspaceDataService as any).updateTheme(theme);
     }
     
     return {
@@ -318,7 +318,7 @@ async function executeControlWorkspaceLayout(args: any): Promise<any> {
 async function executeGetDashboardState(args: any): Promise<any> {
   try {
     const { includeMetrics = true, includeActivities = true, activityLimit = 5 } = args || {};
-    const state = dashboardDataService.getState();
+    const state = workspaceDataService.getState();
     
     const response: any = {
       summary: state.summary,
@@ -555,9 +555,9 @@ async function executeResizeWorkspaceLayout(args: any): Promise<any> {
 async function executeGetFormState(args: any): Promise<any> {
   try {
     const { formId = 'all' } = args;
-    // const dashboardData = dashboardDataService.getState();
+    // const dashboardData = workspaceDataService.getState();
     
-    // Simulate form state (in real implementation, would get from dashboardDataService)
+    // Simulate form state (in real implementation, would get from workspaceDataService)
     const mockForms = {
       profile: {
         name: 'Profile Settings',
@@ -689,7 +689,7 @@ async function executeGetWidgetState(args: any): Promise<any> {
   try {
     const { widgetId } = args;
     
-    // Simulate widget state (in real implementation, would get from dashboardDataService)
+    // Simulate widget state (in real implementation, would get from workspaceDataService)
     const mockWidgets = [
       { id: 'metrics-widget', name: 'Metrics', isVisible: true, isExpanded: true, type: 'metrics' },
       { id: 'activities-widget', name: 'Activities', isVisible: true, isExpanded: false, type: 'activities' },
