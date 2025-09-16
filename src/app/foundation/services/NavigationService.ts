@@ -189,10 +189,11 @@ class NavigationService {
     
     // Emit sidebar state change event
     eventMigrationHelper.emitBoth(
-      'navigation:sidebar-change',
-      'navigation:sidebar:changed',
+      'navigation:section-change',
+      'navigation:section:changed',
       {
-        state: this.state.sidebarState,
+        section: this.state.currentSection,
+        sidebarState: this.state.sidebarState,
         source: 'service'
       }
     );
