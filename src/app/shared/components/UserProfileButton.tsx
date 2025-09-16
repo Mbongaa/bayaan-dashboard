@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/app/(auth)/login/actions";
 import { createClient } from "@/app/utils/supabase/client";
+import { Z_CLASSES } from "@/app/styles/z-index";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface UserProfileButtonProps {
@@ -20,7 +21,6 @@ interface UserProfileButtonProps {
 export function UserProfileButton({ className }: UserProfileButtonProps) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [openTooltip, setOpenTooltip] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -61,19 +61,12 @@ export function UserProfileButton({ className }: UserProfileButtonProps) {
 
   return (
     <TooltipProvider>
-      <Tooltip delayDuration={200} open={openTooltip}>
+      <Tooltip delayDuration={200}>
         <TooltipTrigger asChild>
           <Button
             variant="outline"
             size="icon"
             className={`rounded-full bg-white/10 dark:bg-black/10 backdrop-blur-sm border border-gray-400/60 dark:border-gray-700/50 hover:scale-110 transform-gpu transition duration-150 ${className}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpenTooltip(!openTooltip);
-            }}
-            onMouseEnter={() => setOpenTooltip(true)}
-            onMouseLeave={() => setOpenTooltip(false)}
           >
             <User className="h-4 w-4 text-gray-700 dark:text-gray-300" />
           </Button>
@@ -82,7 +75,7 @@ export function UserProfileButton({ className }: UserProfileButtonProps) {
           side="right"
           sideOffset={8}
           align="center"
-          className="p-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl ml-1"
+          className={`p-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm rounded-xl ml-1 ${Z_CLASSES.dropdown}`}
         >
           <div className="space-y-3">
             {loading ? (
@@ -106,7 +99,6 @@ export function UserProfileButton({ className }: UserProfileButtonProps) {
               onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                setOpenTooltip(false);
                 // Small delay to ensure tooltip closes before form submission
                 setTimeout(async () => {
                   await signOut();
