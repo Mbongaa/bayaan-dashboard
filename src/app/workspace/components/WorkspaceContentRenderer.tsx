@@ -25,10 +25,10 @@ export function WorkspaceContentRenderer({
   onBackToVoice,
   className
 }: WorkspaceContentRendererProps) {
-  useState(false);
+  const [, setIsTransitioning] = useState(false);
   const [currentPage, setCurrentPage] = useState(selectedItem);
   const [showContent, setShowContent] = useState(false);
-  useState<WorkspaceItem[]>([]);
+  const [, setActiveModules] = useState<WorkspaceItem[]>([]);
 
   // Handle page transitions with fade effect
   useEffect(() => {

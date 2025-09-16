@@ -47,15 +47,15 @@ export async function signup(formData: FormData) {
 
   // Create profile for the user
   if (authData.user) {
-    const { error: profileError } = await supabase
+    const { error: profileError } = await (supabase as any)
       .from('profiles')
-      .insert([{
+      .insert({
         id: authData.user.id,
         email: email,
         full_name: fullName,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }]);
+      });
 
     if (profileError) {
       console.error('Profile creation error:', profileError);
