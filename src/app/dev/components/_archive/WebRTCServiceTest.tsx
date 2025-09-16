@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { foundationServices } from '../../foundation/services/FoundationServices';
+import { foundationServices } from '../../../foundation/services/FoundationServices';
 
 /**
  * WebRTC Service Test Component
