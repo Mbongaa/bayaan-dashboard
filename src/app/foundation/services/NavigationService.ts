@@ -182,6 +182,28 @@ class NavigationService {
     return this.state.sidebarState || 'expanded';
   }
 
+  setSidebarState(state: 'collapsed' | 'expanded'): void {
+    console.log('[NavigationService] Setting sidebar state:', state);
+    this.state.sidebarState = state;
+    this.saveState();
+    
+    // Emit sidebar state change event
+    eventMigrationHelper.emitBoth(
+      'navigation:sidebar-change',
+      'navigation:sidebar:changed',
+      {
+        state: this.state.sidebarState,
+        source: 'service'
+      }
+    );
+  }
+
+  toggleSidebar(): void {
+    const currentState = this.getSidebarState();
+    const newState = currentState === 'expanded' ? 'collapsed' : 'expanded';
+    this.setSidebarState(newState);
+  }
+
   // Voice control integration with Phase 2 service communication
   handleVoiceCommand(action: string, target?: string): { success: boolean; message: string } {
     console.log('[NavigationService] Handling voice command:', action, target);
