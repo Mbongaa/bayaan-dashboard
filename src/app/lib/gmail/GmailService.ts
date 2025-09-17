@@ -215,7 +215,7 @@ export class GmailService {
 
       return {
         id: response.data.id!,
-        threadId: response.data.threadId
+        threadId: response.data.threadId ?? undefined
       };
     } catch (error) {
       throw new Error(`Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`);
