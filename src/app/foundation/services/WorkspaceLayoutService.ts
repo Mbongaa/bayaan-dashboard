@@ -432,12 +432,12 @@ class WorkspaceLayoutService {
   
   // Get currently focused module
   public getFocusedModule(): string | null {
-    return this.state.focusedModuleId;
+    return this.state.focusedModuleId ?? null;
   }
   
   // Set focused module (called by UI)
   public setFocusedModule(moduleId: string | null): void {
-    this.state.focusedModuleId = moduleId;
+    this.state.focusedModuleId = moduleId ?? undefined;
     
     if (moduleId) {
       this.eventBus.emit('workspace:module-focused', {
