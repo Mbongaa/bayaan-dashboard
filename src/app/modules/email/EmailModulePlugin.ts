@@ -327,8 +327,10 @@ export class EmailModulePlugin implements IModulePlugin {
     console.log('[EmailModule] Gmail service will be initialized on first use');
     
     // Set up event listeners
-    this.eventBus.on('email:refresh', this.handleRefresh.bind(this));
-    this.eventBus.on('email:sync', this.handleSync.bind(this));
+    if (this.eventBus) {
+      this.eventBus.on('email:refresh', this.handleRefresh.bind(this));
+      this.eventBus.on('email:sync', this.handleSync.bind(this));
+    }
     
     console.log('[EmailModule] Initialized successfully');
   }

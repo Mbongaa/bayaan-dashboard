@@ -2,11 +2,12 @@ import { login, signInWithGoogle, signInWithGitHub } from './actions';
 import Link from 'next/link';
 import MiniOrb from '@/app/foundation/components/MiniOrb';
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; message?: string };
+  searchParams: Promise<{ error?: string; message?: string }>;
 }) {
+  const params = await searchParams;
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Background effects */}
@@ -34,14 +35,14 @@ export default function LoginPage({
           </div>
 
           {/* Messages */}
-          {searchParams?.message && (
+          {params?.message && (
             <div className="mt-4 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-sm text-green-400">
-              {searchParams.message}
+              {params.message}
             </div>
           )}
-          {searchParams?.error && (
+          {params?.error && (
             <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
-              {searchParams.error}
+              {params.error}
             </div>
           )}
 
