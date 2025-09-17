@@ -646,8 +646,8 @@ export class EmailModulePlugin implements IModulePlugin {
     
     // Clean up event listeners
     if (this.eventBus) {
-      this.eventBus.off('email:refresh', this.handleRefresh.bind(this));
-      this.eventBus.off('email:sync', this.handleSync.bind(this));
+      this.eventBus.off('email:refresh');
+      this.eventBus.off('email:sync');
     }
     
     // Clean up services
