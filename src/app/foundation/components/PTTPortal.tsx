@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import StandalonePTTIcon from "./_archive/audio-visual/StandalonePTTIcon";
+import StandalonePTTIcon from "./StandalonePTTIcon";
 import { useWebRTCAudioSession } from "@/app/foundation/hooks/useWebRTCAudioSession";
 import { useMicrophoneAnalysis } from "@/app/foundation/hooks/useMicrophoneAnalysis";
 

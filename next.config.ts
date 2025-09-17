@@ -2,7 +2,16 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Final safe optimizations for build performance
+  poweredByHeader: false,
+  compress: true,
+
+  // Environment-specific optimizations
+  ...(process.env.NODE_ENV === 'production' && {
+    experimental: {
+      optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    },
+  }),
 };
 
 export default withPWA({

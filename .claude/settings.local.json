@@ -70,7 +70,12 @@
       "Bash(do kill -9 $pid)",
       "Bash(timeout 60s npm run build)",
       "Bash(timeout 45s npm run build)",
-      "Bash(timeout 120s npm run build)"
+      "Bash(timeout 120s npm run build)",
+      "Read(//mnt/c/Users/HP/Desktop/Bayaan/**)",
+      "Bash(test:*)",
+      "Bash(timeout 90s time npm run build:*)",
+      "Bash(timeout 120s time npm run build)",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": [],
     "ask": []
