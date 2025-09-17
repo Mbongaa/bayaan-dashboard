@@ -60,21 +60,63 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Critical Viewport for iOS PWA */}
+        <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no, user-scalable=no, viewport-fit=cover" />
+
         {/* PWA Meta Tags */}
+        <meta name="application-name" content="Bayaan AI" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Bayaan AI" />
-        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-TileColor" content="#3b82f6" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
+        <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#3b82f6" />
-        
-        {/* PWA Icons */}
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.ico" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon.ico" />
+
+        {/* PWA Icons - iOS Specific Sizes */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon-72x72.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon-72x72.png" />
+        <link rel="apple-touch-icon" href="/icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/icon-192x192.png" />
-        <link rel="mask-icon" href="/icon-192x192.png" color="#3b82f6" />
-        
+        <link rel="apple-touch-icon" sizes="167x167" href="/icon-192x192.png" />
+        <link rel="mask-icon" href="/icon-512x512.png" color="#3b82f6" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+
+        {/* Apple Splash Screen Images for Various Device Sizes */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/icon-512x512.png"
+          media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+        />
+
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{

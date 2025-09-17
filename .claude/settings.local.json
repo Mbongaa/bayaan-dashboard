@@ -75,7 +75,22 @@
       "Bash(test:*)",
       "Bash(timeout 90s time npm run build:*)",
       "Bash(timeout 120s time npm run build)",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.antstack.com)",
+      "Bash(git clone:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(python3 -m pip install:*)",
+      "Bash(python3:*)",
+      "Bash(source ~/.bashrc)",
+      "Bash(echo $PATH)",
+      "Bash(/root/.local/bin/pipx install SuperClaude)",
+      "Bash(/root/.local/bin/SuperClaude install:*)",
+      "Read(//root/.claude/**)",
+      "Read(//root/**)",
+      "Bash(/root/.local/bin/SuperClaude:*)",
+      "Bash(npx next:*)"
     ],
     "deny": [],
     "ask": []
