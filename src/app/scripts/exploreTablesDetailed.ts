@@ -54,7 +54,7 @@ async function exploreTablesInDetail() {
         
         columns.forEach(col => {
           const value = firstRow[col];
-          let type = typeof value;
+          let type: string = typeof value;
           
           if (value === null) {
             // Check other rows for non-null values

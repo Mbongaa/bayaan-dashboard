@@ -190,8 +190,10 @@ export class MockEmailModulePlugin implements IModulePlugin {
     this.eventBus = services.eventBus;
     
     // Set up event listeners
-    this.eventBus.on('email:refresh', this.handleRefresh.bind(this));
-    this.eventBus.on('email:sync', this.handleSync.bind(this));
+    if (this.eventBus) {
+      this.eventBus.on('email:refresh', this.handleRefresh.bind(this));
+      this.eventBus.on('email:sync', this.handleSync.bind(this));
+    }
     
     console.log('[MockEmailModule] Initialized with', this.mockEmails.length, 'mock emails');
   }
@@ -349,8 +351,8 @@ export class MockEmailModulePlugin implements IModulePlugin {
     console.log('[MockEmailModule] Disposing');
     
     if (this.eventBus) {
-      this.eventBus.off('email:refresh', this.handleRefresh.bind(this));
-      this.eventBus.off('email:sync', this.handleSync.bind(this));
+      this.eventBus.off('email:refresh');
+      this.eventBus.off('email:sync');
     }
     
     this.eventBus = null;
